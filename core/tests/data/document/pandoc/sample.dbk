@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE article>
+<article
+  xml:lang="en"
+  xmlns="http://docbook.org/ns/docbook" version="5.0"
+  xmlns:mml="http://www.w3.org/1998/Math/MathML"
+  xmlns:xlink="http://www.w3.org/1999/xlink" >
+  <info>
+    <title>Sample Document</title>
+  </info>
+  <section xml:id="lorem-ipsum-overview">
+    <title>Lorem Ipsum Overview</title>
+    <para>
+      Lorem ipsum dolor sit amet, <emphasis>consectetur</emphasis>
+      adipiscing elit, sed do <emphasis role="strong">eiusmod</emphasis>
+      tempor incididunt ut labore et <literal>dolore_magna</literal>
+      aliqua. See the
+      <link xlink:href="https://example.com/docs">example site</link>
+      for more.
+    </para>
+    <section xml:id="lists-and-structure">
+      <title>Lists and Structure</title>
+      <para>
+        Ut enim ad minim veniam:
+      </para>
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>
+            First bullet item
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Second bullet item
+          </para>
+          <itemizedlist spacing="compact">
+            <listitem>
+              <para>
+                Nested alpha
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Nested beta
+              </para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+        <listitem>
+          <para>
+            Third bullet with
+            <emphasis role="strikethrough">struck</emphasis> text
+          </para>
+        </listitem>
+      </itemizedlist>
+      <orderedlist numeration="arabic" spacing="compact">
+        <listitem>
+          <para>
+            Step one
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Step two
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Step three
+          </para>
+        </listitem>
+      </orderedlist>
+      <variablelist spacing="compact">
+        <varlistentry>
+          <term>
+            Term One
+          </term>
+          <listitem>
+            <para>
+              Definition of the first term.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </section>
+    <section xml:id="table-section">
+      <title>Table Section</title>
+      <informaltable>
+        <tgroup cols="3">
+          <colspec align="left" />
+          <colspec align="right" />
+          <colspec align="center" />
+          <thead>
+            <row>
+              <entry>
+                Name
+              </entry>
+              <entry>
+                Quantity
+              </entry>
+              <entry>
+                Price
+              </entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                Apple
+              </entry>
+              <entry>
+                3
+              </entry>
+              <entry>
+                1.25
+              </entry>
+            </row>
+            <row>
+              <entry>
+                Banana
+              </entry>
+              <entry>
+                12
+              </entry>
+              <entry>
+                0.50
+              </entry>
+            </row>
+            <row>
+              <entry>
+                Cherry
+              </entry>
+              <entry>
+                100
+              </entry>
+              <entry>
+                9.99
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </section>
+    <section xml:id="code-and-quotes">
+      <title>Code and Quotes</title>
+      <programlisting language="python">
+def greet(name):
+    return &quot;Hello, &quot; + name
+</programlisting>
+      <blockquote>
+        <para>
+          Duis aute irure dolor in reprehenderit in voluptate velit esse
+          cillum dolore eu fugiat nulla pariatur.
+        </para>
+      </blockquote>
+      <section xml:id="unicode-corner">
+        <title>Unicode Corner</title>
+        <para>
+          Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese:
+          汉字测试. Hebrew: שלום עולם. Arabic: مرحبا بالعالم. Emoji:
+          🙂🚀.
+        </para>
+        <para>
+          Footnote reference here.<footnote>
+            <para>
+              This is the footnote text.
+            </para>
+          </footnote> Superscript x<superscript>2</superscript> and
+          subscript H<subscript>2</subscript>O.
+        </para>
+        <figure>
+          <title>Tiny pixel</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="pixel.png" />
+            </imageobject>
+            <textobject><phrase>Tiny pixel</phrase></textobject>
+          </mediaobject>
+        </figure>
+        <para>
+          Final paragraph with a
+          <link xlink:href="https://example.org/page">second link</link>
+          and an autolink
+          <link xlink:href="https://example.net/" role="uri">https://example.net/</link>.
+        </para>
+      </section>
+    </section>
+  </section>
+</article>

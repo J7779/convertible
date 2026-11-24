@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>Sample Document</title>
+    <dateModified></dateModified>
+    <ownerName></ownerName>
+  </head>
+  <body>
+<outline text="Lorem Ipsum Overview" _note="Lorem ipsum dolor sit amet, *consectetur* adipiscing elit, sed do&#10;**eiusmod** tempor incididunt ut labore et `dolore_magna` aliqua. See&#10;the [example site](https://example.com/docs &quot;Example title&quot;) for more.">
+  <outline text="Lists and Structure" _note="Ut enim ad minim veniam:&#10;&#10;- First bullet item&#10;- Second bullet item&#10;  - Nested alpha&#10;  - Nested beta&#10;- Third bullet with ~~struck~~ text&#10;&#10;1.  Step one&#10;2.  Step two&#10;3.  Step three&#10;&#10;Term One&#10;: Definition of the first term.">
+  </outline>
+  <outline text="Table Section" _note="  Name       Quantity  Price&#10;  -------- ---------- -------&#10;  Apple             3  1.25&#10;  Banana           12  0.50&#10;  Cherry          100  9.99">
+  </outline>
+  <outline text="Code and Quotes" _note="``` python&#10;def greet(name):&#10;    return &quot;Hello, &quot; + name&#10;```&#10;&#10;&gt; Duis aute irure dolor in reprehenderit in voluptate velit esse cillum&#10;&gt; dolore eu fugiat nulla pariatur.">
+    <outline text="Unicode Corner" _note="Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese: 汉字测试.&#10;Hebrew: שלום עולם. Arabic: مرحبا بالعالم. Emoji: 🙂🚀.&#10;&#10;Footnote reference here.[^1] Superscript x^2^ and subscript H~2~O.&#10;&#10;![Tiny pixel](pixel.png)&#10;&#10;------------------------------------------------------------------------&#10;&#10;Final paragraph with a [second link](https://example.org/page) and an&#10;autolink &lt;https://example.net/&gt;.&#10;&#10;[^1]: This is the footnote text.">
+    </outline>
+  </outline>
+</outline>
+  </body>
+</opml>

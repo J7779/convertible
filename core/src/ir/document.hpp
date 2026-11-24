@@ -4,6 +4,7 @@
 
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <string_view>
@@ -28,6 +29,70 @@ inline constexpr int max_document_depth = 64;
 struct EncodedImage {
   Bytes bytes;        ///< the image file
   std::string mime;   ///< e.g. "image/png"; empty when unknown
+  /// Where the picture lives when the source only referenced it (an
+  /// `<img src="photo.jpg">` or `![](https://...)`): the reference as
+  /// written. `bytes` is then EMPTY, because nothing is ever fetched;
+  /// writers emit a reference to `url` (or the alt text) instead of data.
+  std::string url = {};
+};
+
+// --------------------------------------------------------------------------- attributes
+
+/// Optional identifier and annotations of a block or inline, as found in
+/// formats that have them (HTML id/class, Markdown `{#id .class}`, Djot,
+/// AsciiDoc anchors). Readers fill what they find; writers that cannot
+/// express them simply ignore them. A few classes carry agreed meaning
+/// (see `ir::conventions`).
+struct Attributes {
+  std::string id = {};
+  std::vector<std::string> classes = {};
+  /// Other key/value annotations in source order.
+  std::vector<std::pair<std::string, std::string>> pairs = {};
+
+  [[nodiscard]] bool empty() const noexcept { return id.empty() && classes.empty() && pairs.empty(); }
+  [[nodiscard]] bool has_class(std::string_view name) const noexcept {
+    for (const std::string& c : classes) {
+      if (c == name) return true;
+    }
+    return false;
+  }
+  void add_class(std::string_view name) {
+    if (!has_class(name)) classes.emplace_back(name);
+  }
+  /// The value of a key/value annotation, or empty.
+  [[nodiscard]] std::string_view get(std::string_view key) const noexcept {
+    for (const auto& [k, v] : pairs) {
+      if (k == key) return v;
+    }
+    return {};
+  }
+  void set(std::string_view key, std::string value) {
+    for (auto& [k, v] : pairs) {
+      if (k == key) {
+        v = std::move(value);
+        return;
+      }
+    }
+    pairs.emplace_back(std::string(key), std::move(value));
+  }
+};
+
+/// Class names with an agreed meaning across readers and writers.
+namespace conventions {
+/// On a BlockQuote: an admonition/callout ("note", "warning", "tip", ... is
+/// added as a second class).
+inline constexpr std::string_view admonition = "admonition";
+/// On a CodeBlock: the output of the code cell before it (notebooks).
+inline constexpr std::string_view cell_output = "output";
+/// On a Paragraph: a line block (poetry, addresses) whose LineBreaks matter.
+inline constexpr std::string_view line_block = "line-block";
+}  // namespace conventions
+
+/// How `Code` and `CodeBlock` text is to be understood.
+enum class MathMode : std::uint8_t {
+  None,     ///< ordinary verbatim text
+  Inline,   ///< TeX math in running text (`$x^2$`)
+  Display,  ///< TeX math set on its own line (`$$x^2$$`)
 };
 
 /// A picture inside a document: either still encoded as found in the source
@@ -56,12 +121,23 @@ struct Strong {
 /// Inline code / verbatim text.
 struct Code {
   std::string text;
+  /// Non-None: `text` is TeX math (writers without math show it as code).
+  MathMode math = MathMode::None;
+  /// Non-empty: `text` is raw markup of that format ("html", "latex", ...)
+  /// to be passed through by writers of the same format and shown as code
+  /// (or dropped) by others.
+  std::string raw_format = {};
 };
 /// A hyperlink.
 struct Link {
   std::string url;    ///< destination, as written in the source
   std::string title;  ///< optional tooltip
   Inlines children;   ///< the link text
+  /// Non-empty: this is a footnote reference to `Document::footnotes` entry
+  /// with this label; `url` is then "#fn-<label>" and `children` the visible
+  /// marker (usually the number), so writers that know nothing of notes
+  /// still show a sensible superscript-style link.
+  std::string note = {};
 };
 struct Strikethrough {
   Inlines children;
@@ -81,6 +157,7 @@ struct LineBreak {};
 struct InlineImage {
   ImageSource source;
   std::string alt;  ///< text alternative
+  std::string title = {};  ///< optional tooltip
 };
 
 /// One inline node.
@@ -88,12 +165,18 @@ struct Inline {
   using Node = std::variant<Text, Emphasis, Strong, Code, Link, Strikethrough, Underline, Superscript, Subscript,
                             LineBreak, InlineImage>;
   Node node;
+  /// Optional id/classes; usually empty. Highlighted text (`<mark>`) is a
+  /// Strong carrying the class "mark".
+  Attributes attr;
 
   Inline() = default;
   /// Implicit from any node type: `Inlines{Text{"a"}, Strong{{Text{"b"}}}}`.
   template <class T>
     requires(!std::same_as<std::remove_cvref_t<T>, Inline>) && std::constructible_from<Node, T>
   Inline(T&& value) : node(std::forward<T>(value)) {}  // NOLINT(google-explicit-constructor)
+  template <class T>
+    requires(!std::same_as<std::remove_cvref_t<T>, Inline>) && std::constructible_from<Node, T>
+  Inline(T&& value, Attributes attributes) : node(std::forward<T>(value)), attr(std::move(attributes)) {}
 
   template <class T>
   [[nodiscard]] bool is() const noexcept {
@@ -123,25 +206,51 @@ struct Heading {
 struct Paragraph {
   Inlines content;
 };
+/// Check box state of a task-list item.
+enum class TaskState : std::uint8_t { None, Open, Done };
+/// Numbering style of an ordered list.
+enum class ListNumbering : std::uint8_t { Decimal, LowerAlpha, UpperAlpha, LowerRoman, UpperRoman };
+
 /// A bulleted or numbered list.
 struct List {
   bool ordered = false;       ///< numbered when true
   int start = 1;              ///< number of the first item (ordered lists)
   std::vector<Blocks> items;  ///< each item is a sequence of blocks (often one Paragraph)
+  /// A definition list: the FIRST block of every item is the term (a
+  /// Paragraph), the remaining blocks are its definition. Writers without
+  /// definition lists render it as a bulleted list, which reads fine.
+  bool definition = false;
+  /// Per item check boxes (GFM task lists); empty, or one entry per item.
+  std::vector<TaskState> tasks = {};
+  /// Ordered lists only.
+  ListNumbering numbering = ListNumbering::Decimal;
+  /// Items separated by blank lines (Markdown "loose" lists).
+  bool loose = false;
+
+  [[nodiscard]] TaskState task(std::size_t item) const noexcept {
+    return item < tasks.size() ? tasks[item] : TaskState::None;
+  }
 };
 /// Preformatted text.
 struct CodeBlock {
   std::string language;  ///< syntax hint such as "cpp"; may be empty
   std::string code;      ///< verbatim, lines separated by '\n', no trailing newline required
+  /// Display: `code` is TeX math set on its own (writers without math show code).
+  MathMode math = MathMode::None;
+  /// Non-empty: raw markup of that format ("html", "latex", ...) passed through
+  /// by writers of the same format and shown as code by others.
+  std::string raw_format = {};
 };
 struct BlockQuote {
   Blocks blocks;
 };
 /// One cell of a document table.
+enum class Alignment : std::uint8_t { Default, Left, Center, Right };
 struct TableCell {
   Inlines content;
   int colspan = 1;
   int rowspan = 1;
+  Alignment align = Alignment::Default;  ///< overrides the column alignment when not Default
 };
 struct TableRow {
   std::vector<TableCell> cells;
@@ -150,12 +259,21 @@ struct TableRow {
 /// A table embedded in a document. (The spreadsheet IR is `ir::Table`.)
 struct TableBlock {
   std::vector<TableRow> rows;
+  /// Optional caption shown with the table.
+  Inlines caption = {};
+  /// Optional per-column alignment; may be shorter than the widest row.
+  std::vector<Alignment> alignments = {};
+
+  [[nodiscard]] Alignment column_alignment(std::size_t column) const noexcept {
+    return column < alignments.size() ? alignments[column] : Alignment::Default;
+  }
 };
 /// A picture on its own line.
 struct ImageBlock {
   ImageSource source;
   std::string alt;      ///< text alternative
   std::string caption;  ///< optional visible caption
+  std::string title = {};  ///< optional tooltip
 };
 /// A thematic break.
 struct HorizontalRule {};
@@ -167,12 +285,17 @@ struct Block {
   using Node = std::variant<Paragraph, Heading, List, CodeBlock, BlockQuote, TableBlock, ImageBlock, HorizontalRule,
                             PageBreak>;
   Node node;
+  /// Optional id/classes (a heading's anchor is `attr.id`); usually empty.
+  Attributes attr;
 
   Block() = default;
   /// Implicit from any node type: `doc.blocks.push_back(Heading{1, {Text{"Hi"}}});`
   template <class T>
     requires(!std::same_as<std::remove_cvref_t<T>, Block>) && std::constructible_from<Node, T>
   Block(T&& value) : node(std::forward<T>(value)) {}  // NOLINT(google-explicit-constructor)
+  template <class T>
+    requires(!std::same_as<std::remove_cvref_t<T>, Block>) && std::constructible_from<Node, T>
+  Block(T&& value, Attributes attributes) : node(std::forward<T>(value)), attr(std::move(attributes)) {}
 
   template <class T>
   [[nodiscard]] bool is() const noexcept {
@@ -199,10 +322,21 @@ struct DocumentMetadata {
   std::map<std::string, std::string> extra;
 };
 
+/// The content of a footnote, referenced from the text by a `Link` whose
+/// `note` is `label`.
+struct Footnote {
+  std::string label;  ///< unique within the document (often "1", "2", ...)
+  Blocks blocks;
+};
+
 /// A text document: metadata plus a tree of blocks.
 struct Document {
   DocumentMetadata metadata;
   Blocks blocks;
+  /// Footnote bodies, in order of first reference. Writers that cannot hold
+  /// notes may append them as end notes (see the document family's
+  /// `footnotes_to_endnotes`).
+  std::vector<Footnote> footnotes = {};
 };
 
 // --------------------------------------------------------------------------- builders

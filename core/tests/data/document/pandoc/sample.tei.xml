@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="en">
+<teiHeader>
+  <fileDesc>
+    <titleStmt>
+      <title>Sample Document</title>
+    </titleStmt>
+    <publicationStmt>
+    </publicationStmt>
+    <sourceDesc>
+      <p>Synthetic sample.</p>
+    </sourceDesc>
+  </fileDesc>
+</teiHeader>
+<text>
+<body>
+<div type="level1" xml:id="lorem-ipsum-overview">
+  <head>Lorem Ipsum Overview</head>
+  <p>Lorem ipsum dolor sit amet,
+  <hi rendition="simple:italic">consectetur</hi> adipiscing elit, sed do
+  <hi rendition="simple:bold">eiusmod</hi> tempor incididunt ut labore
+  et <seg type="code">dolore_magna</seg> aliqua. See the
+  <ref target="https://example.com/docs">example site</ref> for
+  more.</p>
+  <div type="level2" xml:id="lists-and-structure">
+    <head>Lists and Structure</head>
+    <p>Ut enim ad minim veniam:</p>
+    <list type="unordered">
+      <item>
+        <p>First bullet item</p>
+      </item>
+      <item>
+        <p>Second bullet item</p>
+        <list type="unordered">
+          <item>
+            <p>Nested alpha</p>
+          </item>
+          <item>
+            <p>Nested beta</p>
+          </item>
+        </list>
+      </item>
+      <item>
+        <p>Third bullet with
+        <hi rendition="simple:strikethrough">struck</hi> text</p>
+      </item>
+    </list>
+    <list type="ordered:arabic">
+      <item>
+        <p>Step one</p>
+      </item>
+      <item>
+        <p>Step two</p>
+      </item>
+      <item>
+        <p>Step three</p>
+      </item>
+    </list>
+    <list type="definition">
+      <label>
+        Term One
+      </label>
+      <item>
+        <p>Definition of the first term.</p>
+      </item>
+    </list>
+  </div>
+  <div type="level2" xml:id="table-section">
+    <head>Table Section</head>
+    <table>
+      <row role="label">
+        <cell><p>Name</p></cell>
+        <cell><p>Quantity</p></cell>
+        <cell><p>Price</p></cell>
+      </row>
+      <row>
+        <cell><p>Apple</p></cell>
+        <cell><p>3</p></cell>
+        <cell><p>1.25</p></cell>
+      </row>
+      <row>
+        <cell><p>Banana</p></cell>
+        <cell><p>12</p></cell>
+        <cell><p>0.50</p></cell>
+      </row>
+      <row>
+        <cell><p>Cherry</p></cell>
+        <cell><p>100</p></cell>
+        <cell><p>9.99</p></cell>
+      </row>
+    </table>
+  </div>
+  <div type="level2" xml:id="code-and-quotes">
+    <head>Code and Quotes</head>
+    <ab type='codeblock python'>
+def greet(name):
+    return &quot;Hello, &quot; + name
+</ab>
+    <quote>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse
+      cillum dolore eu fugiat nulla pariatur.</p>
+    </quote>
+    <div type="level3" xml:id="unicode-corner">
+      <head>Unicode Corner</head>
+      <p>Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese:
+      汉字测试. Hebrew: שלום עולם. Arabic: مرحبا بالعالم. Emoji:
+      🙂🚀.</p>
+      <p>Footnote reference here.<note>
+        <p>This is the footnote text.</p>
+      </note> Superscript x<hi rendition="simple:superscript">2</hi> and
+      subscript H<hi rendition="simple:subscript">2</hi>O.</p>
+      <p><figure>
+        <head>Tiny pixel</head>
+        <graphic url="pixel.png" />
+      </figure></p>
+      <p>Tiny pixel</p>
+      <milestone unit="undefined" type="separator" rend="line" />
+      <p>Final paragraph with a
+      <ref target="https://example.org/page">second link</ref> and an
+      autolink
+      <ref target="https://example.net/">https://example.net/</ref>.</p>
+    </div>
+  </div>
+</div>
+</body>
+</text>
+</TEI>

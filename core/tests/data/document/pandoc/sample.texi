@@ -1,0 +1,131 @@
+\input texinfo  @c -*-texinfo-*-
+@settitle Sample Document
+
+@documentencoding UTF-8
+
+@macro textstrikeout{text}
+~~\text\~~
+@end macro
+
+@ifnottex
+@paragraphindent 0
+@end ifnottex
+@titlepage
+@title Sample Document
+@end titlepage
+
+@node Top
+@top Sample Document
+
+@menu
+* Lorem Ipsum Overview::
+@end menu
+
+@node Lorem Ipsum Overview
+@chapter Lorem Ipsum Overview
+Lorem ipsum dolor sit amet, @emph{consectetur} adipiscing elit, sed do
+@strong{eiusmod} tempor incididunt ut labore et @code{dolore_magna}
+aliqua. See the @uref{https://example.com/docs,example site} for more.
+
+@menu
+* Lists and Structure::
+* Table Section::
+* Code and Quotes::
+@end menu
+
+@node Lists and Structure
+@section Lists and Structure
+Ut enim ad minim veniam:
+
+@itemize
+@item
+First bullet item
+@item
+Second bullet item
+@itemize
+@item
+Nested alpha
+@item
+Nested beta
+@end itemize
+
+@item
+Third bullet with @textstrikeout{struck} text
+@end itemize
+
+@enumerate 
+@item
+Step one
+@item
+Step two
+@item
+Step three
+@end enumerate
+
+@table @asis
+@item Term One
+
+Definition of the first term.
+@end table
+
+@node Table Section
+@section Table Section
+@multitable {Cherry} {Quantity} {Price} 
+@headitem 
+Name
+ @tab Quantity
+ @tab Price
+@item 
+Apple
+ @tab 3
+ @tab 1.25
+@item 
+Banana
+ @tab 12
+ @tab 0.50
+@item 
+Cherry
+ @tab 100
+ @tab 9.99
+@end multitable
+
+@node Code and Quotes
+@section Code and Quotes
+
+@verbatim
+def greet(name):
+    return "Hello, " + name
+@end verbatim
+
+@quotation
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
+dolore eu fugiat nulla pariatur.
+@end quotation
+
+@menu
+* Unicode Corner::
+@end menu
+
+@node Unicode Corner
+@subsection Unicode Corner
+Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese: 汉字测试.
+Hebrew: שלום עולם. Arabic: مرحبا بالعالم. Emoji: 🙂🚀.
+
+Footnote reference here.@footnote{This is the footnote text.}
+Superscript x@sup{2} and subscript H@sub{2}O.
+
+@float
+@image{pixel,,,Tiny pixel,png}
+@caption{Tiny pixel}
+@end float
+@iftex
+@bigskip@hrule@bigskip
+@end iftex
+@ifnottex
+------------------------------------------------------------------------
+@end ifnottex
+
+Final paragraph with a @uref{https://example.org/page,second link} and
+an autolink @url{https://example.net/}.
+
+@bye

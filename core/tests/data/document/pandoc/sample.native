@@ -1,0 +1,382 @@
+[ Header
+    1
+    ( "lorem-ipsum-overview" , [] , [] )
+    [ Str "Lorem"
+    , Space
+    , Str "Ipsum"
+    , Space
+    , Str "Overview"
+    ]
+, Para
+    [ Str "Lorem"
+    , Space
+    , Str "ipsum"
+    , Space
+    , Str "dolor"
+    , Space
+    , Str "sit"
+    , Space
+    , Str "amet,"
+    , Space
+    , Emph [ Str "consectetur" ]
+    , Space
+    , Str "adipiscing"
+    , Space
+    , Str "elit,"
+    , Space
+    , Str "sed"
+    , Space
+    , Str "do"
+    , Space
+    , Strong [ Str "eiusmod" ]
+    , SoftBreak
+    , Str "tempor"
+    , Space
+    , Str "incididunt"
+    , Space
+    , Str "ut"
+    , Space
+    , Str "labore"
+    , Space
+    , Str "et"
+    , Space
+    , Code ( "" , [] , [] ) "dolore_magna"
+    , Space
+    , Str "aliqua."
+    , Space
+    , Str "See"
+    , Space
+    , Str "the"
+    , SoftBreak
+    , Link
+        ( "" , [] , [] )
+        [ Str "example" , Space , Str "site" ]
+        ( "https://example.com/docs" , "Example title" )
+    , Space
+    , Str "for"
+    , Space
+    , Str "more."
+    ]
+, Header
+    2
+    ( "lists-and-structure" , [] , [] )
+    [ Str "Lists"
+    , Space
+    , Str "and"
+    , Space
+    , Str "Structure"
+    ]
+, Para
+    [ Str "Ut"
+    , Space
+    , Str "enim"
+    , Space
+    , Str "ad"
+    , Space
+    , Str "minim"
+    , Space
+    , Str "veniam:"
+    ]
+, BulletList
+    [ [ Plain
+          [ Str "First" , Space , Str "bullet" , Space , Str "item" ]
+      ]
+    , [ Plain
+          [ Str "Second" , Space , Str "bullet" , Space , Str "item" ]
+      , BulletList
+          [ [ Plain [ Str "Nested" , Space , Str "alpha" ] ]
+          , [ Plain [ Str "Nested" , Space , Str "beta" ] ]
+          ]
+      ]
+    , [ Plain
+          [ Str "Third"
+          , Space
+          , Str "bullet"
+          , Space
+          , Str "with"
+          , Space
+          , Strikeout [ Str "struck" ]
+          , Space
+          , Str "text"
+          ]
+      ]
+    ]
+, OrderedList
+    ( 1 , Decimal , Period )
+    [ [ Plain [ Str "Step" , Space , Str "one" ] ]
+    , [ Plain [ Str "Step" , Space , Str "two" ] ]
+    , [ Plain [ Str "Step" , Space , Str "three" ] ]
+    ]
+, DefinitionList
+    [ ( [ Str "Term" , Space , Str "One" ]
+      , [ [ Plain
+              [ Str "Definition"
+              , Space
+              , Str "of"
+              , Space
+              , Str "the"
+              , Space
+              , Str "first"
+              , Space
+              , Str "term."
+              ]
+          ]
+        ]
+      )
+    ]
+, Header
+    2
+    ( "table-section" , [] , [] )
+    [ Str "Table" , Space , Str "Section" ]
+, Table
+    ( "" , [] , [] )
+    (Caption Nothing [])
+    [ ( AlignLeft , ColWidthDefault )
+    , ( AlignRight , ColWidthDefault )
+    , ( AlignCenter , ColWidthDefault )
+    ]
+    (TableHead
+       ( "" , [] , [] )
+       [ Row
+           ( "" , [] , [] )
+           [ Cell
+               ( "" , [] , [] )
+               AlignDefault
+               (RowSpan 1)
+               (ColSpan 1)
+               [ Plain [ Str "Name" ] ]
+           , Cell
+               ( "" , [] , [] )
+               AlignDefault
+               (RowSpan 1)
+               (ColSpan 1)
+               [ Plain [ Str "Quantity" ] ]
+           , Cell
+               ( "" , [] , [] )
+               AlignDefault
+               (RowSpan 1)
+               (ColSpan 1)
+               [ Plain [ Str "Price" ] ]
+           ]
+       ])
+    [ TableBody
+        ( "" , [] , [] )
+        (RowHeadColumns 0)
+        []
+        [ Row
+            ( "" , [] , [] )
+            [ Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "Apple" ] ]
+            , Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "3" ] ]
+            , Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "1.25" ] ]
+            ]
+        , Row
+            ( "" , [] , [] )
+            [ Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "Banana" ] ]
+            , Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "12" ] ]
+            , Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "0.50" ] ]
+            ]
+        , Row
+            ( "" , [] , [] )
+            [ Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "Cherry" ] ]
+            , Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "100" ] ]
+            , Cell
+                ( "" , [] , [] )
+                AlignDefault
+                (RowSpan 1)
+                (ColSpan 1)
+                [ Plain [ Str "9.99" ] ]
+            ]
+        ]
+    ]
+    (TableFoot ( "" , [] , [] ) [])
+, Header
+    2
+    ( "code-and-quotes" , [] , [] )
+    [ Str "Code" , Space , Str "and" , Space , Str "Quotes" ]
+, CodeBlock
+    ( "" , [ "python" ] , [] )
+    "def greet(name):\n    return \"Hello, \" + name"
+, BlockQuote
+    [ Para
+        [ Str "Duis"
+        , Space
+        , Str "aute"
+        , Space
+        , Str "irure"
+        , Space
+        , Str "dolor"
+        , Space
+        , Str "in"
+        , Space
+        , Str "reprehenderit"
+        , Space
+        , Str "in"
+        , Space
+        , Str "voluptate"
+        , Space
+        , Str "velit"
+        , Space
+        , Str "esse"
+        , SoftBreak
+        , Str "cillum"
+        , Space
+        , Str "dolore"
+        , Space
+        , Str "eu"
+        , Space
+        , Str "fugiat"
+        , Space
+        , Str "nulla"
+        , Space
+        , Str "pariatur."
+        ]
+    ]
+, Header
+    3
+    ( "unicode-corner" , [] , [] )
+    [ Str "Unicode" , Space , Str "Corner" ]
+, Para
+    [ Str "Accents:"
+    , Space
+    , Str "caf\233,"
+    , Space
+    , Str "na\239ve,"
+    , Space
+    , Str "\198r\248sk\248bing."
+    , Space
+    , Str "Greek:"
+    , Space
+    , Str "\945\946\947\948."
+    , Space
+    , Str "Chinese:"
+    , Space
+    , Str "\27721\23383\27979\35797."
+    , SoftBreak
+    , Str "Hebrew:"
+    , Space
+    , Str "\1513\1500\1493\1501"
+    , Space
+    , Str "\1506\1493\1500\1501."
+    , Space
+    , Str "Arabic:"
+    , Space
+    , Str "\1605\1585\1581\1576\1575"
+    , Space
+    , Str "\1576\1575\1604\1593\1575\1604\1605."
+    , Space
+    , Str "Emoji:"
+    , Space
+    , Str "\128578\128640."
+    ]
+, Para
+    [ Str "Footnote"
+    , Space
+    , Str "reference"
+    , Space
+    , Str "here."
+    , Note
+        [ Para
+            [ Str "This"
+            , Space
+            , Str "is"
+            , Space
+            , Str "the"
+            , Space
+            , Str "footnote"
+            , Space
+            , Str "text."
+            ]
+        ]
+    , Space
+    , Str "Superscript"
+    , Space
+    , Str "x"
+    , Superscript [ Str "2" ]
+    , Space
+    , Str "and"
+    , Space
+    , Str "subscript"
+    , Space
+    , Str "H"
+    , Subscript [ Str "2" ]
+    , Str "O."
+    ]
+, Figure
+    ( "" , [] , [] )
+    (Caption
+       Nothing [ Plain [ Str "Tiny" , Space , Str "pixel" ] ])
+    [ Plain
+        [ Image
+            ( "" , [] , [] )
+            [ Str "Tiny" , Space , Str "pixel" ]
+            ( "pixel.png" , "" )
+        ]
+    ]
+, HorizontalRule
+, Para
+    [ Str "Final"
+    , Space
+    , Str "paragraph"
+    , Space
+    , Str "with"
+    , Space
+    , Str "a"
+    , Space
+    , Link
+        ( "" , [] , [] )
+        [ Str "second" , Space , Str "link" ]
+        ( "https://example.org/page" , "" )
+    , Space
+    , Str "and"
+    , SoftBreak
+    , Str "an"
+    , Space
+    , Str "autolink"
+    , Space
+    , Link
+        ( "" , [ "uri" ] , [] )
+        [ Str "https://example.net/" ]
+        ( "https://example.net/" , "" )
+    , Str "."
+    ]
+]

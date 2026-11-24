@@ -1,0 +1,107 @@
+'\" t
+.\"
+.TH "Sample Document" "" "" ""
+.SH Lorem Ipsum Overview
+Lorem ipsum dolor sit amet, \f[I]consectetur\f[R] adipiscing elit, sed
+do \f[B]eiusmod\f[R] tempor incididunt ut labore et
+\f[CR]dolore_magna\f[R] aliqua.
+See the \c
+.UR https://example.com/docs
+example site
+.UE \c
+\ for more.
+.SS Lists and Structure
+Ut enim ad minim veniam:
+.IP \(bu 2
+First bullet item
+.IP \(bu 2
+Second bullet item
+.RS 2
+.IP \(bu 2
+Nested alpha
+.IP \(bu 2
+Nested beta
+.RE
+.IP \(bu 2
+Third bullet with [STRIKEOUT:struck] text
+.IP "1." 3
+Step one
+.IP "2." 3
+Step two
+.IP "3." 3
+Step three
+.TP
+Term One
+Definition of the first term.
+.SS Table Section
+.PP
+.TS
+tab(@);
+l r c.
+T{
+Name
+T}@T{
+Quantity
+T}@T{
+Price
+T}
+_
+T{
+Apple
+T}@T{
+3
+T}@T{
+1.25
+T}
+T{
+Banana
+T}@T{
+12
+T}@T{
+0.50
+T}
+T{
+Cherry
+T}@T{
+100
+T}@T{
+9.99
+T}
+.TE
+.SS Code and Quotes
+.IP
+.EX
+\f[B]def\f[R] greet(name):
+    \f[B]return\f[R] \(dqHello, \(dq + name
+.EE
+.RS
+.PP
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
+dolore eu fugiat nulla pariatur.
+.RE
+.SS Unicode Corner
+Accents: café, naïve, Ærøskøbing.
+Greek: αβγδ.
+Chinese: 汉字测试.
+Hebrew: שלום עולם.
+Arabic: مرحبا بالعالم.
+Emoji: 🙂🚀.
+.PP
+Footnote reference here.[1] Superscript x^2^ and subscript H~2~O.
+[IMAGE: Tiny pixel]
+Tiny pixel
+.PP
+   *   *   *   *   *
+.PP
+Final paragraph with a \c
+.UR https://example.org/page
+second link
+.UE \c
+\ and an autolink \c
+.UR https://example.net/
+.UE \c
+\&.
+.SH NOTES
+.SS [1]
+.PP
+This is the footnote text.

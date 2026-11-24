@@ -1,0 +1,82 @@
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+sample - a synthetic document
+
+=head1 Lorem Ipsum Overview
+
+Lorem ipsum dolor sit amet, I<consectetur> adipiscing elit, sed do B<eiusmod>
+tempor incididunt ut labore et C<dolore_magna> aliqua. See the
+L<example site|https://example.com/docs> for more.
+
+=head2 Lists and Structure
+
+Ut enim ad minim veniam:
+
+=over 4
+
+=item *
+
+First bullet item
+
+=item *
+
+Second bullet item
+
+=over 4
+
+=item *
+
+Nested alpha
+
+=item *
+
+Nested beta
+
+=back
+
+=item *
+
+Third bullet item
+
+=back
+
+=over 4
+
+=item 1.
+
+Step one
+
+=item 2.
+
+Step two
+
+=item 3.
+
+Step three
+
+=back
+
+=over 4
+
+=item Term One
+
+Definition of the first term.
+
+=back
+
+=head2 Code and Quotes
+
+    def greet(name):
+        return "Hello, " + name
+
+=head3 Unicode Corner
+
+Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese: 汉字测试.
+Hebrew: שלום עולם. Arabic: مرحبا بالعالم. Emoji: 🙂🚀.
+Comparison: 1 E<lt> 2 E<gt> 0 and C<< $a <=> $b >>.
+
+=cut

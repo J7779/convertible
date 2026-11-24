@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.2 20190208//EN"
+                  "JATS-archivearticle1.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="1.2" article-type="other">
+<front>
+<journal-meta>
+<journal-id></journal-id>
+<journal-title-group>
+</journal-title-group>
+<issn></issn>
+<publisher>
+<publisher-name></publisher-name>
+</publisher>
+</journal-meta>
+<article-meta>
+<title-group>
+<article-title>Sample Document</article-title>
+</title-group>
+<permissions>
+</permissions>
+</article-meta>
+</front>
+<body>
+<sec id="lorem-ipsum-overview">
+  <title>Lorem Ipsum Overview</title>
+  <p>Lorem ipsum dolor sit amet, <italic>consectetur</italic> adipiscing
+  elit, sed do <bold>eiusmod</bold> tempor incididunt ut labore et
+  <monospace>dolore_magna</monospace> aliqua. See the
+  <ext-link ext-link-type="uri" xlink:href="https://example.com/docs" xlink:title="Example title">example
+  site</ext-link> for more.</p>
+  <sec id="lists-and-structure">
+    <title>Lists and Structure</title>
+    <p>Ut enim ad minim veniam:</p>
+    <list list-type="bullet">
+      <list-item>
+        <p>First bullet item</p>
+      </list-item>
+      <list-item>
+        <p>Second bullet item</p>
+        <list list-type="bullet">
+          <list-item>
+            <p>Nested alpha</p>
+          </list-item>
+          <list-item>
+            <p>Nested beta</p>
+          </list-item>
+        </list>
+      </list-item>
+      <list-item>
+        <p>Third bullet with <strike>struck</strike> text</p>
+      </list-item>
+    </list>
+    <list list-type="order">
+      <list-item>
+        <p>Step one</p>
+      </list-item>
+      <list-item>
+        <p>Step two</p>
+      </list-item>
+      <list-item>
+        <p>Step three</p>
+      </list-item>
+    </list>
+    <def-list>
+      <def-item>
+        <term>Term One</term>
+        <def>
+          <p>Definition of the first term.</p>
+        </def>
+      </def-item>
+    </def-list>
+  </sec>
+  <sec id="table-section">
+    <title>Table Section</title>
+    <table-wrap>
+      <table>
+        <thead>
+          <tr>
+            <th align="left">Name</th>
+            <th align="right">Quantity</th>
+            <th align="center">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left">Apple</td>
+            <td align="right">3</td>
+            <td align="center">1.25</td>
+          </tr>
+          <tr>
+            <td align="left">Banana</td>
+            <td align="right">12</td>
+            <td align="center">0.50</td>
+          </tr>
+          <tr>
+            <td align="left">Cherry</td>
+            <td align="right">100</td>
+            <td align="center">9.99</td>
+          </tr>
+        </tbody>
+      </table>
+    </table-wrap>
+  </sec>
+  <sec id="code-and-quotes">
+    <title>Code and Quotes</title>
+    <code language="python">def greet(name):
+    return &quot;Hello, &quot; + name</code>
+    <disp-quote>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse
+      cillum dolore eu fugiat nulla pariatur.</p>
+    </disp-quote>
+    <sec id="unicode-corner">
+      <title>Unicode Corner</title>
+      <p>Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese:
+      汉字测试. Hebrew: שלום עולם. Arabic: مرحبا بالعالم. Emoji:
+      🙂🚀.</p>
+      <p>Footnote reference here.<xref ref-type="fn" rid="fn1">1</xref>
+      Superscript x<sup>2</sup> and subscript H<sub>2</sub>O.</p>
+      <fig>
+        <caption><p>Tiny pixel</p></caption>
+        <graphic mimetype="image" mime-subtype="png" xlink:href="pixel.png" />
+      </fig>
+      <p>Final paragraph with a
+      <ext-link ext-link-type="uri" xlink:href="https://example.org/page">second
+      link</ext-link> and an autolink
+      <ext-link ext-link-type="uri" xlink:href="https://example.net/">https://example.net/</ext-link>.</p>
+    </sec>
+  </sec>
+</sec>
+</body>
+<back>
+<fn-group>
+  <fn id="fn1">
+    <label>1</label><p>This is the footnote text.</p>
+  </fn>
+</fn-group>
+</back>
+</article>

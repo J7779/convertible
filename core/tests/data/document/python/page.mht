@@ -1,0 +1,25 @@
+Content-Type: multipart/related; type="text/html";
+ boundary="----=_Part_0001_synthetic"
+MIME-Version: 1.0
+Subject: Synthetic page
+
+------=_Part_0001_synthetic
+Content-Type: text/html; charset="iso-8859-2"
+MIME-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://example.com/page/index.html
+
+<!DOCTYPE html><html><head><title>Synthetic page</title></head><body><h1>Za=
+=BF=F3=B3=E6 g=EA=B6l=B1 ja=BC=F1</h1><p>Lorem <b>ipsum</b> dolor <a href=
+=3D"https://example.com/">sit</a>.</p><p><img src=3D"images/pixel.png" alt=
+=3D"Pixel"></p><ul><li>Alpha</li><li>Beta</li></ul></body></html>
+------=_Part_0001_synthetic
+Content-Type: image/png
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Location: https://example.com/page/images/pixel.png
+
+iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAH0lEQVQI12M0TjvDAANMDAwMZ9JM
+EByTWWcgfEZkZQC/yAc36ePN5AAAAABJRU5ErkJggg==
+
+------=_Part_0001_synthetic--

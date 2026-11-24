@@ -1,0 +1,65 @@
+= Sample Document
+:lang: en
+
+== Lorem Ipsum Overview
+
+Lorem ipsum dolor sit amet, _consectetur_ adipiscing elit, sed do
+*eiusmod* tempor incididunt ut labore et `dolore++_++magna` aliqua. See
+the https://example.com/docs[example site] for more.
+
+=== Lists and Structure
+
+Ut enim ad minim veniam:
+
+* First bullet item
+* Second bullet item
+** Nested alpha
+** Nested beta
+* Third bullet with [line-through]#struck# text
+
+[arabic]
+. Step one
+. Step two
+. Step three
+
+Term One::
+  Definition of the first term.
+
+=== Table Section
+
+[cols="<,>,^",options="header",]
+|===
+|Name |Quantity |Price
+|Apple |3 |1.25
+|Banana |12 |0.50
+|Cherry |100 |9.99
+|===
+
+=== Code and Quotes
+
+[source,python]
+----
+def greet(name):
+    return "Hello, " + name
+----
+
+____
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
+dolore eu fugiat nulla pariatur.
+____
+
+==== Unicode Corner
+
+Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese: 汉字测试.
+Hebrew: שלום עולם. Arabic: مرحبا بالعالم. Emoji: 🙂🚀.
+
+Footnote reference here.footnote:[This is the footnote text.]
+Superscript x^2^ and subscript H~2~O.
+
+.Tiny pixel
+image::pixel.png[Tiny pixel]
+
+'''''
+
+Final paragraph with a https://example.org/page[second link] and an
+autolink https://example.net/.
