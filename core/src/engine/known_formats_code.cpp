@@ -100,7 +100,6 @@ constexpr KnownFormat rows[] = {
     {"metal", "Metal shader", Code, "metal", "text/x-metal", 3, "Apple Metal shader source.", {}},
     {"wgsl", "WGSL shader", Code, "wgsl", "text/x-wgsl", 2, "WebGPU shader source.", {}},
     {"gd", "GDScript", Code, "gd", "text/x-gdscript", 4, "Godot engine script.", {}},
-    {"ino", "Arduino sketch", Code, "ino", "text/x-arduino", 6, "Arduino program source.", {}},
     {"pde", "Processing sketch", Code, "pde", "text/x-processing", 2, "Processing program source.", {}},
     {"sas", "SAS program", Code, "sas", "text/x-sas", 4, "SAS statistics program.", {}},
     {"do", "Stata do-file", Code, "do ado", "text/x-stata", 3, "Stata commands.", {}},

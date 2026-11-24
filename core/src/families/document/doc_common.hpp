@@ -89,9 +89,11 @@ void apply_write_options(ir::Document& document, const Options& options);
 
 // =========================================================================== charsets
 
-/// Decode bytes in a named character set to UTF-8. Knows UTF-8/16/32, ASCII,
-/// ISO-8859-1..16, Windows-1250..1258, KOI8-R/U, Mac Roman, IBM 437/850/866.
-/// Returns false (and leaves `out` untouched) for an unknown label.
+/// Decode bytes in a named character set to UTF-8: UTF-8/16/32, ASCII and
+/// every charset of util/charsets.hpp (ISO-8859-*, Windows-125x/874, KOI8,
+/// Mac Roman, IBM code pages, Shift_JIS, EUC-JP, ISO-2022-JP, GBK, GB18030,
+/// Big5, EUC-KR) under their WHATWG labels. Returns false (and leaves `out`
+/// untouched) for an unknown label.
 bool decode_charset(ByteView data, std::string_view label, std::string& out);
 [[nodiscard]] bool is_known_charset(std::string_view label);
 

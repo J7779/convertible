@@ -1917,7 +1917,7 @@ Result<Json> read_items(std::string_view format, const ReadContext& ctx) {
     for (const auto& record : records) items.push_back(convert(record));
     return items;
   };
-  if (format == "bibtex") {
+  if (format == "bib") {
     BibParser parser(text, ctx.limits);
     CVT_TRY_ASSIGN(const std::vector<BibParser::Entry> entries, parser.parse());
     if (entries.empty() && !util::trim(text).empty() && text.find('@') == std::string::npos) {
@@ -1973,7 +1973,7 @@ Result<std::string> write_items(std::string_view format, const Json& value, cons
   if (items.is_object() && items.contains("items")) items = items["items"];
   if (items.is_object()) items = Json::array({items});
   if (!items.is_array()) return fail(Status::Encode, "a bibliography is written from an array of CSL-JSON items");
-  if (format == "bibtex") {
+  if (format == "bib") {
     const bool biblatex = ctx.options.get_enum("bib_dialect", "bibtex", {"bibtex", "biblatex"}) == "biblatex";
     const bool escape = ctx.options.was_set("latex_escape") ? ctx.options.get_bool("latex_escape", true) : !biblatex;
     return write_bibtex(items, biblatex, escape);
@@ -2023,9 +2023,9 @@ void register_format(Registry& registry, const Format& format) {
     return to_bytes(text);
   };
   data.read_options = {source_encoding_option()};
-  if (id == "bibtex") {
+  if (id == "bib") {
     data.write_options = {
-        OptionSpec::choice("bib_dialect", "Dialect", "bibtex", {"bibtex", "biblatex"},
+        OptionSpec::choice("bib_dialect", "Dialect", "bib", {"bib", "biblatex"},
                            "Classic BibTeX fields (journal, year, address) or BibLaTeX ones (journaltitle, date, location)."),
         OptionSpec::boolean("latex_escape", "Escape accents", true,
                             "Write accented letters as LaTeX commands ({\\'e}) by default on for BibTeX and off for BibLaTeX, which reads UTF-8.")
@@ -2074,7 +2074,7 @@ bool first_line_starts(const std::string& head, std::string_view prefix) {
 }  // namespace
 
 void register_bibliographies(Registry& registry) {
-  register_format(registry, {"bibtex", "BibTeX bibliography", "BibTeX / BibLaTeX database of references.", {"bib", "bibtex"},
+  register_format(registry, {"bib", "BibTeX bibliography", "BibTeX / BibLaTeX database of references.", {"bib", "bibtex"},
                              "application/x-bibtex", 45, [](ByteView data, std::string_view) {
                                const std::string head = head_of(data);
                                const std::size_t at = head.find('@');

@@ -1,5 +1,7 @@
 // Convertible core - image family: helpers shared by the format codecs.
-// Private to the family (other families use image_ops.hpp / image_api.hpp).
+// Shared by the raster image families (image and image_modern): option sets,
+// metadata and decode/encode plumbing every raster codec needs. Other
+// families use image_ops.hpp (pixel operations) and image_api.hpp (codecs).
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
 #pragma once
 

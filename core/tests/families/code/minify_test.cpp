@@ -86,7 +86,9 @@ TEST_CASE("code/html-min: whitespace-safe, raw text kept") {
   CHECK(min.find("<body class=\"main  page\">") != std::string::npos);
   CHECK(min.find("<p>Some <b>bold</b> text over lines.</p>") != std::string::npos);
   CHECK(min.size() < html.size());
-  CHECK(convert(test::random_bytes(100, 1), "bin", "html-min").status == Status::Encode);
+  // Restricted to HTML sources (Codec::only_from): binary data is not offered html-min at all.
+  CHECK(convert(test::random_bytes(100, 1), "bin", "html-min").status == Status::UnsupportedConversion);
+  CHECK(convert(test::random_bytes(100, 1), "html", "html-min").status == Status::Encode);
 }
 
 TEST_CASE("code/sql and code/graphql: minify and pretty") {

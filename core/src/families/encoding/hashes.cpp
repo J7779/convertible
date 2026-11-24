@@ -345,8 +345,15 @@ Result<std::vector<std::pair<const HashAlgorithm*, std::string>>> report_values(
   CVT_TRY_ASSIGN(const std::vector<const HashAlgorithm*> algorithms, report_algorithms(ctx.options));
   const bool upper = ctx.options.get_bool("uppercase", false);
   std::vector<std::pair<const HashAlgorithm*, std::string>> values;
-  for (const HashAlgorithm* algorithm : algorithms) {
-    CVT_TRY_ASSIGN(const Bytes digest, hash_with_progress(*algorithm, blob.bytes, {}, ctx));
+  for (std::size_t i = 0; i < algorithms.size(); ++i) {
+    const HashAlgorithm* algorithm = algorithms[i];
+    // Each algorithm gets its own share of the progress range: progress never
+    // runs backwards, so restarting at 0 would hide every later report (and
+    // with it the user's cancellation) until the last algorithm.
+    Context part = ctx;
+    const double n = static_cast<double>(algorithms.size());
+    part.progress = ctx.progress.sub(static_cast<double>(i) / n, static_cast<double>(i + 1) / n);
+    CVT_TRY_ASSIGN(const Bytes digest, hash_with_progress(*algorithm, blob.bytes, {}, part));
     values.emplace_back(algorithm, digest_hex(digest, upper));
   }
   return values;

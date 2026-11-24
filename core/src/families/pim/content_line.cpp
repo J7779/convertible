@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "families/pim/pim.hpp"
+#include "util/charsets.hpp"
 #include "util/text.hpp"
 
 namespace cvt::pim::cl {
@@ -319,6 +320,8 @@ std::string decode_charset(std::string_view bytes, std::string_view charset) {
     if (text.starts_with("\xEF\xBB\xBF")) text.erase(0, 3);
     return text;
   }
+  // Legacy charsets (CHARSET=SHIFT_JIS on Japanese phones, BIG5, KOI8-R ...).
+  if (auto decoded = util::decode_labelled(as_bytes(bytes), charset)) return std::move(decoded->text);
   return util::sanitize_utf8(bytes);
 }
 

@@ -690,15 +690,6 @@ Result<std::shared_ptr<PdfFile>> open_xps(ReadContext& ctx, Bytes& storage) {
   return PdfFile::open(storage, options);
 }
 
-Result<AnyIR> read_xps_document(ReadContext& ctx) {
-  Bytes storage;
-  CVT_TRY_ASSIGN(auto file, open_xps(ctx, storage));
-  ExtractOptions options;
-  CVT_TRY_ASSIGN(options.pages, parse_page_ranges(ctx.options.get_string("pages", ""), static_cast<int>(file->pages().size())));
-  CVT_TRY_ASSIGN(ir::Document doc, extract_document(*file, options, ctx));
-  return doc;
-}
-
 Result<AnyIR> read_xps_image(ReadContext& ctx) {
   Bytes storage;
   CVT_TRY_ASSIGN(auto file, open_xps(ctx, storage));
@@ -738,15 +729,10 @@ void register_xps(Registry& registry) {
       const bool oxps = util::iends_with(filename, ".oxps");
       return (std::string_view(id) == "oxps") == oxps ? score : score - 10;
     };
-    registry.add_format(std::move(info));
-    Codec doc;
-    doc.format_id = id;
-    doc.kind = Kind::Document;
-    doc.read = read_xps_document;
-    doc.read_cost = 25;
-    doc.lossy = true;
-    doc.read_options = {OptionSpec::text("pages", "Pages", "", "Pages to convert, e.g. \"1-3,5\"; empty for all.")};
-    registry.add_codec(std::move(doc));
+    // The office family owns XPS (its description, detection and the
+    // Document reader with headings, pictures and page breaks); this family
+    // adds the page renderer, and its description only fills gaps.
+    registry.add_known_format(std::move(info));
     Codec img;
     img.format_id = id;
     img.kind = Kind::Image;

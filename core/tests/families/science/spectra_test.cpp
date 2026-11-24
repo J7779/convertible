@@ -16,7 +16,7 @@ double num(const ir::Table& t, std::size_t row, std::size_t col, std::size_t she
 }  // namespace
 
 TEST_CASE("science/jcamp: decodes an AFFN file written by the jcamp package") {
-  const auto table = test::read_as<ir::Table>("jcamp", test::fixture("science/chem/band_affn.jdx"));
+  const auto table = test::read_as<ir::Table>("jdx", test::fixture("science/chem/band_affn.jdx"));
   REQUIRE_OK(table);
   const auto& rows = table->sheets[0].rows;
   REQUIRE(rows.size() == 26);
@@ -28,11 +28,11 @@ TEST_CASE("science/jcamp: decodes an AFFN file written by the jcamp package") {
     CHECK_APPROX(num(*table, i + 1, 1), y, 1e-9);
   }
   CHECK(table->sheets.back().name == "header");
-  CHECK(detected(test::fixture("science/chem/band_affn.jdx")) == "jcamp");
+  CHECK(detected(test::fixture("science/chem/band_affn.jdx")) == "jdx");
 }
 
 TEST_CASE("science/jcamp: decodes SQZ/DIF/DUP with Y check values") {
-  const auto table = test::read_as<ir::Table>("jcamp", test::fixture("science/chem/asdf_example.jdx"));
+  const auto table = test::read_as<ir::Table>("jdx", test::fixture("science/chem/asdf_example.jdx"));
   REQUIRE_OK(table);
   const std::vector<double> expected = {5, 10, 15, 15, 15, 12.5, 10, 10, 10, 10, 7.5, -2.5, -2.5, 0};
   REQUIRE(table->sheets[0].rows.size() == expected.size() + 1);
@@ -53,13 +53,13 @@ TEST_CASE("science/jcamp: ASDF and AFFN writers round trip; ASDF is smaller") {
   }
   sheet.has_header = true;
   table.sheets.push_back(sheet);
-  const auto asdf = test::write_from("jcamp", table);
-  const auto affn = test::write_from("jcamp", table, R"({"jcamp_form":"affn"})");
+  const auto asdf = test::write_from("jdx", table);
+  const auto affn = test::write_from("jdx", table, R"({"jcamp_form":"affn"})");
   REQUIRE_OK(asdf);
   REQUIRE_OK(affn);
   CHECK(asdf->size() < affn->size());
   for (const Bytes* bytes : {&*asdf, &*affn}) {
-    const auto back = test::read_as<ir::Table>("jcamp", *bytes);
+    const auto back = test::read_as<ir::Table>("jdx", *bytes);
     REQUIRE_OK(back);
     REQUIRE(back->sheets[0].rows.size() == 501);
     for (std::size_t i = 1; i <= 500; ++i) {
@@ -68,18 +68,18 @@ TEST_CASE("science/jcamp: ASDF and AFFN writers round trip; ASDF is smaller") {
     }
   }
   // The jcamp fixture survives jcamp -> jcamp.
-  const auto fixture = test::read_as<ir::Table>("jcamp", test::fixture("science/chem/band_affn.jdx"));
+  const auto fixture = test::read_as<ir::Table>("jdx", test::fixture("science/chem/band_affn.jdx"));
   REQUIRE_OK(fixture);
-  const auto again = test::write_from("jcamp", *fixture);
+  const auto again = test::write_from("jdx", *fixture);
   REQUIRE_OK(again);
   CHECK(test::str(*again).find("##TITLE=synthetic band\n") != std::string::npos);
-  const auto back = test::read_as<ir::Table>("jcamp", *again);
+  const auto back = test::read_as<ir::Table>("jdx", *again);
   REQUIRE_OK(back);
   CHECK(test::tables_equal(ir::Table{{back->sheets[0]}}, ir::Table{{fixture->sheets[0]}}, 1e-7));
   // Unevenly spaced data uses XYPOINTS.
   ir::Table uneven = table;
   uneven.sheets[0].rows[3][0].number = 1004.5;
-  const auto points = test::write_from("jcamp", uneven);
+  const auto points = test::write_from("jdx", uneven);
   REQUIRE_OK(points);
   CHECK(test::str(*points).find("##XYPOINTS=(XY..XY)") != std::string::npos);
 }
@@ -109,15 +109,15 @@ TEST_CASE("science/mzml: decodes an OpenMS file (zlib, 64-bit m/z, 32-bit intens
 }
 
 TEST_CASE("science/spectra: hostile input") {
-  CHECK_STATUS(test::read_as<ir::Table>("jcamp", as_bytes("##TITLE=x\n##XYDATA=(X++(Y..Y))\n1 A0Z999999999\n##END=\n")),
+  CHECK_STATUS(test::read_as<ir::Table>("jdx", as_bytes("##TITLE=x\n##XYDATA=(X++(Y..Y))\n1 A0Z999999999\n##END=\n")),
                Status::Limit);
-  CHECK_STATUS(test::read_as<ir::Table>("jcamp", as_bytes("##TITLE=x\n##END=\n")), Status::Decode);
+  CHECK_STATUS(test::read_as<ir::Table>("jdx", as_bytes("##TITLE=x\n##END=\n")), Status::Decode);
   CHECK_STATUS(test::read_as<ir::Table>("mzml", as_bytes("<mzML><spectrum><binaryDataArray><cvParam accession=\"MS:1000514\"/>"
                                                           "<cvParam accession=\"MS:1000574\"/><binary>AAAA</binary>"
                                                           "</binaryDataArray></spectrum></mzML>")),
                Status::Decode);
   for (const auto& [format, name] : std::vector<std::pair<std::string, std::string>>{
-           {"jcamp", "band_affn.jdx"}, {"jcamp", "asdf_example.jdx"}, {"mzml", "run.mzML"}, {"mzxml", "run.mzXML"}}) {
+           {"jdx", "band_affn.jdx"}, {"jdx", "asdf_example.jdx"}, {"mzml", "run.mzML"}, {"mzxml", "run.mzXML"}}) {
     CHECK(test::fuzz_reader<ir::Table>(format, test::fixture("science/chem/" + name), 256) > 0);
   }
 }

@@ -52,6 +52,10 @@ struct ConvertOutput {
   std::string format_id;         ///< canonical id of the target format
   std::string extension;         ///< default extension of the target, without dot
   std::string mime;              ///< media type of the target
+  /// File name the writer gave its output (extract: the archive's one
+  /// entry, "notes.txt" from "notes.txt.gz"); empty otherwise. When set,
+  /// `format_id`, `extension` and `mime` describe that file, not the target.
+  std::string filename;
   std::vector<std::string> warnings;
 };
 
@@ -67,6 +71,26 @@ struct ConvertOutput {
 /// may name the same file as `input`. Nothing is written when the
 /// conversion fails.
 [[nodiscard]] Result<ConvertOutput> run_file_conversion(const Registry& registry, const FileConvertRequest& request);
+
+/// One named file of a pack request.
+struct PackInput {
+  ByteView data;
+  std::string name;  ///< path inside the archive (UTF-8); sanitised and made unique
+};
+
+/// Several files into one archive ("Save all as one archive").
+struct PackRequest {
+  std::vector<PackInput> inputs;
+  std::string target_id;  ///< an archive format with an Archive writer (zip, 7z, tar.gz ...)
+  Options options;        ///< the writer's options; the reserved "limits" object as for conversions
+  Progress progress;
+  Limits limits;
+};
+
+/// Build an archive of `target_id` from the inputs. Errors: UnknownFormat,
+/// UnsupportedConversion (the format holds no several files), Limit
+/// (entries, sizes), InvalidArgument (options), Encode from the writer.
+[[nodiscard]] Result<ConvertOutput> run_pack(const Registry& registry, const PackRequest& request);
 
 /// Apply the reserved `"limits"` object of `options` (if any) on top of
 /// `base`. Unknown keys and non-numeric values are InvalidArgument errors.

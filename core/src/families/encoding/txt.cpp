@@ -109,7 +109,27 @@ Result<Bytes> write_txt(const AnyIR& value, WriteContext& ctx) {
     }
     return std::move(encoded.bytes);
   }
-  util::EncodedText encoded = util::encode_text(content, *encoding, ctx.options.get_bool("bom", false));
+  // The Unicode encodings (and Latin-1 / Windows-1252) are stateless: the
+  // text is encoded in pieces cut at character boundaries, so that progress
+  // is reported and a cancellation is seen about every MiB.
+  util::EncodedText encoded;
+  constexpr std::size_t piece = std::size_t{1} << 20;
+  bool bom = ctx.options.get_bool("bom", false);
+  for (std::size_t at = 0; at < content.size() || (at == 0 && content.empty());) {
+    CVT_TRY(ctx.checkpoint(content.empty() ? 0.0 : static_cast<double>(at) / static_cast<double>(content.size())));
+    std::size_t end = std::min(content.size(), at + piece);
+    while (end < content.size() && (static_cast<unsigned char>(content[end]) & 0xC0u) == 0x80u) ++end;  // UTF-8 continuation
+    util::EncodedText part = util::encode_text(content.substr(at, end - at), *encoding, bom);
+    bom = false;
+    encoded.replaced += part.replaced;
+    if (encoded.bytes.empty()) {
+      encoded.bytes = std::move(part.bytes);
+    } else {
+      append(encoded.bytes, ByteView(part.bytes));
+    }
+    if (content.empty()) break;
+    at = end;
+  }
   if (encoded.replaced > 0) {
     ctx.warn(std::to_string(encoded.replaced) + " character(s) cannot be represented in " +
              std::string(util::encoding_name(*encoding)) + " and were replaced with '?'.");

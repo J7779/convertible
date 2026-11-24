@@ -139,10 +139,39 @@ approximate ones, 5–30 for bridges. Two special rules:
   a video never ends as a sound file; a waveform picture never becomes a
   video; video frames never become a document).
 - *Target order* (`list_targets`, `cvt_targets_json`): the source's own
-  category first, most popular first (a lossy target is not demoted there:
+  category first, together with its near neighbours (a drawing's pictures
+  and PDF, data's spreadsheets and back, PDF for spreadsheets, e-books and
+  presentations), most popular first (a lossy target is not demoted there:
   PNG offers JPEG first); then real conversions to other categories, fewer
-  bridges first, faithful before lossy, by popularity; the universal
-  byte-level targets (Base64, checksums, …) last.
+  bridges first, faithful before lossy, by popularity; the archive and
+  universal byte-level targets (zip, Base64, checksums, …) last. Each entry
+  carries a `role` (`compress`, `extract`, `archive`, `encode`, `convert`).
+
+### Planner rules: offered targets must work
+
+A target is offered only when the route can succeed for ordinary files of
+the source format; `tests/integration/offered_targets_test.cpp` converts
+real files to every offered target. Five declarations keep routes honest:
+
+| Declaration | Meaning | Used by |
+| --- | --- | --- |
+| `FormatInfo::output_only` | produced from other content, never detected, never a source | barcodes (`qr`, `ean13`, …), `css-min`/`js-pretty`/…, `csv-semicolon`, `extract` |
+| `Codec::only_from` | the writer serves only these source formats | `html-min` (html, xhtml), `css-min` (css), the code compress writers |
+| `Codec::same_format_only` | the writer only re-encodes its own format | the PDF rewrite (Blob) |
+| `Codec::ir_tag` | an IR dialect: the writer takes only values read by a reader with the same tag, without bridges | vector scenes in `Data` (`vector-scene`), sequences, molecules, palettes, PKI, OpenPGP, playlists, feeds, web links, HTTP requests, ignore files |
+| `Codec::direct_only` | the writer takes only a value read directly by the source's reader | `extract`, palettes and volumes from pictures, barcodes from plain text, `cbz` from pictures or pages, `pb`, `editorconfig`, … |
+| `Bridge::after_reader_only` | the bridge extracts structure the source must have, so it is never chained after another bridge | Document → Table (txt is never offered as a spreadsheet) |
+
+Families declare these at registration (`Registry::set_ir_tag`,
+`Registry::set_direct_only` for codecs registered through helpers).
+
+**Extract.** The `extract` target (archive family, output-only, role
+`extract`) turns a compressed file or a one-entry archive back into its
+content: `notes.txt.gz` → `notes.txt`, a ZIP holding one picture → that
+picture. Its writer names the output (`WriteContext::output_filename`); the
+result then reports the entry's own name (`cvt_result_filename`), format,
+extension and MIME type. An archive with several files is an Encode error
+that lists them. It is offered for every format with an Archive reader.
 
 **Detection** (`engine/detect.hpp`) scores every format and takes the best:
 a magic number scores 60 (1 byte) to 95 (8+ bytes); a `sniff` result is used
@@ -286,6 +315,23 @@ Shared ground:
 - Two families may add codecs of different kinds to the same format id
   (html as `Document` and as `Table`): both call `add_format` with the fields
   they know; non-empty fields of the later call win, extensions are united.
+
+### Format ids: one canonical id per format
+
+The full policy is at the top of `src/engine/known_formats.cpp`; in short:
+the id users recognise (the dominant extension, lower case: `jpg`, `dcm`,
+`h5`, `jsonl`, `adoc`, `gbk`); when two real formats want the same short id
+the far more common one gets it and the other a descriptive id (`mpegts`,
+`vcf-variant`, `xyz-molecule`); aliases are extensions, never second ids
+(`.m4b` of `m4a`, `.patch` of `diff`, `.xlt` of `xls`); a family's
+`FormatInfo` wins over the database row of the same id, and a database row
+must not duplicate a family's format under another id; formats inside a
+shared container (ZIP, OLE2, ISO BMFF, ASF, RIFF, EBML, Ogg, gzip, SQLite,
+TIFF) are recognised through `sniff::classify()` or a sniff that looks
+inside, never by the bare container magic. `tests/engine/catalogue_test.cpp`
+fails on any disagreement: two ids with one name, an untested extension
+claimed twice, a database row that is an alias of a family format, a bare
+container magic as a signature, an output-only format offered as a source.
 
 ### One owner per id (enforced by `Registry::validate()`)
 
@@ -681,6 +727,7 @@ All in-house, all in `src/util/`, namespace `cvt::util` (types `Bytes`,
 | --- | --- |
 | `bytes.hpp` | `Bytes`, `ByteView`, `as_bytes`/`as_chars`/`as_u8`, bounds-checked endian-aware `ByteReader`, `ByteWriter` |
 | `text.hpp` | ASCII helpers, `split`/`trim`/`join`, `parse_int`/`parse_double`/`format_double` (locale-free), UTF-8 validation and repair, UTF-8/16/32 and Latin-1/Windows-1252 transcoding, BOM and encoding detection, line endings |
+| `charsets.hpp` | every legacy charset (ISO-8859-*, Windows-125x/874, KOI8, Mac Roman, IBM/EBCDIC code pages, Shift_JIS, EUC-JP, ISO-2022-JP, GBK, GB18030, Big5, EUC-KR): `decode_labelled` by label or `cp<number>`, `charset_for_code_page`, `decode_auto` (BOM, UTF-8, else a confident guess), encoder and detector; the only copy of these tables |
 | `base64.hpp`, `hex.hpp` | encoders and strict decoders |
 | `crc.hpp`, `hash.hpp` | CRC-32, Adler-32, MD5, SHA-1, SHA-256 |
 | `deflate.hpp` | DEFLATE, zlib and gzip: one-shot functions with output limits and incremental `Inflater`/`Deflater` |
@@ -691,6 +738,17 @@ All in-house, all in `src/util/`, namespace `cvt::util` (types `Bytes`,
 
 If something general is missing, ask for it to be added here rather than
 growing a private copy in a family.
+
+Family headers other families may include (everything else in a family
+directory is private to it):
+
+| Header | For |
+| --- | --- |
+| `families/image/image_api.hpp`, `image_ops.hpp` | decoding/encoding pictures through the image codecs, resampling, colour, compositing |
+| `families/image/common.hpp` | the raster families (image, image_modern): shared option sets and codec plumbing |
+| `families/vector/vector_api.hpp` | vector scenes: read/write any vector format, render, PDF page content |
+| `families/mesh/mesh_ops.hpp`, `common.hpp` | mesh operations (triangulation, axes, units) and the shared mesh writer options |
+| `families/audio_lossless/audio_api.hpp` | PCM helpers and the shared audio writer options |
 
 ## Tests
 

@@ -93,7 +93,8 @@ bool is_grey(const ir::Frame& frame) {
   return true;
 }
 
-Result<ir::Image> array_to_image(const arrays::Array& array, const Window& window, bool flip_vertical, const Context& ctx) {
+Result<ir::Image> array_to_image(const arrays::Array& array, const Window& window, bool flip_vertical, const Context& ctx,
+                                 bool colour_planes) {
   using arrays::ScalarKind;
   if (array.dtype.kind == ScalarKind::Record || array.dtype.kind == ScalarKind::Bytes ||
       array.dtype.kind == ScalarKind::Unicode) {
@@ -102,10 +103,13 @@ Result<ir::Image> array_to_image(const arrays::Array& array, const Window& windo
   std::vector<std::uint64_t> shape = array.shape;
   while (shape.size() > 2 && shape.front() == 1) shape.erase(shape.begin());
   if (shape.size() < 2) return fail(Status::Decode, "'{}' has fewer than two dimensions", array.name);
+  // Colour pictures come interleaved [height, width, channels] (NumPy) or as
+  // planes [channels, height, width] (the FITS writers' RGB cube).
   const bool rgb = shape.size() == 3 && (shape.back() == 3 || shape.back() == 4) && shape[0] > 4;
+  const bool planar = colour_planes && !rgb && shape.size() == 3 && (shape[0] == 3 || shape[0] == 4) && shape[1] > 4 && shape[2] > 4;
   const std::uint64_t height = rgb ? shape[0] : shape[shape.size() - 2];
   const std::uint64_t width = rgb ? shape[1] : shape.back();
-  const std::uint64_t frames = rgb ? 1 : array.count() / std::max<std::uint64_t>(1, width * height);
+  const std::uint64_t frames = rgb || planar ? 1 : array.count() / std::max<std::uint64_t>(1, width * height);
   if (width == 0 || height == 0 || width > 0xFFFFFFFFu || height > 0xFFFFFFFFu) return fail(Status::Decode, "empty image");
   CVT_TRY(ctx.limits.check_pixels(width, height, frames));
   std::vector<double> values(static_cast<std::size_t>(array.count()));
@@ -115,13 +119,13 @@ Result<ir::Image> array_to_image(const arrays::Array& array, const Window& windo
   const auto range = value_range(values, window);
   const auto w = static_cast<std::uint32_t>(width);
   const auto h = static_cast<std::uint32_t>(height);
-  if (rgb) {
-    const std::uint64_t channels = shape.back();
+  if (rgb || planar) {
+    const std::uint64_t channels = rgb ? shape.back() : shape[0];
     ir::Frame frame = ir::Frame::filled(w, h, {0, 0, 0, 255});
     const bool bytes = array.dtype.kind == ScalarKind::UInt && array.dtype.size == 1;
     for (std::uint64_t p = 0; p < width * height; ++p) {
       for (std::uint64_t c = 0; c < channels; ++c) {
-        double v = values[static_cast<std::size_t>(p * channels + c)];
+        double v = values[static_cast<std::size_t>(rgb ? p * channels + c : c * width * height + p)];
         if (!bytes) v = (v - range.first) / std::max(1e-300, range.second - range.first) * 255.0;
         frame.rgba[static_cast<std::size_t>(p * 4 + c)] = static_cast<std::uint8_t>(std::clamp(std::lround(v), 0L, 255L));
       }

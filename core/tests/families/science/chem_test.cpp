@@ -45,14 +45,14 @@ Json read_data(const std::string& format, const std::string& file) {
 TEST_CASE("science/chem: ethanol from RDKit and Open Babel in every format") {
   check_ethanol(read_data("mol", "ethanol.mol")["molecules"][0], 1e-4);
   check_ethanol(read_data("sdf", "three.sdf")["molecules"][0], 1e-4);
-  check_ethanol(read_data("xyz", "ethanol.xyz")["molecules"][0], 1e-6, false);
+  check_ethanol(read_data("xyz-molecule", "ethanol.xyz")["molecules"][0], 1e-6, false);
   check_ethanol(read_data("mol2", "ethanol.mol2")["molecules"][0], 1e-4);
   check_ethanol(read_data("cml", "ethanol.cml")["molecules"][0], 1e-4);
   const Json mol2 = read_data("mol2", "ethanol.mol2");
   CHECK(mol2["molecules"][0]["atoms"][0]["atom_type"].as_string() == "C.3");
   CHECK_APPROX(mol2["molecules"][0]["atoms"][2]["partial_charge"].as_double(), -0.3953, 1e-9);
   CHECK(read_data("cml", "ethanol.cml")["molecules"][0]["atoms"][0]["hydrogen_count"].as_int64() == 3);
-  CHECK(read_data("xyz", "ethanol.xyz")["molecules"][0]["name"].as_string() == "ethanol");
+  CHECK(read_data("xyz-molecule", "ethanol.xyz")["molecules"][0]["name"].as_string() == "ethanol");
 }
 
 TEST_CASE("science/sdf: three records, charges, aromatic bonds and data items") {
@@ -79,13 +79,13 @@ TEST_CASE("science/sdf: three records, charges, aromatic bonds and data items") 
   CHECK(detected(test::fixture("science/chem/ethanol.mol"), "e.mol") == "mol");
   CHECK(detected(test::fixture("science/chem/ethanol.mol2")) == "mol2");
   CHECK(detected(test::fixture("science/chem/ethanol.cml")) == "cml");
-  CHECK(detected(test::fixture("science/chem/ethanol.xyz")) == "xyz");
+  CHECK(detected(test::fixture("science/chem/ethanol.xyz")) == "xyz-molecule");
 }
 
 TEST_CASE("science/chem: writers round trip through their own readers and across formats") {
   const auto source = test::read_as<ir::Data>("sdf", test::fixture("science/chem/three.sdf"));
   REQUIRE_OK(source);
-  for (const char* format : {"sdf", "mol2", "cml", "xyz", "pdb", "mmcif", "cif"}) {
+  for (const char* format : {"sdf", "mol2", "cml", "xyz-molecule", "pdb", "mmcif", "cif"}) {
     INFO(format);
     const auto written = test::write_from(format, *source);
     REQUIRE_OK(written);
@@ -182,13 +182,13 @@ TEST_CASE("science/cif: fractional coordinates become Cartesian (ASE files)") {
 }
 
 TEST_CASE("science/chem: hostile input") {
-  CHECK_STATUS(test::read_as<ir::Data>("xyz", as_bytes("5\nfive atoms\nC 0 0 0\n")), Status::Decode);
+  CHECK_STATUS(test::read_as<ir::Data>("xyz-molecule", as_bytes("5\nfive atoms\nC 0 0 0\n")), Status::Decode);
   CHECK_STATUS(test::read_as<ir::Data>("mol", as_bytes("x\n\n\n  1  1  0  0  0  0  0  0  0  0999 V2000\n"
                                                          "    0.0000    0.0000    0.0000 C   0  0\n  1  5  1  0\nM  END\n")),
                Status::Decode);
   CHECK_STATUS(test::read_as<ir::Data>("cif", as_bytes("data_x\n_cell_length_a 'unterminated\n")), Status::Decode);
   for (const auto& [format, name] : std::vector<std::pair<std::string, std::string>>{
-           {"sdf", "three.sdf"}, {"mol", "acetate_v3000.mol"}, {"xyz", "ethanol.xyz"}, {"mol2", "ethanol.mol2"},
+           {"sdf", "three.sdf"}, {"mol", "acetate_v3000.mol"}, {"xyz-molecule", "ethanol.xyz"}, {"mol2", "ethanol.mol2"},
            {"cml", "ethanol.cml"}, {"pdb", "peptide.pdb"}, {"mmcif", "peptide.cif"}, {"cif", "monoclinic.cif"}}) {
     CHECK(test::fuzz_reader<ir::Data>(format, test::fixture("science/chem/" + name), 256) > 0);
   }

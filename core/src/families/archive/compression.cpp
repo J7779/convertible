@@ -82,7 +82,7 @@ constexpr std::array<NameEntry, 12> aliases = {{
     {Method::Lzw, "z"},
     {Method::Lzw, "compress"},
     {Method::SnappyFramed, "sz"},
-    {Method::Zlib, "zz"},
+    {Method::Zlib, "zlib"},
     {Method::Ppmd7, "ppmd"},
     {Method::Lzma2Raw, "lzma2"},
 }};

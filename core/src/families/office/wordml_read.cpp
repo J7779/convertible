@@ -992,7 +992,11 @@ Result<ir::Document> WordReader::read_package(Package& package) {
     rels_[rel.id] = std::move(rel);
   }
   CVT_TRY(ctx_.checkpoint(0.2, "Reading styles"));
-  for (const auto& [id, rel] : rels_) {
+  // A copy: note bodies temporarily add their own relationships to rels_ and
+  // restore it afterwards, which must not happen under a live iterator (the
+  // map assignment reuses and reorders nodes: an endless loop with libstdc++).
+  const auto main_rels = rels_;
+  for (const auto& [id, rel] : main_rels) {
     const std::string type = rel.type.substr(rel.type.rfind('/') + 1);
     if (type == "footnotes" || type == "endnotes") {
       // Note bodies may reference pictures through their own relationships.

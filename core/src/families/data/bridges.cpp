@@ -214,6 +214,9 @@ void register_data_bridges(Registry& registry) {
   table.cost = 15;
   table.lossy = true;
   table.label = "lay out records as rows";
+  // Records must be in the source (JSON, YAML ...): a syntax tree a bridge just
+  // made from a document or source code is no list of records.
+  table.after_reader_only = true;
   table.options = {
       OptionSpec::choice("flatten", "Nested values", "dotted", {"dotted", "json"},
                          "Spread nested objects and arrays over columns named by their path (a.b, tags.0), or keep "

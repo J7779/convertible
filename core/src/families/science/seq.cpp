@@ -644,7 +644,8 @@ Result<std::vector<SeqRecord>> read_genbank(std::string_view text, ReadContext& 
         } else if (section == "COMMENT") {
           extend(r.annotations, "comment", "\n");
         } else if (section == "ACCESSION") {
-          for (const Json& extra : string_list(value, ' ').elements()) r.annotations["accessions"].push_back(extra);
+          const Json accessions = string_list(value, ' ');  // named: a temporary would die before the loop
+          for (const Json& extra : accessions.elements()) r.annotations["accessions"].push_back(extra);
         } else if (!references.empty() && (section == "AUTHORS" || section == "TITLE" || section == "JOURNAL" ||
                                             section == "CONSRTM" || section == "REMARK")) {
           extend(references[references.size() - 1], util::to_lower(section), " ");
@@ -795,7 +796,8 @@ Result<std::vector<SeqRecord>> read_embl(std::string_view text, ReadContext& ctx
       if (code == "AC") {
         std::string t(value);
         if (t.ends_with(';')) t.pop_back();
-        for (const Json& a : string_list(t, ';').elements()) {
+        const Json accessions = string_list(t, ';');
+        for (const Json& a : accessions.elements()) {
           if (!r.annotations.contains("accessions")) r.annotations["accessions"] = Json::array();
           r.annotations["accessions"].push_back(a);
         }
@@ -975,7 +977,8 @@ Result<std::vector<SeqRecord>> read_uniprot(std::string_view text, ReadContext& 
         break;
       }
       if (code == "AC") {
-        for (const Json& a : string_list(value, ';').elements()) {
+        const Json accessions = string_list(value, ';');
+        for (const Json& a : accessions.elements()) {
           if (!r.annotations.contains("accessions")) r.annotations["accessions"] = Json::array();
           r.annotations["accessions"].push_back(a);
         }
@@ -1094,14 +1097,14 @@ void register_sequences(Registry& registry) {
                                              "Phred score given to bases whose source has no quality values.")},
        .lossy_table = false});
 
-  add_format(registry, {.id = "genbank",
+  add_format(registry, {.id = "gbk",
                         .name = "GenBank flat file",
                         .description = "NCBI GenBank sequence record with annotations and features.",
-                        .extensions = {"gb", "gbk", "genbank", "gbff"},
+                        .extensions = {"gbk", "gb", "genbank", "gbff"},
                         .mime = "chemical/x-genbank",
                         .popularity = 30,
                         .sniff = sniff_genbank});
-  add_record_codecs(registry, {.id = "genbank", .read = read_genbank, .write = write_genbank, .lossy_table = true});
+  add_record_codecs(registry, {.id = "gbk", .read = read_genbank, .write = write_genbank, .lossy_table = true});
 
   add_format(registry, {.id = "embl",
                         .name = "EMBL flat file",

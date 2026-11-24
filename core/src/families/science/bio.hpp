@@ -24,7 +24,7 @@ struct Feature {
 };
 
 struct SeqRecord {
-  std::string id;
+  std::string id{};
   std::string name;
   std::string description;
   std::string sequence;
@@ -43,11 +43,11 @@ struct SeqRecord {
 /// Register Table and Data codecs for a format whose content is a list of
 /// sequence records.
 struct RecordCodec {
-  std::string id;
-  std::function<Result<std::vector<SeqRecord>>(std::string_view text, ReadContext& ctx)> read;
-  std::function<Result<std::string>(const std::vector<SeqRecord>& records, WriteContext& ctx)> write;
-  std::vector<OptionSpec> read_options;
-  std::vector<OptionSpec> write_options;
+  std::string id{};
+  std::function<Result<std::vector<SeqRecord>>(std::string_view text, ReadContext& ctx)> read{};
+  std::function<Result<std::string>(const std::vector<SeqRecord>& records, WriteContext& ctx)> write{};
+  std::vector<OptionSpec> read_options{};
+  std::vector<OptionSpec> write_options{};
   bool lossy_table = false;  ///< the Table view drops annotations/features
 };
 void add_record_codecs(Registry& registry, RecordCodec codec);

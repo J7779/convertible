@@ -749,14 +749,14 @@ namespace cvt::science {
 
 void register_molecules(Registry& registry) {
   using namespace chem;
-  add_format(registry, {.id = "xyz",
-                        .name = "XYZ coordinates",
+  add_format(registry, {.id = "xyz-molecule",
+                        .name = "XYZ molecule",
                         .description = "Element symbols and Cartesian coordinates, one or more frames.",
                         .extensions = {"xyz"},
                         .mime = "chemical/x-xyz",
                         .popularity = 25,
                         .sniff = sniff_xyz});
-  add_molecule_codecs(registry, "xyz", read_xyz, write_xyz,
+  add_molecule_codecs(registry, "xyz-molecule", read_xyz, write_xyz,
                       {OptionSpec::integer("decimals", "Decimals", 5, 1, 12, "Digits after the decimal point.")});
 
   add_format(registry, {.id = "mol",

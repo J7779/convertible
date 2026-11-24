@@ -55,7 +55,7 @@ class TexiWriter {
     m_.soft_break = " ";
     m_.code = [](const ir::Code& code) -> std::string {
       if (code.math != ir::MathMode::None) return "@math{" + texi_escape(code.text) + "}";
-      if (!code.raw_format.empty()) return code.raw_format == "texinfo" ? code.text : std::string();
+      if (!code.raw_format.empty()) return code.raw_format == "texi" ? code.text : std::string();
       return "@code{" + texi_escape(code.text) + "}";
     };
     m_.link = [](const ir::Link& link, const std::string& label) -> std::string {
@@ -175,7 +175,7 @@ class TexiWriter {
             out += node.ordered ? "@end enumerate\n\n" : "@end itemize\n\n";
           } else if constexpr (std::same_as<T, ir::CodeBlock>) {
             if (!node.raw_format.empty()) {
-              if (node.raw_format == "texinfo") out = node.code + "\n\n";
+              if (node.raw_format == "texi") out = node.code + "\n\n";
               return;
             }
             if (node.math != ir::MathMode::None) {
@@ -249,7 +249,7 @@ int sniff_texinfo(ByteView data, std::string_view filename) {
 
 void register_texinfo(Registry& registry) {
   MarkupFormat texinfo;
-  texinfo.id = "texinfo";
+  texinfo.id = "texi";
   texinfo.name = "Texinfo";
   texinfo.description = "GNU Texinfo documentation source (written).";
   texinfo.extensions = {"texi", "texinfo", "txi"};

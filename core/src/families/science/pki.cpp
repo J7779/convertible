@@ -1296,10 +1296,10 @@ void register_pki(Registry& registry) {
             nullptr);
 
   // OpenPGP.
-  add_format(registry, {.id = "pgp-armor", .name = "OpenPGP armoured data", .description = "ASCII-armoured OpenPGP keys, signatures or messages.",
+  add_format(registry, {.id = "asc", .name = "OpenPGP armoured data", .description = "ASCII-armoured OpenPGP keys, signatures or messages.",
                         .category = Category::Encoding, .extensions = {"asc"}, .mime = "application/pgp-keys", .popularity = 15,
                         .sniff = [](ByteView d, std::string_view) { return head_text(d, 1024).find("-----BEGIN PGP ") != std::string_view::npos ? 95 : 0; }});
-  add_format(registry, {.id = "pgp", .name = "OpenPGP binary data", .description = "Binary OpenPGP packets (keys, signatures, messages).",
+  add_format(registry, {.id = "gpg", .name = "OpenPGP binary data", .description = "Binary OpenPGP packets (keys, signatures, messages).",
                         .category = Category::Encoding, .extensions = {"gpg", "pgp", "sig"}, .mime = "application/pgp-encrypted", .popularity = 12,
                         .sniff = [](ByteView d, std::string_view name) {
                           if (d.size() < 3 || (static_cast<std::uint8_t>(d[0]) & 0x80) == 0) return 0;
@@ -1309,7 +1309,7 @@ void register_pki(Registry& registry) {
                           if (!plausible) return 0;
                           return has_extension(name, "gpg") || has_extension(name, "pgp") || has_extension(name, "sig") ? 70 : 0;
                         }});
-  add_codec(registry, "pgp-armor", Kind::Data,
+  add_codec(registry, "asc", Kind::Data,
             [](ReadContext& ctx) -> Result<AnyIR> {
               CVT_TRY_ASSIGN(Json data, read_pgp_armor(input_text(ctx.input)));
               return ir::Data{std::move(data)};
@@ -1321,7 +1321,7 @@ void register_pki(Registry& registry) {
               return to_bytes(pgp_armor(data, bytes, options::resolved_strip_metadata(ctx.options)));
             },
             {}, {options::strip_metadata()});
-  add_codec(registry, "pgp", Kind::Data,
+  add_codec(registry, "gpg", Kind::Data,
             [](ReadContext& ctx) -> Result<AnyIR> {
               CVT_TRY_ASSIGN(Json packets, pgp_packets(ctx.input));
               return ir::Data{Json::object({{"data", b64(ctx.input)}, {"packets", std::move(packets)}})};

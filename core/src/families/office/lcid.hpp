@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <string_view>
 
+#include "util/charsets.hpp"
+
 namespace cvt::office::lcid {
 
 /// The Windows ANSI code page of a locale (1252 when unknown).
@@ -42,21 +44,12 @@ namespace cvt::office::lcid {
   }
 }
 
-/// The charset label the document family's HTML reader understands for a
-/// code page, or empty when it has no decoder for it.
-[[nodiscard]] constexpr std::string_view html_charset(int code_page) noexcept {
-  switch (code_page) {
-    case 1250: return "windows-1250";
-    case 1251: return "windows-1251";
-    case 1252: return "windows-1252";
-    case 1253: return "windows-1253";
-    case 1254: return "windows-1254";
-    case 1255: return "windows-1255";
-    case 1256: return "windows-1256";
-    case 1257: return "windows-1257";
-    case 1258: return "windows-1258";
-    default: return {};
-  }
+/// The charset label of a code page that the document family's HTML reader
+/// decodes (every one of util/charsets.hpp, the East Asian code pages 932,
+/// 936, 949 and 950 included), or empty when there is none.
+[[nodiscard]] inline std::string_view html_charset(int code_page) noexcept {
+  const util::CharsetInfo* charset = util::charset_for_code_page(code_page);
+  return charset != nullptr ? charset->id : std::string_view();
 }
 
 /// BCP 47 tag of a locale ("en-US"), empty when unknown.

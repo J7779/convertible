@@ -34,7 +34,6 @@ constexpr KnownFormat rows[] = {
 
     // ---- certificates, keys and secrets ----------------------------------------------------------------------------
     {"pem", "PEM file", Other, "pem", "application/x-pem-file", 25, "Base64 certificates or keys between BEGIN/END lines (RFC 7468).", {}, named(Text)},
-    {"crt", "X.509 certificate", Other, "crt cer der", "application/pkix-cert", 30, "Public-key certificate (PEM or DER).", {}, both(Der, Text, true)},
     {"csr", "Certificate signing request", Other, "csr req p10", "application/pkcs10", 8, "PKCS #10 request for a certificate.", {}, both(Der, Text)},
     {"crl", "Certificate revocation list", Other, "crl", "application/pkix-crl", 3, "List of revoked certificates.", {}, both(Der, Text)},
     {"private-key", "Private key", Other, "key pk8 p8", "application/pkcs8", 15, "Private key (PKCS #1, #8, SEC 1 or OpenSSH).", {}, both(Der, Text)},
@@ -53,7 +52,7 @@ constexpr KnownFormat rows[] = {
     {"kdb", "KeePass 1 database", Other, "kdb", "application/x-keepass", 3, "KeePass 1 password database.", {{0, "03 D9 A2 9A 65 FB 4B B5"}}},
     {"asc", "ASCII-armoured OpenPGP", Other, "asc", "application/pgp-signature", 10, "OpenPGP key, signature or message in text armour.", {}, named(Text)},
     {"gpg", "OpenPGP data", Other, "gpg pgp", "application/pgp-encrypted", 8, "Binary OpenPGP message or key ring.", {}},
-    {"ssh-pubkey", "SSH public key", Other, "pub", "text/plain", 8, "OpenSSH public key line.", {}, Text},
+    {"ssh-pub", "SSH public key", Other, "pub", "text/plain", 8, "OpenSSH public key line.", {}, Text},
     {"ppk", "PuTTY private key", Other, "ppk", "application/x-putty-private-key", 4, "PuTTY SSH key.", {{0, "'PuTTY-User-Key-File-'"}}},
     {"age", "age encrypted file", Other, "age", "application/x-age-encryption", 2, "File encrypted with the age tool.", {{0, "'age-encryption.org/v1'"}}},
     {"pvk", "Private key (PVK)", Other, "pvk", "application/x-pvk", 1, "Microsoft private key blob.", {{0, "1E F1 B5 B0"}}},

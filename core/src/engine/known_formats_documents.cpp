@@ -20,7 +20,8 @@ constexpr KnownFormat rows[] = {
     {"oxps", "OpenXPS document", Document, "oxps", "application/oxps", 8, "ECMA-388 Open XML Paper Specification document.", {}, Zip},
     {"dvi", "TeX DVI", Document, "dvi", "application/x-dvi", 5, "Device-independent output of TeX.", {{0, "F7 02 01 83 92 C0 1C 3B 00 00 00 00"}}},
     {"djvu", "DjVu document", Document, "djvu djv", "image/vnd.djvu", 25, "Compressed scanned documents and books.", {{0, "'AT&TFORM'"}}},
-    {"pcl", "PCL print job", Document, "pcl prn", "application/vnd.hp-pcl", 4, "Hewlett-Packard Printer Command Language job.", {}},
+    {"pcl", "PCL print job", Document, "pcl prn", "application/vnd.hp-pcl", 4, "Hewlett-Packard Printer Command Language job.",
+     {{0, "1B 'E' 1B"}}},  // printer reset; the PJL wrapper (ESC %-12345X) also carries HP-GL/2 and PostScript
 
     // ---- word processing -----------------------------------------------------------------------------------------
     {"docx", "Word document", Document, "docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 95,
@@ -129,9 +130,8 @@ constexpr KnownFormat rows[] = {
     {"xlsb", "Excel binary workbook", Spreadsheet, "xlsb", "application/vnd.ms-excel.sheet.binary.macroEnabled.12", 10,
      "Excel workbook with binary parts in an OOXML package.", {}, Zip},
     {"xls", "Excel 97-2003 workbook", Spreadsheet, "xls", "application/vnd.ms-excel", 55, "Microsoft Excel binary workbook (BIFF in OLE2).", {}, Ole},
-    {"xlt", "Excel 97-2003 template", Spreadsheet, "xlt", "application/vnd.ms-excel", 4, "Excel binary workbook template.", {}, Ole},
     {"xla", "Excel 97-2003 add-in", Spreadsheet, "xla", "application/vnd.ms-excel", 2, "Excel binary add-in.", {}, Ole},
-    {"xmlss", "Excel 2003 XML spreadsheet", Spreadsheet, "xml", "application/vnd.ms-excel", 4, "SpreadsheetML of Excel 2002/2003 (single XML file).",
+    {"spreadsheetml", "Excel 2003 XML spreadsheet", Spreadsheet, "xml", "application/vnd.ms-excel", 4, "SpreadsheetML of Excel 2002/2003 (single XML file).",
      {}, Markup},
     {"ods", "OpenDocument spreadsheet", Spreadsheet, "ods", "application/vnd.oasis.opendocument.spreadsheet", 50, "Spreadsheet of LibreOffice Calc (ODF).",
      {{30, "'mimetypeapplication/vnd.oasis.opendocument.spreadsheet'"}}, Zip},
@@ -175,8 +175,6 @@ constexpr KnownFormat rows[] = {
      {}, Zip},
     {"thmx", "Office theme", Presentation, "thmx", "application/vnd.ms-officetheme", 3, "Microsoft Office colour, font and effect theme.", {}, named(Zip)},
     {"ppt", "PowerPoint 97-2003 presentation", Presentation, "ppt", "application/vnd.ms-powerpoint", 45, "PowerPoint binary presentation (OLE2).", {}, Ole},
-    {"pps", "PowerPoint 97-2003 show", Presentation, "pps", "application/vnd.ms-powerpoint", 8, "PowerPoint binary slide show.", {}, Ole},
-    {"pot", "PowerPoint 97-2003 template", Presentation, "pot", "application/vnd.ms-powerpoint", 3, "PowerPoint binary template.", {}, Ole},
     {"odp", "OpenDocument presentation", Presentation, "odp", "application/vnd.oasis.opendocument.presentation", 40,
      "Presentation of LibreOffice Impress (ODF).", {{30, "'mimetypeapplication/vnd.oasis.opendocument.presentation'"}}, Zip},
     {"otp", "OpenDocument presentation template", Presentation, "otp", "application/vnd.oasis.opendocument.presentation-template", 3,

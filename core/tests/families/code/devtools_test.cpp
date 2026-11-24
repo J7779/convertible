@@ -40,10 +40,10 @@ TEST_CASE("code/diff: diff -u and git diff output") {
   CHECK((*git)[0].new_path == "added.txt");
   CHECK((*git)[1].new_path == "docs/numbers.txt");
   CHECK((*git)[1].added == 2);
-  CHECK(detected(test::fixture_text("code/devtools/sample.patch"), "change.patch") == "patch");
+  CHECK(detected(test::fixture_text("code/devtools/sample.patch"), "change.patch") == "diff");
   CHECK(detected(test::fixture_text("code/devtools/sample.diff"), "") == "diff");
 
-  const auto inline_doc = test::read_as<ir::Document>("patch", test::fixture("code/devtools/sample.patch"));
+  const auto inline_doc = test::read_as<ir::Document>("diff", test::fixture("code/devtools/sample.patch"));
   REQUIRE_OK(inline_doc);
   const std::string text = ir::plain_text(*inline_doc);
   CHECK(text.starts_with("3 files changed, 5 insertions(+), 2 deletions(-)"));
@@ -65,7 +65,7 @@ TEST_CASE("code/diff: diff -u and git diff output") {
   CHECK(ir::plain_text(table->rows[3].cells[1].content) == "beta");
   CHECK(ir::plain_text(table->rows[3].cells[3].content) == "BETA");
   // Through the engine: highlighted HTML of a patch.
-  const std::string html = convert(test::fixture("code/devtools/sample.patch"), "patch", "html-highlight").text();
+  const std::string html = convert(test::fixture("code/devtools/sample.patch"), "diff", "html-highlight").text();
   CHECK(html.find("hl-inserted") != std::string::npos);
   CHECK_STATUS(code::parse_diff("just text\n"), Status::Decode);
   CHECK(test::fuzz_reader<ir::Document>("diff", test::fixture("code/devtools/sample.patch")) > 0);

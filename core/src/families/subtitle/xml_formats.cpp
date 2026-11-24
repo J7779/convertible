@@ -831,12 +831,12 @@ void register_xml_formats(Registry& registry) {
   registry.add_codec(xml_codec("ebu-tt", parse_ttml_document, ttml_writer(Profile::EbuTtD)));
   registry.add_codec(xml_codec("smpte-tt", parse_ttml_document, nullptr));
 
-  FormatInfo sami = subtitle_format("sami", "SAMI captions", "Microsoft Synchronized Accessible Media Interchange.",
+  FormatInfo sami = subtitle_format("smi", "SAMI captions", "Microsoft Synchronized Accessible Media Interchange.",
                                     {"smi", "sami"}, "application/x-sami", 25);
   sami.sniff = sniff_sami;
   registry.add_format(std::move(sami));
   registry.add_codec(make_text_codec(
-      "sami", parse_sami, write_sami,
+      "smi", parse_sami, write_sami,
       {OptionSpec::text("sami_language", "Language", "",
                         "Language class to read from a multi-language SAMI file (class name such as ENUSCC or a "
                         "language tag such as en-US); empty = the first one.")},

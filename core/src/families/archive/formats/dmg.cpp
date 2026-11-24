@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "engine/registry.hpp"
+#include "engine/sniffers.hpp"
 #include "families/archive/archive_common.hpp"
 #include "families/archive/compression.hpp"
 #include "families/archive/formats/formats.hpp"
@@ -426,10 +427,14 @@ int sniff_dmg(std::span<const std::byte> data, std::string_view filename) {
     return named ? 80 : 0;
   }
   if (named && is_encrypted(data)) return 90;
-  // Raw disk images: only with the name, and only when they hold HFS+.
-  if (named && data.size() >= 1536 && hfs::is_volume_header(data.subspan(1024))) return 80;
-  if (named && data.size() >= 1024 && starts(data, 512, "EFI PART")) return 70;
-  if (named && starts(data, 0, "ER") && starts(data, 512, "PM")) return 70;
+  // Raw disk images: only with the name. The shared disk classifier
+  // recognises the volume (HFS+, APFS, a partition map); the name says .dmg.
+  if (!named) return 0;
+  const sniff::Verdict disk = sniff::classify(sniff::Family::Disk, data, filename, "dmg");
+  if (disk.container && (disk.id.empty() || disk.base)) return sniff::named_confidence;
+  if (data.size() >= 1536 && hfs::is_volume_header(data.subspan(1024))) return 80;
+  if (data.size() >= 1024 && starts(data, 512, "EFI PART")) return 70;
+  if (starts(data, 0, "ER") && starts(data, 512, "PM")) return 70;
   return 0;
 }
 

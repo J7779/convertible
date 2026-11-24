@@ -105,6 +105,11 @@ struct WriteContext : Context {
   std::string source_filename;
   /// Canonical id of the original input format; may be empty.
   std::string source_format_id;
+  /// Set by a writer whose output is a file it can name ("extract": the one
+  /// entry of an archive, "notes.txt" out of "notes.txt.gz"). The engine then
+  /// reports that name and the format detected from it and the bytes, instead
+  /// of the target format's extension and MIME type.
+  std::string output_filename;
 };
 
 }  // namespace cvt

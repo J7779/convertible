@@ -82,4 +82,12 @@ struct TargetInfo {
 /// Empty when the source id is unknown.
 [[nodiscard]] std::vector<TargetInfo> list_targets(const Registry& registry, std::string_view source_id);
 
+/// What a target does for the user, for apps that group the list:
+///   "compress"  the source format itself (a re-encode: smaller, optimised)
+///   "extract"   the content of a compressed file or one-entry archive
+///   "archive"   the file packed into an archive or compressed (zip, 7z, gz ...)
+///   "encode"    a byte-level rendering of any file (Base64, hex, checksums ...)
+///   "convert"   everything else: a real conversion to another format
+[[nodiscard]] std::string_view target_role(const FormatInfo& source, const TargetInfo& target);
+
 }  // namespace cvt

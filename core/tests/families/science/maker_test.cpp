@@ -44,14 +44,14 @@ TEST_CASE("science/excellon and gerber: summaries and rendered layers") {
   CHECK(drill->value["bounds"]["max"] == Json::array({5, 3}));
   const auto drill_image = test::read_as<ir::Image>("excellon", maker("drill.drl"), R"({"preview_size":300})");
   REQUIRE_OK(drill_image);
-  const auto gerber = test::read_as<ir::Data>("gerber", maker("layer.gbr"));
+  const auto gerber = test::read_as<ir::Data>("gbr", maker("layer.gbr"));
   REQUIRE_OK(gerber);
   CHECK(gerber->value["flashes"].as_int64() == 3);
   CHECK(gerber->value["draws"].as_int64() == 2);
   CHECK(gerber->value["apertures"].as_int64() == 3);
   CHECK_APPROX(gerber->value["bounds"]["min"][0].as_double(), -0.5, 1e-9);  // half the 1.0 mm pad
   CHECK_APPROX(gerber->value["bounds"]["max"][1].as_double(), 3.3, 1e-9);   // via radius 0.3 above y = 3
-  const auto layer = test::read_as<ir::Image>("gerber", maker("layer.gbr"), R"({"preview_size":400,"layer_color":"ff0000"})");
+  const auto layer = test::read_as<ir::Image>("gbr", maker("layer.gbr"), R"({"preview_size":400,"layer_color":"ff0000"})");
   REQUIRE_OK(layer);
   const auto& f = layer->frames[0];
   // The via at (2.5, 3) is red; a corner of the board is background.
@@ -60,17 +60,17 @@ TEST_CASE("science/excellon and gerber: summaries and rendered layers") {
   CHECK(red > 1000);
   CHECK(f.rgba[0] == 255);
   CHECK(f.rgba[1] == 255);
-  CHECK(detected(maker("layer.gbr")) == "gerber");
+  CHECK(detected(maker("layer.gbr")) == "gbr");
   CHECK(detected(maker("drill.drl")) == "excellon");
-  CHECK_STATUS(test::read_as<ir::Image>("gerber", maker("layer.gbr"), R"({"layer_color":"red"})"), Status::InvalidArgument);
+  CHECK_STATUS(test::read_as<ir::Image>("gbr", maker("layer.gbr"), R"({"layer_color":"red"})"), Status::InvalidArgument);
 }
 
 TEST_CASE("science/maker: hostile input") {
   CHECK(test::fuzz_reader<ir::Data>("gcode", maker("square.gcode")) > 0);
   CHECK(test::fuzz_reader<ir::Image>("gcode", maker("square.gcode"), 16) > 0);
   CHECK(test::fuzz_reader<ir::Data>("excellon", maker("drill.drl")) > 0);
-  CHECK(test::fuzz_reader<ir::Data>("gerber", maker("layer.gbr")) > 0);
-  CHECK(test::fuzz_reader<ir::Image>("gerber", maker("layer.gbr"), 16) > 0);
-  CHECK_STATUS(test::read_as<ir::Data>("gerber", as_bytes("%FSLAX99Y99*%")), Status::Decode);
+  CHECK(test::fuzz_reader<ir::Data>("gbr", maker("layer.gbr")) > 0);
+  CHECK(test::fuzz_reader<ir::Image>("gbr", maker("layer.gbr"), 16) > 0);
+  CHECK_STATUS(test::read_as<ir::Data>("gbr", as_bytes("%FSLAX99Y99*%")), Status::Decode);
   CHECK_STATUS(test::read_as<ir::Image>("gcode", as_bytes("G21\nG0 X1\n"), R"({"preview_size":100000})"), Status::Decode);
 }

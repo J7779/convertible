@@ -19,6 +19,7 @@
 #include <string_view>
 
 #include "engine/registry.hpp"
+#include "engine/sniffers.hpp"
 #include "families/data/data.hpp"
 #include "util/text.hpp"
 
@@ -851,7 +852,7 @@ int sniff_json(ByteView data, std::string_view filename) {
   if (head.empty()) return 0;
   const char c = head.front();
   const bool shape = c == '{' || c == '[';
-  if (has_extension(filename, {"json", "har", "jsonld", "webmanifest", "json-ld"})) return shape ? 72 : 60;
+  if (has_extension(filename, {"json"})) return shape ? 72 : 60;
   if (!shape) return 0;
   // Many formats are JSON underneath (GeoJSON, glTF, notebooks, ...): when the
   // file name has an extension, stay below an extension-only match (78) so
@@ -861,7 +862,13 @@ int sniff_json(ByteView data, std::string_view filename) {
   if (data.size() <= (std::size_t{1} << 20)) {
     util::JsonParseOptions options;
     options.max_depth = 64;
-    if (util::parse_json(as_chars(data), options)) return other_extension ? 70 : 85;
+    if (util::parse_json(as_chars(data), options)) {
+      // A JSON dialect the shared classifier recognises by its keys (a
+      // notebook, a web manifest, ...) is that format, not plain JSON.
+      const sniff::Verdict dialect = sniff::classify(sniff::Family::Json, data, filename, "json");
+      if (!dialect.id.empty() && dialect.id != "json" && !dialect.base) return 70;
+      return other_extension ? 70 : 85;
+    }
   }
   // An object should continue with a quoted key or close.
   const std::string_view rest = util::trim_left(head.substr(1));
@@ -874,7 +881,7 @@ int sniff_json(ByteView data, std::string_view filename) {
 }
 
 int sniff_ndjson(ByteView data, std::string_view filename) {
-  if (has_extension(filename, {"ndjson", "jsonl"})) return 90;
+  if (has_extension(filename, {"jsonl", "ndjson"})) return 90;
   // Two or more lines that each start with '{' and end with '}'.
   const std::string_view head = as_chars(data).substr(0, 4096);
   std::size_t lines = 0;
@@ -915,7 +922,7 @@ void register_json_formats(Registry& registry) {
       .name = "JSON",
       .description = "JavaScript Object Notation, the common interchange format for structured data.",
       .category = Category::Data,
-      .extensions = {"json", "har", "jsonld", "webmanifest"},
+      .extensions = {"json"},
       .mime = "application/json",
       .popularity = 92,
       .signatures = {},
@@ -931,6 +938,12 @@ void register_json_formats(Registry& registry) {
                        .write = text_writer(write_json, "JSON"),
                        .read_options = json_read,
                        .write_options = json_write_options(true)});
+  // JSON dialects with ids of their own (detected by their keys in the
+  // detection database): read as the JSON they are, so they convert to
+  // everything JSON converts to.
+  for (const char* dialect : {"har", "jsonld", "webmanifest"}) {
+    add_codec(registry, {.format_id = dialect, .read = text_reader(parse_json_text, "JSON"), .read_options = json_read});
+  }
 
   registry.add_format(FormatInfo{
       .id = "jsonc",
@@ -967,17 +980,17 @@ void register_json_formats(Registry& registry) {
                        .write_options = json_write_options(true)});
 
   registry.add_format(FormatInfo{
-      .id = "ndjson",
+      .id = "jsonl",
       .name = "Newline-delimited JSON",
       .description = "One JSON value per line (JSON Lines), common for logs and data exports.",
       .category = Category::Data,
-      .extensions = {"ndjson", "jsonl"},
+      .extensions = {"jsonl", "ndjson"},
       .mime = "application/x-ndjson",
       .popularity = 45,
       .signatures = {},
       .sniff = sniff_ndjson,
   });
-  add_codec(registry, {.format_id = "ndjson",
+  add_codec(registry, {.format_id = "jsonl",
                        .read = text_reader(parse_ndjson_text, "NDJSON"),
                        .write = text_writer(write_ndjson, "NDJSON"),
                        .read_options = common_read_options(),

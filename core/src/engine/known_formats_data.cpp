@@ -242,7 +242,6 @@ constexpr KnownFormat rows[] = {
     {"amf", "Additive Manufacturing File", Model3D, "amf", "application/x-amf", 2, "ASTM additive manufacturing mesh (XML).", {}, Markup},
     {"vox", "MagicaVoxel model", Model3D, "vox", "application/x-magicavoxel", 4, "Voxel model of MagicaVoxel.", {{0, "'VOX '"}}},
     {"pcd", "PCL point cloud", Model3D, "pcd", "application/x-pcd", 4, "Point Cloud Library point cloud.", {}, named(Text)},
-    {"pts", "Point cloud text", Model3D, "pts", "text/plain", 2, "Leica / laser-scanner point list.", {}},
     {"bvh", "BioVision motion", Model3D, "bvh", "application/x-bvh", 4, "Skeleton hierarchy and motion capture data.", {}, Text},
     {"md2", "Quake 2 model", Model3D, "md2", "application/x-md2", 2, "id Software animated model.", {{0, "'IDP2'"}}},
     {"md3", "Quake 3 model", Model3D, "md3", "application/x-md3", 2, "id Software animated model.", {{0, "'IDP3'"}}},

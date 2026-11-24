@@ -1,17 +1,11 @@
-// Convertible core - encoding family: legacy character sets and detection.
-// See charsets.hpp; the tables are in charset_tables.inc (charsets_gen.py).
-//
-// Targets registered here:
-//   charset-detect   a report of the plausible encodings of any file
-// The charsets themselves are offered through the `txt` reader and writer
-// (options source_encoding / encoding, see txt.cpp).
+// Convertible core - legacy character sets and their detection (see charsets.hpp).
+// The tables are in charset_tables.inc, written by charsets_gen.py.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
-#include "families/encoding/charsets.hpp"
+#include "util/charsets.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cstdint>
-#include <format>
 #include <iterator>
 #include <optional>
 #include <string>
@@ -19,14 +13,11 @@
 #include <utility>
 #include <vector>
 
-#include "engine/registry.hpp"
-#include "families/encoding/encoding.hpp"
-#include "families/encoding/simple.hpp"
 #include "util/deflate.hpp"
 #include "util/hex.hpp"
 #include "util/text.hpp"
 
-namespace cvt::encoding {
+namespace cvt::util {
 
 namespace {
 
@@ -35,7 +26,7 @@ struct SbcsTable {
   std::array<std::uint16_t, 256> map;
 };
 
-#include "families/encoding/charset_tables.inc"
+#include "util/charset_tables.inc"
 
 enum class Kind { Sbcs, ShiftJis, Cp932, EucJp, Iso2022Jp, Gbk, Gb18030, Big5, EucKr };
 
@@ -44,7 +35,7 @@ struct Charset {
   Kind kind;
 };
 
-constexpr std::array<Charset, 42> charset_list = {{
+constexpr std::array<Charset, 43> charset_list = {{
     {{"iso-8859-1", "Western European (ISO-8859-1)", "latin1 l1 iso88591 iso_8859-1 cp819"}, Kind::Sbcs},
     {{"iso-8859-2", "Central European (ISO-8859-2)", "latin2 l2 iso88592"}, Kind::Sbcs},
     {{"iso-8859-3", "South European (ISO-8859-3)", "latin3 l3 iso88593"}, Kind::Sbcs},
@@ -69,6 +60,7 @@ constexpr std::array<Charset, 42> charset_list = {{
     {{"windows-1256", "Arabic (Windows-1256)", "cp1256 win1256"}, Kind::Sbcs},
     {{"windows-1257", "Baltic (Windows-1257)", "cp1257 win1257"}, Kind::Sbcs},
     {{"windows-1258", "Vietnamese (Windows-1258)", "cp1258 win1258"}, Kind::Sbcs},
+    {{"windows-874", "Thai (Windows-874)", "cp874 win874 xcp874 ms874"}, Kind::Sbcs},
     {{"koi8-r", "Russian (KOI8-R)", "koi8r koi8 cskoi8r"}, Kind::Sbcs},
     {{"koi8-u", "Ukrainian (KOI8-U)", "koi8u"}, Kind::Sbcs},
     {{"macintosh", "Mac OS Roman", "macroman mac-roman xmacroman mac csmacintosh"}, Kind::Sbcs},
@@ -219,7 +211,7 @@ class Decoder {
     ++replaced_;
     i_ += n;
   }
-  CharsetText finish() { return {std::move(out_), replaced_}; }
+  CharsetText finish() { return {std::move(out_), replaced_, {}}; }
 
  private:
   ByteView data_;
@@ -664,7 +656,7 @@ Family family_of(std::string_view id) {
   if (id == "windows-1253" || id == "iso-8859-7") return Family::Greek;
   if (id == "windows-1255" || id == "iso-8859-8") return Family::Hebrew;
   if (id == "windows-1256" || id == "iso-8859-6") return Family::Arabic;
-  if (id == "iso-8859-11") return Family::Thai;
+  if (id == "iso-8859-11" || id == "windows-874") return Family::Thai;
   return Family::Latin;
 }
 
@@ -724,11 +716,6 @@ int plausibility(const Scripts& s, std::string_view id, std::size_t replaced) {
 constexpr std::array<std::string_view, 16> detection_candidates = {
     "windows-1252", "windows-1250", "windows-1251", "koi8-r", "windows-1253", "windows-1255", "windows-1256",
     "iso-8859-11", "shift_jis", "windows-31j", "euc-jp", "iso-2022-jp", "gbk", "gb18030", "big5", "euc-kr"};
-
-int sniff_report(ByteView data, std::string_view) {
-  const std::string_view text = as_chars(data).substr(0, 64);
-  return text.starts_with("Most likely encoding: ") ? 85 : 0;
-}
 
 }  // namespace
 
@@ -881,21 +868,116 @@ std::vector<CharsetGuess> detect_charsets(ByteView data) {
   return out;
 }
 
-void register_charsets(Registry& registry) {
-  add_binary_encoding(registry, {
-      .id = "charset-detect", .name = "Text encoding report",
-      .description = "The most likely character encodings of a text file, with a confidence for each.",
-      .extensions = {"txt", "charset"}, .popularity = 20,
-      .encode = [](const ir::Blob& blob, const WriteContext& ctx) -> Result<std::string> {
-        CVT_TRY(ctx.checkpoint(0.0, "Detecting"));
-        const std::vector<CharsetGuess> guesses = detect_charsets(blob.bytes);
-        std::string out = std::format("Most likely encoding: {} ({}%)\n", guesses.front().id, guesses.front().confidence);
-        for (std::size_t i = 1; i < guesses.size(); ++i) out += std::format("Also possible: {} ({}%)\n", guesses[i].id, guesses[i].confidence);
-        return out;
-      },
-      .expansion = 0,
-      .sniff = sniff_report,
-  });
+bool is_multibyte_charset(std::string_view id) noexcept {
+  return id == "shift_jis" || id == "windows-31j" || id == "euc-jp" || id == "iso-2022-jp" || id == "gbk" ||
+         id == "gb18030" || id == "big5" || id == "euc-kr";
 }
 
-}  // namespace cvt::encoding
+const CharsetInfo* charset_for_code_page(int code_page) noexcept {
+  std::string_view id;
+  switch (code_page) {
+    case 37: id = "ibm037"; break;
+    case 437: id = "ibm437"; break;
+    case 500: id = "ibm500"; break;
+    case 850: id = "ibm850"; break;
+    case 852: id = "ibm852"; break;
+    case 866: id = "ibm866"; break;
+    case 874: id = "windows-874"; break;
+    case 932: id = "windows-31j"; break;
+    case 936: id = "gbk"; break;
+    case 949: id = "euc-kr"; break;  // the Unified Hangul Code additions are not in the table
+    case 950: id = "big5"; break;
+    case 1047: id = "ibm1047"; break;
+    case 1250: case 1251: case 1252: case 1253: case 1254: case 1255: case 1256: case 1257: case 1258: {
+      static constexpr std::array<std::string_view, 9> windows = {"windows-1250", "windows-1251", "windows-1252",
+                                                                  "windows-1253", "windows-1254", "windows-1255",
+                                                                  "windows-1256", "windows-1257", "windows-1258"};
+      id = windows[static_cast<std::size_t>(code_page - 1250)];
+      break;
+    }
+    case 10000: id = "macintosh"; break;
+    case 20866: id = "koi8-r"; break;
+    case 21866: id = "koi8-u"; break;
+    case 20932: case 51932: id = "euc-jp"; break;
+    case 50220: case 50221: case 50222: id = "iso-2022-jp"; break;
+    case 51949: id = "euc-kr"; break;
+    case 54936: id = "gb18030"; break;
+    case 28591: id = "iso-8859-1"; break;
+    case 28592: id = "iso-8859-2"; break;
+    case 28593: id = "iso-8859-3"; break;
+    case 28594: id = "iso-8859-4"; break;
+    case 28595: id = "iso-8859-5"; break;
+    case 28596: id = "iso-8859-6"; break;
+    case 28597: id = "iso-8859-7"; break;
+    case 28598: id = "iso-8859-8"; break;
+    case 28599: id = "iso-8859-9"; break;
+    case 28600: id = "iso-8859-10"; break;
+    case 28601: id = "iso-8859-11"; break;
+    case 28603: id = "iso-8859-13"; break;
+    case 28604: id = "iso-8859-14"; break;
+    case 28605: id = "iso-8859-15"; break;
+    case 28606: id = "iso-8859-16"; break;
+    default: return nullptr;
+  }
+  return find_charset(id);
+}
+
+namespace {
+
+// "cp936", "windows-936", "ms936", "x-cp936": a code page number.
+std::optional<int> code_page_label(std::string_view key) {
+  for (const std::string_view prefix : {"windows", "cp", "ms", "xcp", "ibm"}) {
+    if (key.starts_with(prefix) && key.size() > prefix.size()) {
+      const auto number = parse_int(key.substr(prefix.size()));
+      if (number && *number > 0 && *number < 100000) return static_cast<int>(*number);
+    }
+  }
+  return std::nullopt;
+}
+
+CharsetText unicode_decoded(ByteView data, TextEncoding encoding) {
+  // A byte order mark of the named encoding is not text.
+  if (const auto bom = detect_bom(data); bom && bom->encoding == encoding) data = data.subspan(bom->length);
+  DecodedText decoded = decode_text(data, encoding);
+  return {std::move(decoded.text), decoded.replaced, std::string(encoding_name(encoding))};
+}
+
+}  // namespace
+
+std::optional<CharsetText> decode_labelled(ByteView data, std::string_view label) {
+  const std::string key = label_key(label);
+  if (key.empty()) return std::nullopt;
+  if (key == "usascii" || key == "ascii" || key == "ansix341968") return unicode_decoded(data, TextEncoding::Windows1252);
+  if (const auto encoding = parse_encoding(label)) return unicode_decoded(data, *encoding);
+  const CharsetInfo* info = find_charset(label);
+  if (info == nullptr) {
+    if (const auto number = code_page_label(key)) {
+      if (*number == 1252) return unicode_decoded(data, TextEncoding::Windows1252);
+      if (*number == 65001) return unicode_decoded(data, TextEncoding::Utf8);
+      info = charset_for_code_page(*number);
+    }
+  }
+  if (info == nullptr) return std::nullopt;
+  CharsetText out = charset_decode(data, *info);
+  out.charset = std::string(info->id);
+  return out;
+}
+
+CharsetText decode_auto(ByteView data, std::string_view fallback) {
+  if (const auto bom = detect_bom(data)) return unicode_decoded(data, bom->encoding);
+  const std::vector<CharsetGuess> guesses = detect_charsets(data);
+  const CharsetGuess& best = guesses.front();
+  // The detector answers "utf-8" for valid UTF-8 (and plain ASCII) and a
+  // Unicode encoding when one is certain; a legacy charset only when the text
+  // reads plausibly in it. Single-byte code pages decode anything, so they
+  // need more confidence than the multi-byte ones, which reject most text
+  // that is not theirs.
+  const int needed = is_multibyte_charset(best.id) ? 60 : 70;
+  if (best.confidence >= needed) {
+    if (auto decoded = decode_labelled(data, best.id)) return std::move(*decoded);
+  }
+  if (auto decoded = decode_labelled(data, fallback)) return std::move(*decoded);
+  return unicode_decoded(data, TextEncoding::Windows1252);
+}
+
+}  // namespace cvt::util

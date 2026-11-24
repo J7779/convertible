@@ -722,7 +722,7 @@ class H5File {
     const std::uint64_t size = length(r);
     if (size > block.size()) return fail(Status::Decode, "HDF5 global heap is truncated");
     util::ByteReader objects(block.subspan(r.position(), static_cast<std::size_t>(size) - std::min<std::size_t>(r.position(), static_cast<std::size_t>(size))));
-    while (objects.remaining() >= 8 + length_size_) {
+    while (objects.remaining() >= 8 + static_cast<std::size_t>(length_size_)) {
       const std::uint16_t id = objects.u16le();
       (void)objects.u16le();
       (void)objects.u32le();
@@ -1154,7 +1154,7 @@ namespace cvt::science {
 
 void register_hdf5(Registry& registry) {
   using namespace arrays;
-  add_format(registry, {.id = "hdf5",
+  add_format(registry, {.id = "h5",
                         .name = "HDF5 file",
                         .description = "Hierarchical Data Format 5: groups of datasets with attributes (also MATLAB 7.3).",
                         .extensions = {"h5", "hdf5", "he5", "hdf"},
@@ -1162,7 +1162,7 @@ void register_hdf5(Registry& registry) {
                         .popularity = 30,
                         .signatures = {Signature::at(0, "89 'HDF' 0D 0A 1A 0A")},
                         .sniff = sniff_hdf5});
-  add_collection_codecs(registry, "hdf5", read_hdf5, nullptr);
+  add_collection_codecs(registry, "h5", read_hdf5, nullptr);
 }
 
 }  // namespace cvt::science

@@ -23,6 +23,7 @@ void add_format(Registry& registry, FormatSpec spec) {
   info.mime = std::move(spec.mime);
   info.popularity = spec.popularity;
   info.signatures = std::move(spec.signatures);
+  info.output_only = spec.output_only;
   if (spec.sniff) {
     info.sniff = [sniff = std::move(spec.sniff)](std::span<const std::byte> data, std::string_view name) {
       return sniff(data, name);

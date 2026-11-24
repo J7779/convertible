@@ -10,6 +10,14 @@ function(cvt_set_warnings target)
       NOMINMAX WIN32_LEAN_AND_MEAN _CRT_SECURE_NO_WARNINGS _SCL_SECURE_NO_WARNINGS UNICODE _UNICODE)
   else()
     target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+    # GCC's flow-sensitive middle-end diagnostics misfire in optimised builds
+    # on libstdc++ internals (std::variant / std::vector moves inlined into our
+    # code: GCC bugs 105593, 107919, 108197 and relatives). They stay on in
+    # Debug builds, and ASan/UBSan check the real conditions at run time.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      target_compile_options(${target} PRIVATE
+        "$<$<NOT:$<CONFIG:Debug>>:-Wno-maybe-uninitialized;-Wno-array-bounds;-Wno-stringop-overflow;-Wno-free-nonheap-object;-Wno-dangling-pointer>")
+    endif()
   endif()
 endfunction()
 
@@ -129,6 +137,11 @@ function(cvt_add_imported name)
   endif()
   if(CVT_SANITIZE AND NOT MSVC)
     cvt_apply_sanitizers(${tp_target})
+    # Imported C codecs call through function pointers whose prototypes differ
+    # only in pointer types (void* vs uint8_t*), which Clang 17+'s UBSan
+    # `function` check reports in C too. It is how those libraries are
+    # written; their behaviour is not what this sanitizer run is about.
+    target_compile_options(${tp_target} PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:C>,$<C_COMPILER_ID:Clang>>:-fno-sanitize=function>")
   endif()
   if(EMSCRIPTEN AND CVT_WASM_EXCEPTIONS)
     target_compile_options(${tp_target} PRIVATE -fwasm-exceptions)

@@ -162,7 +162,7 @@ void register_stream_formats(Registry& registry) {
       {"br", "Brotli compressed file", Method::Brotli, {"br"}, "application/x-brotli", 25, {}},
       {"lz", "Lzip compressed file", Method::Lzip, {"lz"}, "application/x-lzip", 15, {Signature::at(0, "'LZIP' 01")}},
       {"z", "Unix compress file", Method::Lzw, {"z"}, "application/x-compress", 15, {Signature::at(0, "1F 9D")}},
-      {"zz", "Zlib compressed data", Method::Zlib, {"zz", "zlib"}, "application/zlib", 15, {}},
+      {"zlib", "Zlib compressed data", Method::Zlib, {"zlib", "zz"}, "application/zlib", 15, {}},
       {"sz", "Snappy framed file", Method::SnappyFramed, {"sz"}, "application/x-snappy-framed", 10,
        {Signature::at(0, "FF 06 00 00 'sNaPpY'")}},
   }};

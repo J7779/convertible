@@ -73,7 +73,7 @@ struct Raw {
 
 struct RawOptions {
   std::uint16_t disk = 0;
-  std::string comment;
+  std::string comment{};
 };
 
 Bytes put_extra(std::uint16_t id, ByteView value) {
@@ -471,7 +471,9 @@ TEST_CASE("archive/zip: writer policy, determinism and layout") {
   const auto fixed = test::write_from("zip", source, R"({"timestamps":"fixed"})");
   REQUIRE_OK(fixed);
   CHECK(test::str(*fixed).find(std::string_view("UT\x05\x00", 4)) == std::string::npos);
-  for (const auto& e : test::read_as<ir::Archive>("zip", *fixed)->entries) CHECK_EQ(e.mtime, 315532800);
+  const auto fixed_back = test::read_as<ir::Archive>("zip", *fixed);  // named: the loop must not outlive it
+  REQUIRE_OK(fixed_back);
+  for (const auto& e : fixed_back->entries) CHECK_EQ(e.mtime, 315532800);
 
   // Incompressible data is stored; level 0 stores everything; higher levels are not larger.
   const auto stored = test::write_from("zip", source, R"({"compression_level":0})");

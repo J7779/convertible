@@ -506,10 +506,18 @@ std::vector<const WriteEntry*> depth_first(const std::vector<WriteEntry>& entrie
 
 Result<Bytes> write_tar(const std::vector<WriteEntry>& entries, TarFormat format, const Context& ctx) {
   Bytes out;
+  // Progress by bytes (file contents dominate), each entry counted as one
+  // block; the output is reserved up front instead of growing by copies.
+  std::uint64_t total = 0;
+  for (const WriteEntry& e : entries) total += block + (e.type == EntryType::File ? e.data().size() : 0);
+  out.reserve(static_cast<std::size_t>(std::min<std::uint64_t>(total + 4 * block, std::uint64_t{1} << 31)));
+  const double span = static_cast<double>(std::max<std::uint64_t>(total, 1));
+  std::uint64_t done = 0;
   std::size_t index = 0;
   for (const WriteEntry* entry : depth_first(entries)) {
     const WriteEntry& e = *entry;
-    if ((++index & 255u) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(index) / static_cast<double>(entries.size())));
+    if ((++index & 255u) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(done) / span));
+    done += block;
     std::string path = e.path;
     if (e.type == EntryType::Directory) path += '/';
     const char type = e.type == EntryType::Directory ? '5' : (e.type == EntryType::Symlink ? '2' : '0');
@@ -567,7 +575,16 @@ Result<Bytes> write_tar(const std::vector<WriteEntry>& entries, TarFormat format
       }
       append(out, header(name, prefix, e.mode, size, e.mtime, type, std::string_view(link).substr(0, 100), false));
     }
-    if (e.type == EntryType::File) append_padded(out, e.data());
+    if (e.type == EntryType::File) {
+      const ByteView data = e.data();
+      constexpr std::size_t piece = std::size_t{4} << 20;
+      for (std::size_t at = 0; at < data.size(); at += piece) {
+        CVT_TRY(ctx.checkpoint(static_cast<double>(done + at) / span));
+        append(out, data.subspan(at, std::min(piece, data.size() - at)));
+      }
+      out.insert(out.end(), (block - data.size() % block) % block, std::byte{0});
+      done += data.size();
+    }
   }
   out.insert(out.end(), 2 * block, std::byte{0});
   const std::size_t record = 20 * block;
@@ -642,6 +659,9 @@ void register_compound(Registry& registry, const Compound& c) {
   const compression::Method method = c.method;
   const std::vector<std::string> exts = c.extensions;
   f.info.sniff = [method, exts](std::span<const std::byte> data, std::string_view filename) {
+    // The stream header first: decoding arbitrary data as LZMA, Brotli, ...
+    // just to find out it is not a tar would cost every detection dearly.
+    if (compression::detect(data) != method && method != compression::Method::Brotli) return 0;
     if (const int score = sniff_compound(method, data); score != 0) return score;
     // Too short (or not decodable here) to look inside: trust a matching name over the bare stream format.
     if (compression::detect(data) != method) return 0;

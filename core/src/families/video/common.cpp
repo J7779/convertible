@@ -3,6 +3,7 @@
 #include "families/video/common.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <format>
 #include <limits>
 #include <utility>
@@ -435,12 +436,34 @@ Result<ir::Video> make_video(std::shared_ptr<Demuxed> demuxed, const Context& ct
       state->track = index;
       state->decoder = std::move(decoder);
       state->progress = ctx.progress;
-      video.next_audio = [state]() -> Result<std::optional<ir::AudioChunk>> {
+      // Decoders that do not time their output (most compressed-audio codecs
+      // only return samples) leave pts_ms at 0 after the first chunk: their
+      // chunks are contiguous (priming already dropped), so the time of each
+      // follows from the first packet's timestamp and the samples so far.
+      struct Timing {
+        std::int64_t first_ms = 0;
+        std::uint64_t frames = 0;
+      };
+      auto timing = std::make_shared<Timing>();
+      if (!t.packets.empty() && t.timescale > 0 && t.packets.front().pts != std::numeric_limits<std::int64_t>::min()) {
+        timing->first_ms = std::max<std::int64_t>(0, t.packets.front().pts * 1000 / static_cast<std::int64_t>(t.timescale));
+      }
+      video.next_audio = [state, timing]() -> Result<std::optional<ir::AudioChunk>> {
         if (state->finished) return std::optional<ir::AudioChunk>{};
         if (!state->configured) CVT_TRY(configure(*state));
         while (true) {
           CVT_TRY_ASSIGN(auto chunk, state->decoder->receive_chunk());
-          if (chunk) return chunk;
+          if (chunk) {
+            const std::uint32_t rate = state->decoder->sample_rate();
+            const std::uint16_t channels = state->decoder->channels();
+            if (chunk->pts_ms == 0 && timing->frames > 0 && rate > 0) {
+              chunk->pts_ms = timing->first_ms + static_cast<std::int64_t>(timing->frames * 1000 / rate);
+            } else if (timing->frames == 0 && chunk->pts_ms == 0) {
+              chunk->pts_ms = timing->first_ms;
+            }
+            if (channels > 0) timing->frames += chunk->samples.size() / channels;
+            return chunk;
+          }
           CVT_TRY_ASSIGN(const bool fed, feed(*state));
           if (!fed) {
             state->finished = true;

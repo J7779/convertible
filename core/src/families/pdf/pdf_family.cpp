@@ -285,6 +285,7 @@ void register_pdf(Registry& registry) {
 void register_pdf_family(Registry& registry) {
   pdf::register_pdf(registry);
   pdf::register_xps(registry);
+  pdf::register_vector_pdf(registry);
   pdf::register_fdf(registry);
 }
 

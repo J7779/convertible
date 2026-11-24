@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "engine/registry.hpp"
+#include "engine/sniffers.hpp"
 #include "families/code/code.hpp"
 #include "families/code/highlight.hpp"
 #include "util/text.hpp"
@@ -35,7 +36,7 @@ std::vector<std::string> words(std::string_view list) {
 
 bool in_list(std::string_view list, std::string_view word) {
   for (const std::string_view part : util::split(list, ' ', false)) {
-    if (part == word) return true;
+    if (util::iequals(part, word)) return true;  // file systems differ in case (CMakeLists.TXT)
   }
   return false;
 }
@@ -122,9 +123,18 @@ int sniff_source(const Language& language, ByteView data, std::string_view filen
   const std::string_view name = basename(filename);
   if (!name.empty() && in_list(language.filenames, name)) return 95;
   if (interpreter_matches(language.interpreters, shebang_interpreter(text))) return 92;
-  const int hint = content_hint(language, text);
+  int hint = content_hint(language, text);
   if (hint >= 90) return hint;
-  if (has_extension(filename, language.extensions)) {
+  // The shared text classifier (the detection database's rules for source
+  // code: keywords, idioms, shebangs) recognises unnamed files too.
+  const sniff::Verdict verdict = sniff::classify(sniff::Family::Text, data, filename, language.id);
+  // Capped below the certain answers above (a shebang naming bash beats the
+  // classifier's generic "sh"), and well below a name that says another
+  // format (a .edn file full of parentheses is not Clojure source).
+  const bool ours = has_extension(filename, language.extensions);
+  const bool other_name = !ours && basename(filename).find('.') != std::string_view::npos;
+  if (verdict.id == language.id) hint = std::max(hint, std::min(verdict.confidence, other_name ? 62 : 88));
+  if (ours) {
     // Text with the right extension. Data formats saved under a code
     // extension (a JSON file called x.js) still read fine as code.
     return std::max(hint, 80);

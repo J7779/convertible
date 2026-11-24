@@ -76,7 +76,7 @@ TEST_CASE("capi: the format list") {
     std::vector<std::string> keys;
     for (const auto& [key, value] : format.items()) keys.emplace_back(key);
     CHECK(keys == std::vector<std::string>{"id", "name", "description", "category", "extensions", "mime", "readable",
-                                           "writable", "popularity"});
+                                           "writable", "popularity", "output_only"});
     CHECK_FALSE(format["id"].as_string().empty());
     CHECK_FALSE(format["name"].as_string().empty());
     CHECK(format["extensions"].is_array());
@@ -92,7 +92,7 @@ TEST_CASE("capi: the format list") {
   CHECK(util::dump_json(*base64) ==
         R"({"id":"base64","name":"Base64 text","description":"Binary data as printable ASCII (RFC 4648).",)"
         R"("category":"encoding","extensions":["b64","base64"],"mime":"text/plain","readable":true,"writable":true,)"
-        R"("popularity":70})");
+        R"("popularity":70,"output_only":false})");
   // Detection-only formats are listed, neither readable nor writable (yet).
   const Json* pdf = find_by_id(formats, "pdf");
   REQUIRE(pdf != nullptr);
@@ -129,7 +129,7 @@ TEST_CASE("capi: targets") {
   for (const Json& target : targets.elements()) {
     std::vector<std::string> keys;
     for (const auto& [key, value] : target.items()) keys.emplace_back(key);
-    CHECK(keys == std::vector<std::string>{"id", "name", "category", "extensions", "mime", "lossy", "compress"});
+    CHECK(keys == std::vector<std::string>{"id", "name", "category", "extensions", "mime", "lossy", "compress", "role"});
     CHECK(target["compress"].as_bool() == (target["id"].as_string() == "txt"));
   }
   // The source's category comes first, most popular format first; the text

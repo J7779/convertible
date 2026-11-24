@@ -172,13 +172,13 @@ TEST_CASE("data/jsonc: comments and trailing commas") {
 }
 
 TEST_CASE("data/ndjson and json-seq: records") {
-  const auto lines = td::read("ndjson", "{\"a\":1}\r\n\n  {\"a\":2}  \n[3]\n");
+  const auto lines = td::read("jsonl", "{\"a\":1}\r\n\n  {\"a\":2}  \n[3]\n");
   REQUIRE_OK(lines);
   CHECK(*lines == td::json(R"([{"a": 1}, {"a": 2}, [3]])"));
-  const auto broken = td::read("ndjson", "{\"a\":1}\n{\"a\":\n2}\n");
+  const auto broken = td::read("jsonl", "{\"a\":1}\n{\"a\":\n2}\n");
   REQUIRE_STATUS(broken, Status::Decode);
   CHECK(td::mentions_position(broken.error(), 2, 1));
-  CHECK(td::write("ndjson", td::json(R"([{"a": 1}, "x"])")).value() == "{\"a\":1}\n\"x\"\n");
+  CHECK(td::write("jsonl", td::json(R"([{"a": 1}, "x"])")).value() == "{\"a\":1}\n\"x\"\n");
   const std::string seq = "\x1E{\"a\":1}\n\x1E[2]\n\x1E{broken\n\x1E" "3\n";
   std::vector<std::string> warnings;
   const auto records = td::read("json-seq", seq, {}, &warnings);

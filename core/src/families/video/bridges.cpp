@@ -216,9 +216,43 @@ Result<AnyIR> video_to_image(AnyIR value, Context& ctx) {
 
 // --------------------------------------------------------------------------- Image -> Video
 
+// Video encoders work on macroblocks of 4:2:0 pictures: they need at least
+// 16x16 pixels and an even size. A smaller picture (an icon, a tiny drawing)
+// is enlarged by a whole factor (sharp pixels), an odd edge is extended by
+// repeating the last row or column.
+ir::Frame fit_for_video(const ir::Frame& frame) {
+  constexpr std::uint32_t minimum = 16;
+  const std::uint32_t smaller = std::min(frame.width, frame.height);
+  const std::uint32_t factor = smaller >= minimum ? 1 : (minimum + smaller - 1) / smaller;
+  const std::uint32_t scaled_w = frame.width * factor;
+  const std::uint32_t scaled_h = frame.height * factor;
+  const std::uint32_t width = scaled_w + (scaled_w & 1);
+  const std::uint32_t height = scaled_h + (scaled_h & 1);
+  if (factor == 1 && width == frame.width && height == frame.height) return frame;
+  ir::Frame out = ir::Frame::filled(width, height, {0, 0, 0, 0});
+  out.delay_ms = frame.delay_ms;
+  for (std::uint32_t y = 0; y < height; ++y) {
+    const std::uint32_t sy = std::min(y, scaled_h - 1) / factor;
+    for (std::uint32_t x = 0; x < width; ++x) {
+      const std::uint32_t sx = std::min(x, scaled_w - 1) / factor;
+      const std::size_t from = frame.offset(sx, sy);
+      const std::size_t to = out.offset(x, y);
+      for (std::size_t c = 0; c < 4; ++c) out.rgba[to + c] = frame.rgba[from + c];
+    }
+  }
+  return out;
+}
+
 Result<AnyIR> image_to_video(AnyIR value, Context& ctx) {
   auto image = std::make_shared<ir::Image>(std::move(value).get<ir::Image>());
   if (!image->valid()) return fail(Status::Decode, "the image has no pixels");
+  for (ir::Frame& frame : image->frames) {
+    if (frame.width < 16 || frame.height < 16 || (frame.width & 1) != 0 || (frame.height & 1) != 0) {
+      const std::uint64_t factor = std::min(frame.width, frame.height) >= 16 ? 1 : 16;  // an upper bound
+      CVT_TRY(ctx.limits.check_pixels(std::uint64_t{frame.width} * factor + 1, std::uint64_t{frame.height} * factor + 1));
+      frame = fit_for_video(frame);
+    }
+  }
   const Options& o = ctx.options;
   const double still_seconds = o.get_float("still_duration", 3.0, 0.1, 3600.0);
   const double fps_opt = o.get_float("fps", 0.0, 0.0, 120.0);

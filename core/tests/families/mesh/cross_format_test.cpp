@@ -35,7 +35,9 @@ bool axis_agnostic(std::string_view format) {
   return format == "stl" || format == "ply" || format == "off" || format == "vtk" || format == "xyz" || format == "pcd";
 }
 // Formats whose convention is +Z up.
-bool z_up(std::string_view format) { return format == "3mf" || format == "amf" || format == "3ds" || format == "las"; }
+bool z_up(std::string_view format) {
+  return format == "3mf" || format == "amf" || format == "3ds" || format == "las" || format == "dxf";
+}
 
 ir::Mesh y_up(ir::Mesh m) {
   m.source_up_axis = "Y";  // as if read from a Y-up format: Z-up writers rotate and their readers rotate back

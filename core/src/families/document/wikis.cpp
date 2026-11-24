@@ -504,7 +504,7 @@ InlineMarkup mediawiki_markup(const ir::Document* document) {
       return std::string(code.math == ir::MathMode::Display ? "<math display=\"block\">" : "<math>") +
              html::escape_text(code.text) + "</math>";
     }
-    if (code.raw_format == "mediawiki") return code.text;
+    if (code.raw_format == "wiki") return code.text;
     if (!code.raw_format.empty()) return {};
     return "<code><nowiki>" + html::escape_text(code.text) + "</nowiki></code>";
   };
@@ -567,7 +567,7 @@ std::string mediawiki_table(const ir::TableBlock& table, const std::function<std
 
 Result<std::string> write_mediawiki(const ir::Document& document, WriteContext& /*ctx*/) {
   wiki::WriteSyntax syntax;
-  syntax.raw_format = "mediawiki";
+  syntax.raw_format = "wiki";
   syntax.heading = [](int level, const std::string& text, const ir::Attributes& attr) {
     std::string out;
     if (!attr.id.empty()) out = "<span id=\"" + html::escape_attribute(attr.id) + "\"></span>\n";
@@ -1557,6 +1557,11 @@ int sniff_jira(ByteView data, std::string_view filename) {
   if (head.find("\n||") != std::string_view::npos || head.starts_with("||")) score += 2;
   if (head.find("\nbq. ") != std::string_view::npos) score += 1;
   if (head.find("\ntable") != std::string_view::npos) score -= 1;
+  // A file that is only a table: a "||heading||" row, then "|cell|" rows.
+  const std::size_t nl = head.find('\n');
+  const std::string_view first = util::trim(head.substr(0, nl));
+  const std::string_view second = nl == std::string_view::npos ? std::string_view() : util::trim(head.substr(nl + 1, head.find('\n', nl + 1) - nl - 1));
+  if (first.starts_with("||") && first.ends_with("||") && second.starts_with('|') && !second.starts_with("|-")) score += 7;
   return score >= 7 ? 74 : score >= 5 ? 66 : 0;
 }
 
@@ -1564,7 +1569,7 @@ int sniff_jira(ByteView data, std::string_view filename) {
 
 void register_wikis(Registry& registry) {
   MarkupFormat mediawiki;
-  mediawiki.id = "mediawiki";
+  mediawiki.id = "wiki";
   mediawiki.name = "MediaWiki markup";
   mediawiki.description = "Wikitext as used by Wikipedia and other MediaWiki sites.";
   mediawiki.extensions = {"wiki", "mediawiki", "mw"};

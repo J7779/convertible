@@ -103,7 +103,7 @@ TEST_CASE("science/fastq: writes every encoding and matches Biopython byte for b
 }
 
 TEST_CASE("science/genbank: decodes a Biopython record with features") {
-  const auto data = test::read_as<ir::Data>("genbank", test::fixture("science/bio/construct.gb"));
+  const auto data = test::read_as<ir::Data>("gbk", test::fixture("science/bio/construct.gb"));
   REQUIRE_OK(data);
   const Json& r = data->value["records"][0];
   CHECK(r["id"].as_string() == "TEST0001.1");
@@ -130,7 +130,7 @@ TEST_CASE("science/genbank: decodes a Biopython record with features") {
 }
 
 TEST_CASE("science/embl: matches the GenBank record Biopython wrote from the same data") {
-  const auto gb = test::read_as<ir::Data>("genbank", test::fixture("science/bio/construct.gb"));
+  const auto gb = test::read_as<ir::Data>("gbk", test::fixture("science/bio/construct.gb"));
   const auto embl = test::read_as<ir::Data>("embl", test::fixture("science/bio/construct.embl"));
   REQUIRE_OK(gb);
   REQUIRE_OK(embl);
@@ -145,9 +145,9 @@ TEST_CASE("science/embl: matches the GenBank record Biopython wrote from the sam
 }
 
 TEST_CASE("science/genbank: GenBank and EMBL writers round trip") {
-  const auto gb = test::read_as<ir::Data>("genbank", test::fixture("science/bio/construct.gb"));
+  const auto gb = test::read_as<ir::Data>("gbk", test::fixture("science/bio/construct.gb"));
   REQUIRE_OK(gb);
-  for (const char* format : {"genbank", "embl"}) {
+  for (const char* format : {"gbk", "embl"}) {
     INFO(format);
     const auto written = test::write_from(format, *gb);
     REQUIRE_OK(written);
@@ -162,13 +162,13 @@ TEST_CASE("science/genbank: GenBank and EMBL writers round trip") {
     CHECK(b["annotations"]["taxonomy"] == a["annotations"]["taxonomy"]);
   }
   // The GenBank writer reproduces the Biopython file exactly for its sequence block.
-  const auto written = test::write_from("genbank", *gb);
+  const auto written = test::write_from("gbk", *gb);
   REQUIRE_OK(written);
   const std::string text = test::str(*written);
   CHECK(text.find("        1 atggctaaac gttgaacgta cgtacgtacg tacgtacgta cgtacgtacg tacgtacgta\n") != std::string::npos);
   CHECK(text.find("     misc_feature    complement(21..40)\n") != std::string::npos);
   // GenBank -> FASTA through the shared Table model.
-  const auto table = test::read_as<ir::Table>("genbank", test::fixture("science/bio/construct.gb"));
+  const auto table = test::read_as<ir::Table>("gbk", test::fixture("science/bio/construct.gb"));
   REQUIRE_OK(table);
   const auto fasta = test::write_from("fasta", *table);
   REQUIRE_OK(fasta);
@@ -192,7 +192,7 @@ TEST_CASE("science/uniprot: decodes a Swiss-Prot entry") {
 }
 
 TEST_CASE("science/sequences: detection tells the flat files apart") {
-  CHECK(detected(test::fixture("science/bio/construct.gb")) == "genbank");
+  CHECK(detected(test::fixture("science/bio/construct.gb")) == "gbk");
   CHECK(detected(test::fixture("science/bio/construct.embl")) == "embl");
   CHECK(detected(test::fixture("science/bio/reads_sanger.fastq")) == "fastq");
 }
@@ -200,13 +200,13 @@ TEST_CASE("science/sequences: detection tells the flat files apart") {
 TEST_CASE("science/sequences: damaged input never crashes") {
   CHECK_STATUS(test::read_as<ir::Table>("fasta", as_bytes("not fasta")), Status::Decode);
   CHECK_STATUS(test::read_as<ir::Table>("fastq", as_bytes("@r\nACGT\n+\n!!")), Status::Decode);
-  CHECK_STATUS(test::read_as<ir::Table>("genbank", as_bytes("hello")), Status::Decode);
+  CHECK_STATUS(test::read_as<ir::Table>("gbk", as_bytes("hello")), Status::Decode);
   for (const char* name : {"three.fasta", "reads_sanger.fastq", "construct.gb", "construct.embl",
                            "test_protein.swiss"}) {
     const std::string path = std::string("science/bio/") + name;
     const std::string format = std::string(name).ends_with(".fasta")   ? "fasta"
                                : std::string(name).ends_with(".fastq") ? "fastq"
-                               : std::string(name).ends_with(".gb")    ? "genbank"
+                               : std::string(name).ends_with(".gb")    ? "gbk"
                                : std::string(name).ends_with(".embl")  ? "embl"
                                                                        : "uniprot";
     CHECK(test::fuzz_reader<ir::Data>(format, test::fixture(path), 128) > 0);

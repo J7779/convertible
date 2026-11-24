@@ -10,6 +10,8 @@
 
 #include "engine/detect.hpp"
 #include "engine/registry.hpp"
+#include "families/document/document_api.hpp"
+#include "families/office/lcid.hpp"
 #include "families/office/office_test_support.hpp"
 #include "util/text.hpp"
 
@@ -130,7 +132,7 @@ Bytes make_lit(const std::vector<std::pair<std::string, Bytes>>& files) {
   put32(out, 2);
   put32(out, secondary_len);
   out.resize(header);
-  for (const auto [at, size] : {std::pair<std::uint32_t, std::uint32_t>{0, 0}, {dir_at, static_cast<std::uint32_t>(dir.size())}}) {
+  for (const auto& [at, size] : {std::pair<std::uint32_t, std::uint32_t>{0, 0}, {dir_at, static_cast<std::uint32_t>(dir.size())}}) {
     put32(out, at);
     put32(out, 0);
     put32(out, size);
@@ -448,6 +450,27 @@ TEST_CASE("office/lit: damaged and hostile files") {
   // No pages at all.
   CHECK_STATUS(test::read_as<ir::Document>("lit", make_lit({{"/manifest", Bytes{std::byte{0}}}})), Status::Decode);
   CHECK_STATUS(test::read_as<ir::Document>("lit", test::bytes("ITOLITLS")), Status::Decode);
+}
+
+TEST_CASE("office/chm: pages in East Asian code pages decode in their locale's charset") {
+  // Every locale's ANSI code page has a decoder (util/charsets.hpp), the East
+  // Asian ones included, so no help file falls back to Windows-1252.
+  const struct {
+    std::uint32_t lcid;
+    std::string_view charset;
+  } locales[] = {{0x0411, "windows-31j"}, {0x0804, "gbk"},          {0x0404, "big5"},         {0x0412, "euc-kr"},
+                 {0x041E, "windows-874"}, {0x0419, "windows-1251"}, {0x0409, "windows-1252"}, {0x042A, "windows-1258"}};
+  for (const auto& l : locales) {
+    INFO("lcid ", l.lcid);
+    CHECK(office::lcid::html_charset(office::lcid::code_page(l.lcid)) == l.charset);
+  }
+  // The decode path of a page without a declaration, as the CHM reader runs
+  // it: Shift_JIS text in a Japanese help file (LIT books store UTF-8).
+  document::HtmlReadOptions options;
+  options.fallback_encoding = std::string(office::lcid::html_charset(office::lcid::code_page(0x0411)));
+  const auto page = document::parse_html(test::fixture("document/legacy/shift_jis_nometa.html"), options);
+  REQUIRE_OK(page);
+  CHECK(ir::plain_text(*page).find("こんにちは、世界。字幕のテストです。") != std::string::npos);
 }
 
 }  // namespace cvt

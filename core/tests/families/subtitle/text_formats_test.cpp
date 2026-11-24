@@ -50,6 +50,44 @@ TEST_CASE("subtitle/srt: tolerates real-world mess") {
   CHECK(subs->cues[3].text == "No spaces around the arrow");
 }
 
+TEST_CASE("subtitle/srt: East Asian legacy encodings are recognised and decoded") {
+  struct Case {
+    std::string_view file;
+    std::string_view label;
+    std::string_view first;
+    std::string_view second;
+  };
+  const Case cases[] = {
+      {"subtitle/legacy/shift_jis.srt", "shift_jis", "こんにちは、世界。字幕のテストです。", "東京の空はとても青い。"},
+      {"subtitle/legacy/gbk.srt", "gbk", "你好，世界。这是字幕测试。", "北京的天空非常蓝。"},
+      {"subtitle/legacy/big5.srt", "big5", "你好，世界。這是字幕測試。", "臺北的天空非常藍。"},
+      {"subtitle/legacy/euc_kr.srt", "euc-kr", "안녕하세요, 세계. 자막 시험입니다.", "서울의 하늘은 아주 파랗다."},
+  };
+  for (const Case& c : cases) {
+    INFO(c.file);
+    // Detected from the content alone, then decoded exactly.
+    const Bytes data = test::fixture(c.file);
+    CHECK(detect_format(Registry::instance(), data, "")->format->id == "srt");
+    const auto subs = test::read_as<ir::Subtitles>("srt", data);
+    REQUIRE_OK(subs);
+    REQUIRE(subs->cues.size() == 2);
+    CHECK(subs->cues[0].text == c.first);
+    CHECK(subs->cues[1].text == c.second);
+    CHECK(subs->cues[1].start_ms == 4000);
+    // The same with the encoding named, and through the engine to UTF-8 WebVTT.
+    const auto named = test::read_as<ir::Subtitles>("srt", data, std::string(R"({"source_encoding":")") + std::string(c.label) + "\"}");
+    REQUIRE_OK(named);
+    CHECK(named->cues[0].text == c.first);
+    const test::Converted vtt = test::convert(data, "", "vtt", "", "cues.srt");
+    REQUIRE(vtt.ok());
+    CHECK(vtt.text().find(c.second) != std::string::npos);
+  }
+  // A wrong explicit encoding is honoured (and gives other text).
+  const auto wrong = test::read_as<ir::Subtitles>("srt", test::fixture("subtitle/legacy/gbk.srt"), R"({"source_encoding":"big5"})");
+  REQUIRE_OK(wrong);
+  CHECK(wrong->cues[0].text != "你好，世界。这是字幕测试。");
+}
+
 TEST_CASE("subtitle/srt: detects legacy code pages and honours an explicit encoding") {
   struct Case {
     std::string_view file;

@@ -1274,7 +1274,7 @@ void register_text_tables(Registry& registry) {
                      "application/x-tex", 40, read_latex, write_latex, nullptr,
                      {OptionSpec::boolean("booktabs", "Booktabs rules", false,
                                           "Use \\toprule, \\midrule and \\bottomrule (needs the booktabs package).")}});
-  formats.push_back({"mediawiki", "MediaWiki markup", "Wiki text as used by Wikipedia.", {"wiki", "mediawiki"},
+  formats.push_back({"wiki", "MediaWiki markup", "Wiki text as used by Wikipedia.", {"wiki", "mediawiki"},
                      "text/x-wiki", 20, read_mediawiki, write_mediawiki, nullptr, {}});
   formats.push_back({"jira", "Jira wiki table", "Table in the wiki markup of Jira and Confluence.", {"jira"},
                      "text/plain", 15, read_jira, write_jira, sniff_jira, {}});
@@ -1291,12 +1291,13 @@ void register_text_tables(Registry& registry) {
     info.extensions = format.extensions;
     info.mime = std::string(format.mime);
     info.popularity = format.popularity;
-    if (format.sniff) {
-      info.sniff = format.sniff;
+    info.sniff = format.sniff;
+    if (format.sniff && format.id != "jira") {
       registry.add_format(std::move(info));
     } else {
-      // Markup formats belong to the document family, which describes and
-      // detects them; this description only fills gaps.
+      // Markup formats (Jira wiki markup included) belong to the document
+      // family, which describes and detects them; this description, and the
+      // table sniffer, only fill gaps.
       registry.add_known_format(std::move(info));
     }
 

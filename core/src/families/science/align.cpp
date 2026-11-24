@@ -790,14 +790,14 @@ void register_alignments(Registry& registry) {
                         .sniff = sniff_clustal});
   add_record_codecs(registry, {.id = "clustal", .read = read_clustal, .write = write_clustal});
 
-  add_format(registry, {.id = "stockholm",
+  add_format(registry, {.id = "sto",
                         .name = "Stockholm alignment",
                         .description = "Stockholm multiple sequence alignment with markup (Pfam, Rfam).",
                         .extensions = {"sto", "stk", "stockholm"},
                         .mime = "text/x-stockholm",
                         .popularity = 12,
                         .sniff = sniff_stockholm});
-  add_record_codecs(registry, {.id = "stockholm", .read = read_stockholm, .write = write_stockholm, .lossy_table = true});
+  add_record_codecs(registry, {.id = "sto", .read = read_stockholm, .write = write_stockholm, .lossy_table = true});
 
   add_format(registry, {.id = "newick",
                         .name = "Newick tree",
@@ -808,7 +808,7 @@ void register_alignments(Registry& registry) {
                         .sniff = sniff_newick});
   add_codec(registry, "newick", Kind::Data, read_newick, write_newick);
 
-  add_format(registry, {.id = "nexus",
+  add_format(registry, {.id = "nex",
                         .name = "NEXUS file",
                         .description = "NEXUS character matrix and/or phylogenetic trees.",
                         .extensions = {"nex", "nexus", "nxs"},
@@ -816,7 +816,7 @@ void register_alignments(Registry& registry) {
                         .popularity = 15,
                         .sniff = sniff_nexus});
   add_codec(
-      registry, "nexus", Kind::Table,
+      registry, "nex", Kind::Table,
       [](ReadContext& ctx) -> Result<AnyIR> {
         CVT_TRY_ASSIGN(auto content, parse_nexus(input_text(ctx.input), ctx));
         if (content.records.empty()) return fail(Status::Decode, "the NEXUS file has no character matrix");
@@ -829,7 +829,7 @@ void register_alignments(Registry& registry) {
       },
       {}, {}, 10, 10, true);
   add_codec(
-      registry, "nexus", Kind::Data,
+      registry, "nex", Kind::Data,
       [](ReadContext& ctx) -> Result<AnyIR> {
         CVT_TRY_ASSIGN(auto content, parse_nexus(input_text(ctx.input), ctx));
         Json data = records_to_json(content.records);

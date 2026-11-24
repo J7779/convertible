@@ -122,6 +122,7 @@ void register_vector_format(Registry& registry, VectorFormat format) {
     Codec codec;
     codec.format_id = id;
     codec.kind = Kind::Data;
+    codec.ir_tag = "vector-scene";  // only vector writers understand the envelope (see Codec::ir_tag)
     codec.read_cost = format.read_cost;
     codec.write_cost = format.write_cost;
     codec.lossy = format.lossy_read || format.lossy_write;

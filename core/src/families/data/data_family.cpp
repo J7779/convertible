@@ -36,6 +36,9 @@ void register_data_family(Registry& registry) {
   data::register_cson(registry);
   data::register_script_literals(registry);
   data::register_data_bridges(registry);
+  // Protocol Buffers needs numbered fields, a registry file its key paths:
+  // only from data read as such (Codec::direct_only).
+  registry.set_direct_only({"pb", "reg"}, Kind::Data);
 }
 
 }  // namespace cvt

@@ -28,7 +28,7 @@
 #include "families/office/lcid.hpp"
 #include "families/office/office.hpp"
 #include "families/office/office_common.hpp"
-#include "families/table/codepages.hpp"
+#include "util/charsets.hpp"
 #include "util/text.hpp"
 
 namespace cvt::office {
@@ -67,16 +67,16 @@ std::string stem_of(std::string_view path) {
 /// text is read in the code page of the file's locale.
 class TextDecoder {
  public:
-  explicit TextDecoder(int code_page) : page_(table::find_code_page(code_page)) {
-    if (!page_) page_ = table::find_code_page(1252);
+  explicit TextDecoder(int code_page) : charset_(util::charset_for_code_page(code_page)) {
+    if (charset_ == nullptr) charset_ = util::charset_for_code_page(1252);
   }
   [[nodiscard]] std::string operator()(std::string_view raw) const {
-    if (util::is_valid_utf8(raw) || !page_) return std::string(raw);
-    return table::decode_code_page(as_bytes(raw), *page_);
+    if (util::is_valid_utf8(raw) || charset_ == nullptr) return std::string(raw);
+    return util::charset_decode(as_bytes(raw), *charset_).text;
   }
 
  private:
-  const table::CodePageInfo* page_ = nullptr;
+  const util::CharsetInfo* charset_ = nullptr;
 };
 
 /// Character references in a sitemap value ("Caf&eacute;").

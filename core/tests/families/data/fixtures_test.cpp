@@ -22,7 +22,7 @@ constexpr FixtureCase cases[] = {
     {"python_json_pretty.json", "json", "python_json_pretty.expected.json"},
     {"python_json_ascii.json", "json", "python_json_ascii.expected.json"},
     {"python_json_nan.json", "json", "python_json_nan.expected.json"},
-    {"python_lines.ndjson", "ndjson", "python_lines.expected.json"},
+    {"python_lines.ndjson", "jsonl", "python_lines.expected.json"},
     {"json5_python.json5", "json5", "json5_python.expected.json"},
     {"hjson_python.hjson", "hjson", "hjson_python.expected.json"},
     {"pyyaml_default.yaml", "yaml", "pyyaml_default.expected.json"},
@@ -53,12 +53,12 @@ constexpr FixtureCase cases[] = {
     {"fastavro_deflate.avro", "avro", "fastavro_deflate.expected.json"},
     {"bencode_torrent.torrent", "torrent", "bencode_torrent.expected.json"},
     {"flexbuffers_python.flexbuf", "flexbuffers", "flexbuffers_python.expected.json"},
-    {"pickle_protocol0.pickle", "pickle", "pickle.expected.json"},
-    {"pickle_protocol1.pickle", "pickle", "pickle.expected.json"},
-    {"pickle_protocol2.pickle", "pickle", "pickle.expected.json"},
-    {"pickle_protocol3.pickle", "pickle", "pickle.expected.json"},
-    {"pickle_protocol4.pickle", "pickle", "pickle.expected.json"},
-    {"pickle_protocol5.pickle", "pickle", "pickle.expected.json"},
+    {"pickle_protocol0.pickle", "pkl", "pickle.expected.json"},
+    {"pickle_protocol1.pickle", "pkl", "pickle.expected.json"},
+    {"pickle_protocol2.pickle", "pkl", "pickle.expected.json"},
+    {"pickle_protocol3.pickle", "pkl", "pickle.expected.json"},
+    {"pickle_protocol4.pickle", "pkl", "pickle.expected.json"},
+    {"pickle_protocol5.pickle", "pkl", "pickle.expected.json"},
     {"edn_python.edn", "edn", "edn_python.expected.json"},
     {"php_serialize.txt", "php-serialized", "php_serialize.expected.json"},
     {"python_repr.pyon", "python-literal", "python_repr.expected.json"},
@@ -113,7 +113,7 @@ TEST_CASE("data/fixtures: the CBOR indefinite-length examples decode") {
 
 TEST_CASE("data/fixtures: a schema-less Protocol Buffers message keeps its fields") {
   // A FileDescriptorProto serialised by the protobuf Python library.
-  const auto decoded = td::read_bytes("protobuf", test::fixture("data/protobuf_descriptor.pb"));
+  const auto decoded = td::read_bytes("pb", test::fixture("data/protobuf_descriptor.pb"));
   REQUIRE_OK(decoded);
   CHECK((*decoded)["1"].as_string() == "example.proto");
   CHECK((*decoded)["2"].as_string() == "demo");
@@ -126,7 +126,7 @@ TEST_CASE("data/fixtures: a schema-less Protocol Buffers message keeps its field
   CHECK(message["2"][0]["5"].as_int64() == 17);  // TYPE_SINT32
   CHECK(message["2"][1]["7"].as_string() == "-1.5");
   // Encoding the tree again gives the same bytes.
-  const auto encoded = td::write_bytes("protobuf", *decoded);
+  const auto encoded = td::write_bytes("pb", *decoded);
   REQUIRE_OK(encoded);
   CHECK(*encoded == test::fixture("data/protobuf_descriptor.pb"));
 }

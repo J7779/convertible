@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "engine/standard_options.hpp"
+#include "families/mesh/mesh_ops.hpp"
 #include "families/vector/cad_dxf.hpp"
 #include "families/vector/cad_internal.hpp"
 #include "families/vector/geom.hpp"
@@ -976,12 +977,13 @@ Result<Bytes> write_mesh_dxf(const ir::Mesh& mesh, const Context& ctx) {
   if (mesh.positions.empty()) return fail(Status::Encode, "the mesh has no vertices");
   Writer w(Version::R12, 6);
   Rect box;
-  // Mesh +Y up -> DXF +Z up: (x, y, z) -> (x, -z, y).
+  // The coordinates arrive in DXF's +Z up: the caller prepared them with the
+  // mesh family's Z-up convention.
   const auto at = [&](std::uint32_t i) {
     const ir::Vec3& v = mesh.positions[i];
-    return std::array<double, 3>{v.x, -static_cast<double>(v.z), v.y};
+    return std::array<double, 3>{v.x, v.y, v.z};
   };
-  for (const ir::Vec3& v : mesh.positions) box.add(Point{v.x, -static_cast<double>(v.z)});
+  for (const ir::Vec3& v : mesh.positions) box.add(Point{v.x, v.y});
   std::string entities;
   std::size_t base = 0;
   const std::size_t faces = mesh.face_count();
@@ -994,8 +996,17 @@ Result<Bytes> write_mesh_dxf(const ir::Mesh& mesh, const Context& ctx) {
     std::vector<std::array<std::uint32_t, 4>> quads;
     if (poly.size() == 3) quads.push_back({poly[0], poly[1], poly[2], poly[2]});
     else if (poly.size() == 4) quads.push_back({poly[0], poly[1], poly[2], poly[3]});
-    else
-      for (std::size_t i = 1; i + 1 < poly.size(); ++i) quads.push_back({poly[0], poly[i], poly[i + 1], poly[i + 1]});
+    else {
+      // 3DFACE holds at most four corners: larger polygons are triangulated
+      // by ear clipping (a fan would overlap itself on concave polygons).
+      std::vector<ir::Vec3> points;
+      points.reserve(poly.size());
+      for (const std::uint32_t i : poly) points.push_back(mesh.positions[i]);
+      const std::vector<std::uint32_t> tris = cvt::mesh::triangulate_polygon(points);
+      for (std::size_t t = 0; t + 2 < tris.size(); t += 3) {
+        quads.push_back({poly[tris[t]], poly[tris[t + 1]], poly[tris[t + 2]], poly[tris[t + 2]]});
+      }
+    }
     for (const auto& q : quads) {
       w.tag(0, "3DFACE");
       w.tag(8, "0");

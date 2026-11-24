@@ -25,8 +25,8 @@ struct Writable {
 // preformatted text.
 const Writable writable[] = {
     {"html", 0.99},       {"xhtml", 0.99},      {"md", 0.99},          {"rst", 0.98},
-    {"asciidoc", 0.98},   {"org", 0.98},        {"djot", 0.99},        {"typst", 0.97, true, true, true, true, true},
-    {"mediawiki", 0.98},  {"dokuwiki", 0.98},   {"creole", 0.88, true, true, true, true, false},
+    {"adoc", 0.98},   {"org", 0.98},        {"djot", 0.99},        {"typst", 0.97, true, true, true, true, true},
+    {"wiki", 0.98},  {"dokuwiki", 0.98},   {"creole", 0.88, true, true, true, true, false},
     {"jira", 0.88, true, true, true, true, false}, {"textile", 0.98},
     {"bbcode", 0.88, true, true, true, true, false}, {"t2t", 0.88, true, true, true, true, false},
     {"pod", 0.70, false, true, true, true, false}, {"tex", 0.97},
@@ -85,7 +85,7 @@ TEST_CASE("document/roundtrip: every writer reads back with its own reader") {
 }
 
 TEST_CASE("document/roundtrip: same-format conversions (the compress action) keep the content") {
-  for (const char* format : {"md", "html", "rst", "asciidoc", "org", "mediawiki", "textile", "djot", "tex", "docbook"}) {
+  for (const char* format : {"md", "html", "rst", "adoc", "org", "wiki", "textile", "djot", "tex", "docbook"}) {
     INFO("format ", format);
     const auto first = test::write_from(format, rich_document());
     REQUIRE_OK(first);
@@ -101,7 +101,7 @@ TEST_CASE("document/roundtrip: same-format conversions (the compress action) kee
 }
 
 TEST_CASE("document/roundtrip: Texinfo and OPML writers produce the expected structure") {
-  const auto texi = test::write_from("texinfo", rich_document());
+  const auto texi = test::write_from("texi", rich_document());
   REQUIRE_OK(texi);
   const std::string t = test::str(*texi);
   CHECK(t.starts_with("\\input texinfo\n"));
@@ -133,7 +133,7 @@ TEST_CASE("document/roundtrip: Texinfo and OPML writers produce the expected str
 TEST_CASE("document/roundtrip: wrap_width and standalone options change the output") {
   ir::Document d;
   d.blocks.push_back(ir::build::paragraph(std::string(30, 'a') + " " + std::string(30, 'b') + " " + std::string(30, 'c')));
-  for (const char* format : {"md", "rst", "asciidoc", "org", "djot", "tex"}) {
+  for (const char* format : {"md", "rst", "adoc", "org", "djot", "tex"}) {
     INFO("format ", format);
     const auto wide = test::write_from(format, d, R"({"wrap_width":0})");
     const auto narrow = test::write_from(format, d, R"({"wrap_width":40})");
@@ -199,7 +199,7 @@ TEST_CASE("document/roundtrip: readers survive hostile input") {
   };
   const Reader readers[] = {
       {"html", "pandoc/sample.html"},   {"md", "pandoc/sample.gfm.md"},     {"rst", "pandoc/sample.rst"},
-      {"asciidoc", "pandoc/sample.adoc"}, {"org", "pandoc/sample.org"},     {"mediawiki", "pandoc/sample.wiki"},
+      {"adoc", "pandoc/sample.adoc"}, {"org", "pandoc/sample.org"},     {"wiki", "pandoc/sample.wiki"},
       {"dokuwiki", "pandoc/sample.dokuwiki"}, {"textile", "pandoc/sample.textile"}, {"jira", "pandoc/sample.jira"},
       {"typst", "pandoc/sample.typ"},   {"djot", "pandoc/sample.dj"},       {"t2t", "pandoc/sample.t2t"},
       {"bbcode", "pandoc/sample.bbcode"}, {"tex", "pandoc/sample.tex"},     {"man", "pandoc/sample.1"},
@@ -241,9 +241,9 @@ TEST_CASE("document/roundtrip: readers survive hostile input") {
          return s;
        }()},
       {"pod", "=pod\n\n" + std::string(20000, 'B') + std::string(20000, '<') + "x"},
-      {"asciidoc", std::string(5000, '*') + " x\n" + "|===\n" + std::string(3000, '|')},
+      {"adoc", std::string(5000, '*') + " x\n" + "|===\n" + std::string(3000, '|')},
       {"org", std::string(3000, '*') + " h\n" + std::string(5000, ' ') + "- x\n"},
-      {"mediawiki", std::string(5000, '*') + " x\n{|\n" + std::string(5000, '|') + "\n" + std::string(4000, '[') + "x"},
+      {"wiki", std::string(5000, '*') + " x\n{|\n" + std::string(5000, '|') + "\n" + std::string(4000, '[') + "x"},
       {"typst", std::string(20000, '[') + "#emph[" + std::string(2000, '#')},
       {"djot", std::string(5000, '>') + " " + std::string(5000, '{') + std::string(5000, '_')},
       {"man", ".RS\n.RS\n" + [] {
@@ -269,15 +269,15 @@ TEST_CASE("document/roundtrip: formats are detected by content and extension") {
   const Detect cases[] = {
       {"pandoc/sample.html", "", "html"},         {"pandoc/sample.html", "page.htm", "html"},
       {"pandoc/sample.gfm.md", "notes.md", "md"}, {"pandoc/sample.rst", "doc.rst", "rst"},
-      {"pandoc/sample.adoc", "doc.adoc", "asciidoc"}, {"pandoc/sample.org", "", "org"},
-      {"pandoc/sample.wiki", "page.wiki", "mediawiki"}, {"pandoc/sample.textile", "a.textile", "textile"},
+      {"pandoc/sample.adoc", "doc.adoc", "adoc"}, {"pandoc/sample.org", "", "org"},
+      {"pandoc/sample.wiki", "page.wiki", "wiki"}, {"pandoc/sample.textile", "a.textile", "textile"},
       {"pandoc/sample.jira", "", "jira"},          {"pandoc/sample.typ", "a.typ", "typst"},
       {"pandoc/sample.dj", "a.dj", "djot"},        {"pandoc/sample.tex", "", "tex"},
       {"pandoc/sample.1", "", "man"},              {"pandoc/sample.1", "sample.1", "man"},
       {"pandoc/sample.dbk", "", "docbook"},        {"pandoc/sample.dbk", "a.xml", "docbook"},
       {"pandoc/sample.fb2", "", "fb2"},            {"pandoc/sample.jats.xml", "", "jats"},
       {"pandoc/sample.tei.xml", "", "tei"},        {"pandoc/sample.opml", "", "opml"},
-      {"pandoc/sample.ipynb", "", "ipynb"},        {"pandoc/sample.texi", "", "texinfo"},
+      {"pandoc/sample.ipynb", "", "ipynb"},        {"pandoc/sample.texi", "", "texi"},
       {"pandoc/sample.bbcode", "a.bbcode", "bbcode"}, {"pandoc/sample.t2t", "a.t2t", "t2t"},
       {"pandoc/sample.dokuwiki", "a.dokuwiki", "dokuwiki"}, {"handwritten/sample.creole", "a.creole", "creole"},
       {"handwritten/sample.pod", "", "pod"},       {"handwritten/sample.mdoc", "", "man"},

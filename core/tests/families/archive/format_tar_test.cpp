@@ -138,7 +138,7 @@ TEST_CASE("archive/streams: single compressed files keep or restore their names"
   CHECK(as_tar->entries[0].path == "greeting.txt");
   CHECK(test::str(as_tar->entries[0].bytes) == "Hello, archive!\n");
   // Any file can be compressed: Blob -> Archive -> gz, and back.
-  for (const char* format : {"gz", "bz2", "xz", "lzma", "zst", "lz4", "lz", "z", "zz", "sz"}) {
+  for (const char* format : {"gz", "bz2", "xz", "lzma", "zst", "lz4", "lz", "z", "zlib", "sz"}) {
     INFO("format ", format);
     const test::Converted packed = test::convert(as_bytes("some text to compress, some text to compress"), "txt", format, "", "note.txt");
     REQUIRE(packed.ok());

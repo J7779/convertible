@@ -1,4 +1,11 @@
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include <algorithm>
+#include <chrono>
+#include <set>
+#include <string>
+#include <string_view>
+#include <vector>
+
 #include "engine/detect.hpp"
 #include "engine/fakes.hpp"
 
@@ -178,11 +185,50 @@ TEST_CASE("detect: hostile input never crashes a sniffer") {
     for (const Signature& signature : format->signatures) {
       Bytes head(signature.offset, std::byte{0});
       append(head, ByteView(signature.bytes));
-      for (std::size_t cut = 0; cut <= head.size(); ++cut) {
-        (void)detect_candidates(registry, ByteView(head).first(cut), "f." + format->extensions.front());
-      }
+      // Every cut inside the magic and around it; before a deep magic (ISO
+      // 9660 at 32 KiB, tar at 257) the prefix is only zeros, so a sample of
+      // those lengths covers it.
+      const std::string name = "f." + format->extensions.front();
+      std::set<std::size_t> cuts;
+      for (std::size_t cut = 0; cut <= std::min<std::size_t>(head.size(), 64); ++cut) cuts.insert(cut);
+      for (std::size_t cut = signature.offset >= 8 ? signature.offset - 8 : 0; cut <= head.size(); ++cut) cuts.insert(cut);
+      for (std::size_t cut = 128; cut < signature.offset; cut *= 2) cuts.insert(cut);
+      for (const std::size_t cut : cuts) (void)detect_candidates(registry, ByteView(head).first(cut), name);
       const auto found = detect_format(registry, head, {});
       CHECK_MESSAGE(found.has_value(), format->id);
     }
   }
+}
+
+TEST_CASE("detect: every sniffer is cheap on large adversarial input") {
+  // Sniffers look at a bounded head of the file (and at most a bounded tail):
+  // detection of a large file must cost about as much as detection of a small
+  // one. 4 MiB inputs that look like the start of many text formats, repeated
+  // without end, plus noise and zeros; each one detected under several names.
+  const Registry& registry = Registry::instance();
+  const auto repeat = [](std::string_view line) {
+    std::string text;
+    while (text.size() < (std::size_t{4} << 20)) text += line;
+    return text;
+  };
+  std::vector<Bytes> inputs;
+  for (const std::string_view line :
+       {"1\n00:00:01,000 --> 00:00:02,000\nhello\n\n", "BEGIN:VCARD\nFN:A\n", "BEGIN:VEVENT\nSUMMARY:x\n", "@article{a,\n",
+        "<a href=\"x\">x</a>\n", "{\"a\": [1, 2, {\"b\": \"c\"}]}, ", "a,b,c\n1,2,3\n", "Dialogue: 0,0:00:01.00,0:00:02.00,x\n",
+        "#EXTINF:1,x\nx.mp3\n", "- [ ] item\n", "<p>x</p>", "key = value\n", "        "}) {
+    inputs.push_back(to_bytes(repeat(line)));
+  }
+  inputs.push_back(test::random_bytes(std::size_t{4} << 20, 7));
+  inputs.push_back(Bytes(std::size_t{4} << 20, std::byte{0}));
+  const auto start = std::chrono::steady_clock::now();
+  for (const Bytes& input : inputs) {
+    for (const std::string_view name : {"", "x.txt", "x.srt", "x.vcf", "x.ics", "x.bib", "x.json", "x.csv"}) {
+      (void)detect_candidates(registry, input, name);
+    }
+  }
+  const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+  MESSAGE(inputs.size() * 8, " detections of 4 MiB inputs took ", seconds, " s");
+  // Generous for a Debug build under a sanitizer: about 120 detections. A
+  // sniffer that parses whole files takes minutes here.
+  CHECK(seconds < 60.0);
 }

@@ -54,9 +54,11 @@ std::optional<FrameHeader> parse_header(std::uint32_t word) noexcept {
   h.sample_rate = sample_rates[h.version][h.rate_index];
   h.bitrate_kbps = bitrates[h.lsf() ? 1 : 0][h.layer - 1][h.bitrate_index];
   // Layer II does not allow every bit rate with every mode (MPEG-1 only).
-  if (h.layer == 2 && !h.lsf() && h.bitrate_index != 0) {
+  // Mono above 192 kbit/s is outside the table too, but common encoders
+  // (FFmpeg among them) write it and every decoder plays it, so it is kept.
+  if (h.layer == 2 && !h.lsf() && h.bitrate_index != 0 && h.mode != 3) {
     const std::uint32_t kbps = h.bitrate_kbps;
-    if (h.mode == 3 ? kbps > 192 : (kbps == 32 || kbps == 48 || kbps == 56 || kbps == 80)) return std::nullopt;
+    if (kbps == 32 || kbps == 48 || kbps == 56 || kbps == 80) return std::nullopt;
   }
   return h;
 }

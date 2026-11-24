@@ -1576,7 +1576,8 @@ Result<Scene> read_impl(ReadContext& ctx, bool for_mesh) {
   const bool paper = !for_mesh && ctx.options.get_enum("space", "model", {"model", "paper"}) == "paper";
   std::set<std::string> filter;
   if (!for_mesh) {
-    for (const std::string_view name : util::split(ctx.options.get_string("layers", ""), ',', false)) {
+    const std::string layers = ctx.options.get_string("dxf_layers", "");  // split() returns views into it
+    for (const std::string_view name : util::split(layers, ',', false)) {
       const std::string key = upper(name);
       if (!key.empty()) filter.insert(key);
     }

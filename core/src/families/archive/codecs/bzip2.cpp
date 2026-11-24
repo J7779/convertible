@@ -391,7 +391,7 @@ class Bzip2Encoder final : public Encoder {
   }
 
   Result<void> write_block(Bytes& output) {
-    if (!progress_.report(0.5)) return fail(Status::Cancelled, "the conversion was cancelled");
+    if (progress_.cancelled()) return fail(Status::Cancelled, "the conversion was cancelled");
     const auto n = static_cast<std::uint32_t>(block_.size());
     const std::vector<std::uint32_t> sa = sort_rotations(block_);
     std::uint32_t orig_ptr = 0;
@@ -604,7 +604,15 @@ Result<Bytes> decode_bzip2(ByteView data, const DecodeOptions& options) {
 Result<Bytes> encode_bzip2(ByteView data, const EncodeOptions& options) {
   Bzip2Encoder encoder(options);
   Bytes out;
-  CVT_TRY(encoder.encode(data, out));
+  // Fed in pieces so that progress advances (and a cancellation is seen)
+  // at least once per block sort; the output does not depend on the cut.
+  constexpr std::size_t piece = std::size_t{256} << 10;
+  for (std::size_t at = 0; at < data.size(); at += piece) {
+    if (!options.progress.report(static_cast<double>(at) / static_cast<double>(data.size()))) {
+      return fail(Status::Cancelled, "the conversion was cancelled");
+    }
+    CVT_TRY(encoder.encode(data.subspan(at, std::min(piece, data.size() - at)), out));
+  }
   CVT_TRY(encoder.finish(out));
   return out;
 }

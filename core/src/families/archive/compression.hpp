@@ -151,7 +151,7 @@ struct DecodeOptions {
   /// own end (LzmaRaw without end marker, Lz4Block, Lzo1x, Ppmd7, LZX,
   /// Quantum, XPRESS, Lh, Implode, ...). Also checked when the format stores
   /// a size of its own.
-  std::optional<std::uint64_t> output_size;
+  std::optional<std::uint64_t> output_size{};
   /// Coder properties as stored by the container (see `Method`).
   ByteView properties{};
   /// Window size in bits for LZX / Quantum / Lh / Lzs.
@@ -180,7 +180,7 @@ struct EncodeOptions {
   /// xz integrity check.
   XzCheck check = XzCheck::Crc64;
   /// xz / 7z pre-filters applied before LZMA2, in order.
-  std::vector<Filter> filters;
+  std::vector<Filter> filters{};
   /// LZ4 frame block size in bytes (65536, 262144, 1048576 or 4194304; 0 = 4 MiB).
   std::uint32_t block_size = 0;
   /// Store a checksum of the content (Zstandard, LZ4 frame).
@@ -188,7 +188,7 @@ struct EncodeOptions {
   /// Record the uncompressed size in the header (Zstandard, LZ4 frame, LzmaAlone).
   bool content_size = true;
   /// gzip header fields (FNAME and MTIME); empty / 0 = not recorded.
-  std::string original_name;
+  std::string original_name{};
   std::uint32_t mtime = 0;
   /// Optional progress and cancellation (fraction = input consumed).
   Progress progress{};

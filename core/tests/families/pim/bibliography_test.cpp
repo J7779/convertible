@@ -54,7 +54,7 @@ void check_book(const Json& item) {
 }  // namespace
 
 TEST_CASE("pim/bibtex: decodes files written by bibtexparser and pybtex") {
-  const auto bib = test::read_as<ir::Data>("bibtex", test::fixture("pim/bibliography/bibtexparser.bib"));
+  const auto bib = test::read_as<ir::Data>("bib", test::fixture("pim/bibliography/bibtexparser.bib"));
   REQUIRE_OK(bib);
   REQUIRE(bib->value.size() == 2);
   check_article(bib->value[0]);
@@ -64,7 +64,7 @@ TEST_CASE("pim/bibtex: decodes files written by bibtexparser and pybtex") {
   const Json& book = bib->value[1];
   CHECK(book["author"][0]["suffix"].as_string() == "Jr.");
   CHECK(book["ISBN"].as_string() == "978-0-00-000000-0");
-  const auto py = test::read_as<ir::Data>("bibtex", test::fixture("pim/bibliography/pybtex.bib"));
+  const auto py = test::read_as<ir::Data>("bib", test::fixture("pim/bibliography/pybtex.bib"));
   REQUIRE_OK(py);
   const Json& proc = py->value[0];
   CHECK(proc["type"].as_string() == "paper-conference");
@@ -75,7 +75,7 @@ TEST_CASE("pim/bibtex: decodes files written by bibtexparser and pybtex") {
 }
 
 TEST_CASE("pim/bibtex: macros, concatenation, LaTeX and name forms") {
-  const auto bib = test::read_as<ir::Data>("bibtex", test::fixture("pim/bibliography/macros.bib"));
+  const auto bib = test::read_as<ir::Data>("bib", test::fixture("pim/bibliography/macros.bib"));
   REQUIRE_OK(bib);
   REQUIRE(bib->value.size() == 2);
   const Json& article = bib->value[0];
@@ -102,7 +102,7 @@ TEST_CASE("pim/bibtex: macros, concatenation, LaTeX and name forms") {
 TEST_CASE("pim/bibtex: writing escapes accents and specials; biblatex dialect") {
   const auto csl = test::read_as<ir::Data>("csl-json", test::fixture("pim/bibliography/items.csl.json"));
   REQUIRE_OK(csl);
-  const auto bibtex = test::write_from("bibtex", *csl);
+  const auto bibtex = test::write_from("bib", *csl);
   REQUIRE_OK(bibtex);
   const std::string text = test::str(*bibtex);
   CHECK(text.find("@article{example2021,") != std::string::npos);
@@ -110,7 +110,7 @@ TEST_CASE("pim/bibtex: writing escapes accents and specials; biblatex dialect") 
   CHECK(text.find("author = {Example, Ada and de la Fontaine, Jean-Luc}") != std::string::npos);
   CHECK(text.find("pages = {101--115}") != std::string::npos);
   CHECK(text.find("month = mar") != std::string::npos);
-  const auto biblatex = test::write_from("bibtex", *csl, R"({"bib_dialect":"biblatex"})");
+  const auto biblatex = test::write_from("bib", *csl, R"({"bib_dialect":"biblatex"})");
   REQUIRE_OK(biblatex);
   const std::string latex = test::str(*biblatex);
   CHECK(latex.find("journaltitle = {Journal of Made-up Results}") != std::string::npos);
@@ -118,7 +118,7 @@ TEST_CASE("pim/bibtex: writing escapes accents and specials; biblatex dialect") 
   CHECK(latex.find("ünïcödé") != std::string::npos);  // UTF-8 kept for BibLaTeX
   // Both read back to the same records.
   for (const Bytes* written : {&*bibtex, &*biblatex}) {
-    const auto back = test::read_as<ir::Data>("bibtex", *written);
+    const auto back = test::read_as<ir::Data>("bib", *written);
     REQUIRE_OK(back);
     check_article(back->value[0]);
     check_book(back->value[1]);
@@ -162,7 +162,7 @@ TEST_CASE("pim/bibliography: tagged and XML formats decode to the same records")
 }
 
 TEST_CASE("pim/bibliography: every writable pair round-trips the records") {
-  const char* formats[] = {"bibtex", "ris", "enw", "refworks", "csl-json", "nbib", "isi", "endnote-xml", "mods"};
+  const char* formats[] = {"bib", "ris", "enw", "refworks", "csl-json", "nbib", "isi", "endnote-xml", "mods"};
   const auto source = test::read_as<ir::Data>("csl-json", test::fixture("pim/bibliography/items.csl.json"));
   REQUIRE_OK(source);
   for (const char* from : formats) {
@@ -201,15 +201,15 @@ TEST_CASE("pim/bibliography: reference list and table views") {
   CHECK(text.find("Example, A., & de la Fontaine, J.-L. (2021). A synthetic study of ünïcödé handling. Journal of Made-up "
                   "Results, 12(3), 101-115. https://doi.org/10.1234/example.2021.001") != std::string::npos);
   CHECK(text.find("Sample, B., Jr. (2019). Fictional Methods. Example Press.") != std::string::npos);
-  const auto table = test::read_as<ir::Table>("bibtex", test::fixture("pim/bibliography/bibtexparser.bib"));
+  const auto table = test::read_as<ir::Table>("bib", test::fixture("pim/bibliography/bibtexparser.bib"));
   REQUIRE_OK(table);
   CHECK(table->sheets[0].rows[1][2].text == "Example, Ada; de la Fontaine, Jean-Luc");
   CHECK(table->sheets[0].rows[1][5].number == 2021.0);
 }
 
 TEST_CASE("pim/bibliography: detection and damaged input") {
-  CHECK(detected("pim/bibliography/bibtexparser.bib", "") == "bibtex");
-  CHECK(detected("pim/bibliography/macros.bib", "refs.bib") == "bibtex");
+  CHECK(detected("pim/bibliography/bibtexparser.bib", "") == "bib");
+  CHECK(detected("pim/bibliography/macros.bib", "refs.bib") == "bib");
   CHECK(detected("pim/bibliography/rispy.ris", "") == "ris");
   CHECK(detected("pim/bibliography/endnote.enw", "") == "enw");
   CHECK(detected("pim/bibliography/refworks.txt", "export.txt") == "refworks");
@@ -222,7 +222,7 @@ TEST_CASE("pim/bibliography: detection and damaged input") {
     const char* format;
     const char* file;
   };
-  const Case cases[] = {{"bibtex", "pim/bibliography/macros.bib"},       {"bibtex", "pim/bibliography/bibtexparser.bib"},
+  const Case cases[] = {{"bib", "pim/bibliography/macros.bib"},       {"bib", "pim/bibliography/bibtexparser.bib"},
                         {"ris", "pim/bibliography/rispy.ris"},           {"enw", "pim/bibliography/endnote.enw"},
                         {"refworks", "pim/bibliography/refworks.txt"},   {"csl-json", "pim/bibliography/items.csl.json"},
                         {"nbib", "pim/bibliography/pubmed.nbib"},        {"isi", "pim/bibliography/wos.isi"},
@@ -231,10 +231,10 @@ TEST_CASE("pim/bibliography: detection and damaged input") {
     INFO(c.format);
     CHECK(test::fuzz_reader<ir::Data>(c.format, test::fixture(c.file)) > 0);
   }
-  CHECK_STATUS(test::read_as<ir::Data>("bibtex", test::bytes("@article{x, title = {a {b}")), Status::Decode);
+  CHECK_STATUS(test::read_as<ir::Data>("bib", test::bytes("@article{x, title = {a {b}")), Status::Decode);
   // A macro that doubles itself cannot blow up memory.
   std::string bomb = "@string{a = \"xxxxxxxxxxxxxxxx\"}\n";
   for (int i = 0; i < 30; ++i) bomb += std::format("@string{{a = a # a}}\n");
   bomb += "@misc{k, title = a}\n";
-  CHECK_STATUS(test::read_as<ir::Data>("bibtex", test::bytes(bomb)), Status::Limit);
+  CHECK_STATUS(test::read_as<ir::Data>("bib", test::bytes(bomb)), Status::Limit);
 }

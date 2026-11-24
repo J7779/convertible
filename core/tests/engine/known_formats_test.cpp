@@ -68,7 +68,9 @@ struct ManifestRow {
 
 std::vector<ManifestRow> manifest() {
   std::vector<ManifestRow> rows;
-  for (const std::string_view line : util::split_lines(test::fixture_text("detect/manifest.tsv"))) {
+  // split_lines returns views: the text must outlive the loop.
+  const std::string text = test::fixture_text("detect/manifest.tsv");
+  for (const std::string_view line : util::split_lines(text)) {
     if (line.empty() || line.starts_with('#')) continue;
     const std::vector<std::string_view> cells = util::split(line, '\t');
     REQUIRE(cells.size() == 3);

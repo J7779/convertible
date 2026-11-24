@@ -83,7 +83,7 @@ TEST_CASE("pim/browser-bookmarks: Chrome and Firefox JSON") {
 }
 
 TEST_CASE("pim/link files: .url, .webloc (XML and binary) and .desktop") {
-  const auto url = test::read_as<ir::Data>("url-shortcut", test::fixture("pim/bookmarks/example.url"));
+  const auto url = test::read_as<ir::Data>("url", test::fixture("pim/bookmarks/example.url"));
   REQUIRE_OK(url);
   CHECK(url->value["url"].as_string() == "https://www.example.org/docs?x=1&y=2");
   const auto webloc = test::read_as<ir::Data>("webloc", test::fixture("pim/bookmarks/example.webloc"));
@@ -92,15 +92,15 @@ TEST_CASE("pim/link files: .url, .webloc (XML and binary) and .desktop") {
   const auto binary = test::read_as<ir::Data>("webloc", test::fixture("pim/bookmarks/example_binary.webloc"));
   REQUIRE_OK(binary);
   CHECK(binary->value["url"].as_string() == "https://www.example.org/ünï");
-  const auto desktop = test::read_as<ir::Data>("desktop-link", test::fixture("pim/bookmarks/example.desktop"));
+  const auto desktop = test::read_as<ir::Data>("desktop", test::fixture("pim/bookmarks/example.desktop"));
   REQUIRE_OK(desktop);
   CHECK(desktop->value["url"].as_string() == "https://www.example.org/docs");
   CHECK(desktop->value["title"].as_string() == "Example docs");
   // Every pair of link formats.
-  for (const char* from : {"url-shortcut", "webloc", "desktop-link"}) {
+  for (const char* from : {"url", "webloc", "desktop"}) {
     const auto written = test::write_from(from, *desktop);
     REQUIRE_OK(written);
-    for (const char* to : {"url-shortcut", "webloc", "desktop-link"}) {
+    for (const char* to : {"url", "webloc", "desktop"}) {
       INFO(from, " -> ", to);
       const test::Converted converted = test::convert(*written, from, to);
       REQUIRE(converted.ok());
@@ -109,7 +109,7 @@ TEST_CASE("pim/link files: .url, .webloc (XML and binary) and .desktop") {
       CHECK(back->value["url"].as_string() == "https://www.example.org/docs");
     }
   }
-  CHECK_STATUS(test::read_as<ir::Data>("url-shortcut", test::bytes("[InternetShortcut]\r\n")), Status::Decode);
+  CHECK_STATUS(test::read_as<ir::Data>("url", test::bytes("[InternetShortcut]\r\n")), Status::Decode);
 }
 
 TEST_CASE("pim/feeds: RSS, Atom and JSON Feed decode to one model") {
@@ -175,10 +175,10 @@ TEST_CASE("pim/bookmarks and feeds: detection and damaged input") {
   CHECK(detected("pim/bookmarks/netscape.html", "bookmarks.html") == "netscape-bookmarks");
   CHECK(detected("pim/bookmarks/chrome_bookmarks.json", "Bookmarks") == "browser-bookmarks");
   CHECK(detected("pim/bookmarks/firefox_backup.json", "backup.json") == "browser-bookmarks");
-  CHECK(detected("pim/bookmarks/example.url", "") == "url-shortcut");
+  CHECK(detected("pim/bookmarks/example.url", "") == "url");
   CHECK(detected("pim/bookmarks/example.webloc", "") == "webloc");
   CHECK(detected("pim/bookmarks/example_binary.webloc", "x.webloc") == "webloc");
-  CHECK(detected("pim/bookmarks/example.desktop", "") == "desktop-link");
+  CHECK(detected("pim/bookmarks/example.desktop", "") == "desktop");
   CHECK(detected("pim/feeds/feedgen.rss", "feed.xml") == "rss");
   CHECK(detected("pim/feeds/rss1.rdf", "") == "rss");
   CHECK(detected("pim/feeds/feedgen.atom", "feed.xml") == "atom");
@@ -190,10 +190,10 @@ TEST_CASE("pim/bookmarks and feeds: detection and damaged input") {
   const Case cases[] = {{"netscape-bookmarks", "pim/bookmarks/netscape.html"},
                         {"browser-bookmarks", "pim/bookmarks/chrome_bookmarks.json"},
                         {"browser-bookmarks", "pim/bookmarks/firefox_backup.json"},
-                        {"url-shortcut", "pim/bookmarks/example.url"},
+                        {"url", "pim/bookmarks/example.url"},
                         {"webloc", "pim/bookmarks/example.webloc"},
                         {"webloc", "pim/bookmarks/example_binary.webloc"},
-                        {"desktop-link", "pim/bookmarks/example.desktop"},
+                        {"desktop", "pim/bookmarks/example.desktop"},
                         {"rss", "pim/feeds/feedgen.rss"},
                         {"rss", "pim/feeds/rss1.rdf"},
                         {"atom", "pim/feeds/feedgen.atom"},

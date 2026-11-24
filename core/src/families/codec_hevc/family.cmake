@@ -54,6 +54,7 @@ target_include_directories(cvt_imported_kvazaar PRIVATE
 # boundary-strength maps as 32-bit words at 2-byte offsets (fine on x86,
 # arm64, wasm32 and armv7 LDR/STR). Keep UBSan's other checks.
 if(CVT_SANITIZE AND NOT MSVC)
-  target_compile_options(cvt_imported_libhevc PRIVATE -fno-sanitize=shift-base,alignment)
+  # Null-pointer arithmetic on unused plane pointers (SAO, inter prediction).
+  target_compile_options(cvt_imported_libhevc PRIVATE -fno-sanitize=shift-base,alignment,pointer-overflow)
   target_compile_options(cvt_imported_kvazaar PRIVATE -fno-sanitize=shift-base)
 endif()

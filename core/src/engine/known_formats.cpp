@@ -8,24 +8,53 @@
 // recognise a format (signatures or a sniff function), the database's
 // detection for that id is dropped.
 //
-// CANONICAL IDS (families must use the same spelling for the same format):
+// ID POLICY - one canonical id per format for the whole product. The
+// database, every family, the tests, the fixture manifests and the docs use
+// the same spelling; core/tests/engine/catalogue_test.cpp fails on any
+// disagreement. The rules:
 //   * lower case, [a-z0-9._+-], at most 32 characters;
-//   * the format's dominant file extension without the dot: "jpg" not
-//     "jpeg", "tiff" not "tif", "mp4", "html", "md", "yaml", "ttf", "mid";
-//     every other common extension is listed as an alias (first = default);
+//   * the id users recognise: the format's dominant file extension without
+//     the dot: "jpg" not "jpeg", "tiff" not "tif", "dcm" not "dicom", "h5"
+//     not "hdf5", "jsonl" not "ndjson", "adoc" not "asciidoc", "bib" not
+//     "bibtex", "gbk" not "genbank", "pkl" not "pickle";
 //   * compound formats get compound ids: "tar.gz", "tar.xz", "nii.gz",
 //     "ome.tiff", "pkg.tar.zst";
-//   * when two genuinely different formats share an extension, the more
-//     common one keeps the plain id and the other gets a descriptive one
-//     ("ts" is TypeScript, the MPEG transport stream is "mpegts"; "vcf" is
-//     vCard, the genomics format is "vcf-variant"; "asc" is ASCII-armoured
-//     OpenPGP, the ESRI grid is "asc-grid");
-//   * variants that are the same format under another name stay one id
-//     (m4b, m4p, m4r are "m4a"; jfif is "jpg"; aif/aifc are "aiff"), while
-//     variants with their own structure get their own id (docm, dotx, xlsb,
-//     m2ts, bigtiff, apng);
+//   * when two genuinely different formats want the same short id, the far
+//     more common one gets it and the other gets a descriptive id: "ts" is
+//     TypeScript, the MPEG transport stream is "mpegts"; "vcf" is vCard, the
+//     genomics format "vcf-variant"; "asc" is ASCII-armoured OpenPGP, the Esri
+//     grid "asc-grid"; "xyz" is the point list, the molecule file
+//     "xyz-molecule"; "nc" is NetCDF (G-code lists .nc as an extension and is
+//     told apart by content); an id may also be descriptive when the
+//     extension says nothing ("spreadsheetml", "ogg-flac", "ssh-pub", "bplist");
+//   * aliases are extensions, never second ids: .m4b/.m4r are extensions of
+//     "m4a", .patch of "diff", .xlt of "xls", .pps/.pot of "ppt", .jfif of
+//     "jpg", .a of "ar". Variants with a structure of their own keep their own
+//     id ("aifc" next to "aiff", "docm", "dotx", "xlsb", "m2ts", "bigtiff",
+//     "apng");
+//   * a family's FormatInfo wins over the database row with the same id; a
+//     database row for a format a family owns is reduced to what the family
+//     does not say (extensions are merged, so the row must not list an
+//     extension that belongs to another format) or deleted;
+//   * output-only formats (FormatInfo::output_only: barcodes, minified code,
+//     "csv-semicolon", "extract") are never detected and never sources;
+//   * recognising a format inside a shared container (ZIP, OLE2, ISO BMFF,
+//     ASF, RIFF, EBML, Ogg, gzip, SQLite, TIFF) goes through sniff::classify()
+//     or a sniff function that looks inside - never a bare container magic
+//     as a signature;
 //   * ids that existed before this policy keep their spelling: "macho",
 //     "exe", "elf", "sqlite", "mpg", "mid", "aiff", "ics", "vcf", "ts".
+//
+// Renamed by the catalogue reconciliation (old -> new): dicom -> dcm,
+// genbank -> gbk, jcamp -> jdx, stockholm -> sto, nexus -> nex, nifti -> nii,
+// hdf5 -> h5, netcdf -> nc, gerber -> gbr, pgp -> gpg, pgp-armor -> asc,
+// ndjson -> jsonl, pickle -> pkl, protobuf -> pb, asciidoc -> adoc,
+// texinfo -> texi, mediawiki -> wiki, bibtex -> bib, url-shortcut -> url,
+// desktop-link -> desktop, sami -> smi, star -> bzl, zz -> zlib,
+// xyz (molecules) -> xyz-molecule, patch -> diff, m4b -> m4a; database rows
+// xmlss -> spreadsheetml, ssh-pubkey -> ssh-pub; database rows folded into a
+// family format: a (ar), crt (pem/der), oga (ogg-flac), rf64 (wav), xlt
+// (xls), pps and pot (ppt).
 //
 // EACH ROW (see known_formats_table.hpp):
 //   id, human name, category, extensions (space separated, lower case, the

@@ -1032,7 +1032,12 @@ int sniff_m3u(ByteView data, bool extended_only) {
 void register_playlists(Registry& registry) {
   register_playlist(registry,
                     {"m3u", "M3U playlist", "Media playlist (extended M3U with #EXTINF).", {"m3u"}, "audio/x-mpegurl", 50,
-                     [](ByteView data, std::string_view) { return sniff_m3u(data, false); }},
+                     [](ByteView data, std::string_view filename) {
+                       // A plain list of paths has no header: the name decides.
+                       const int score = sniff_m3u(data, false);
+                       if (score == 0 && util::iends_with(filename, ".m3u") && !data.empty() && util::looks_like_text(data.first(std::min<std::size_t>(data.size(), 2048)))) return 80;
+                       return score;
+                     }},
                     true);
   register_playlist(registry,
                     {"m3u8", "M3U8 playlist", "UTF-8 M3U playlist, including HLS media and master playlists.", {"m3u8"},

@@ -18,6 +18,7 @@
 #include "families/audio_lossy/aac/aac.hpp"
 #include "families/audio_lossy/common.hpp"
 #include "families/audio_lossy/lossy.hpp"
+#include "util/text.hpp"
 
 namespace cvt::lossy {
 
@@ -97,12 +98,16 @@ int sniff_adts(ByteView data, std::string_view) {
 }
 
 /// MPEG-4 file with an AAC (or other non-ALAC) sound track and no video.
-int sniff_m4a(ByteView data, std::string_view) {
+int sniff_m4a(ByteView data, std::string_view filename) {
   if (data.size() < 12 || as_chars(data.subspan(4, 4)) != "ftyp") return 0;
   const std::string_view head = as_chars(data.first(std::min<std::size_t>(data.size(), 1 << 20)));
   std::string_view brand = head.substr(8, 4);
-  const bool audio_brand = brand == "M4A " || brand == "M4B " || brand == "M4P " || brand == "3gp4" || brand == "3gp5" ||
-                           brand == "3gp6" || brand == "mp42" || brand == "isom" || brand == "M4R ";
+  // 3GPP files are "3gp" (the video family's format, which also reads their
+  // sound) unless the name says .3ga or .m4a.
+  const bool gpp = brand == "3gp4" || brand == "3gp5" || brand == "3gp6";
+  if (gpp && !util::iends_with(filename, ".3ga") && !util::iends_with(filename, ".m4a")) return 0;
+  const bool audio_brand = brand == "M4A " || brand == "M4B " || brand == "M4P " || gpp || brand == "mp42" ||
+                           brand == "isom" || brand == "M4R ";
   if (!audio_brand) return 0;
   const std::string_view tail = data.size() > (1 << 20) ? as_chars(data.last(1 << 20)) : std::string_view{};
   const auto contains = [&](std::string_view s) {

@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "engine/registry.hpp"
+#include "engine/sniffers.hpp"
 #include "families/table/common.hpp"
 #include "families/table/sql.hpp"
 #include "families/table/table.hpp"
@@ -1031,7 +1032,12 @@ void register_sqlite(Registry& registry) {
   info.extensions = {"sqlite", "sqlite3", "db", "db3"};
   info.mime = "application/vnd.sqlite3";
   info.popularity = 60;
-  info.signatures = {Signature::at(0, "'SQLite format 3' 00")};
+  // SQLite is a container (GeoPackage, MBTiles ... are SQLite files with an
+  // application id): the shared classifier names those, this is the rest.
+  info.sniff = [](std::span<const std::byte> data, std::string_view filename) {
+    const sniff::Verdict verdict = sniff::classify(sniff::Family::Sqlite, data, filename, "sqlite");
+    return verdict.id == "sqlite" ? verdict.confidence : 0;
+  };
   registry.add_format(std::move(info));
 
   Codec codec;

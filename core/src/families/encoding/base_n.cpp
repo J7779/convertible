@@ -217,6 +217,9 @@ OptionSpec line_width_option(std::int64_t default_width) {
                              "Characters per line; 0 writes a single unbroken line.");
 }
 
+// Whole groups of five bytes when the text is one line (see BinaryEncoding::chunk).
+std::size_t base32_chunk(const Options& options) { return options.get_int("line_width", 0, 0, 1024) == 0 ? 5 : 0; }
+
 OptionSpec padding_option() {
   return OptionSpec::boolean("padding", "Padding", true, "End the output with '=' padding characters.");
 }
@@ -464,6 +467,7 @@ void register_base_n(Registry& registry) {
       .encode = encode_base32(Base32Alphabet::Standard), .decode = decode_base32(Base32Alphabet::Standard),
       .encode_options = {padding_option(), line_width_option(0)},
       .expansion = 4,  // 8 characters per 5 bytes, doubled by one-character lines
+      .chunk = base32_chunk,
   });
   add_binary_encoding(registry, {
       .id = "base32hex", .name = "Base32 text (extended hex alphabet)",
@@ -472,6 +476,7 @@ void register_base_n(Registry& registry) {
       .encode = encode_base32(Base32Alphabet::Hex), .decode = decode_base32(Base32Alphabet::Hex),
       .encode_options = {padding_option(), line_width_option(0)},
       .expansion = 4,
+      .chunk = base32_chunk,
   });
   add_binary_encoding(registry, {
       .id = "base32-crockford", .name = "Base32 text (Crockford alphabet)",

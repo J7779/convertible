@@ -7,6 +7,7 @@
 #include "families/document/doc_common.hpp"
 #include "families/document/document_api.hpp"
 #include "families/document/html_internal.hpp"
+#include "util/charsets.hpp"
 #include "util/text.hpp"
 
 namespace cvt::document {
@@ -1065,8 +1066,13 @@ Result<ir::Document> parse_html(ByteView data, const HtmlReadOptions& options, W
     const std::string_view raw = as_chars(data);
     if (util::is_valid_utf8(raw)) {
       text = std::string(raw);
+    } else if (options.fallback_encoding.empty() || util::iequals(options.fallback_encoding, "windows-1252")) {
+      // No declaration and no specific fallback: a legacy charset the shared
+      // detector is confident about (a Shift_JIS or Big5 page without <meta>),
+      // else Windows-1252 as browsers do.
+      text = util::decode_auto(data, "windows-1252").text;
     } else {
-      decode_charset(data, options.fallback_encoding.empty() ? "windows-1252" : options.fallback_encoding, text);
+      decode_charset(data, options.fallback_encoding, text);
     }
   } else if (util::detect_bom(data) && text.starts_with("\xEF\xBB\xBF")) {
     text.erase(0, 3);

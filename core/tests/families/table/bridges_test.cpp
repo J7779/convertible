@@ -183,12 +183,17 @@ TEST_CASE("table/common: code pages") {
 TEST_CASE("table/registry: formats are registered consistently") {
   const Registry& registry = Registry::instance();
   CHECK(registry.validate().empty());
-  for (const char* id : {"csv", "tsv", "psv", "csv-semicolon", "fwf", "xlsx", "xlsm", "xltx", "xlsb", "xls", "ods", "ots", "fods",
-                         "spreadsheetml", "gnumeric", "md", "rst", "adoc", "org", "tex", "mediawiki", "jira", "text-table",
+  for (const char* id : {"csv", "tsv", "psv", "fwf", "xlsx", "xlsm", "xltx", "xlsb", "xls", "ods", "ots", "fods",
+                         "spreadsheetml", "gnumeric", "md", "rst", "adoc", "org", "tex", "wiki", "jira", "text-table",
                          "html", "sqlite", "sql", "dbf", "parquet", "slk", "dif", "wk1", "wq1"}) {
     INFO(id);
     CHECK(registry.find(id) != nullptr);
     CHECK(registry.has_reader(id));
   }
   for (const char* id : {"xlsb", "gnumeric", "wk1", "wq1"}) CHECK_FALSE(registry.has_writer(id));
+  // A target only: semicolon files are read (and detected) as csv.
+  const FormatInfo* semicolon = registry.find("csv-semicolon");
+  REQUIRE(semicolon != nullptr);
+  CHECK(semicolon->output_only);
+  CHECK(registry.has_writer("csv-semicolon"));
 }

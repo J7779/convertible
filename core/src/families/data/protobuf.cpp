@@ -335,7 +335,7 @@ Result<Bytes> write_protobuf(const Json& value, WriteContext&) {
 
 void register_protobuf(Registry& registry) {
   registry.add_format(FormatInfo{
-      .id = "protobuf",
+      .id = "pb",
       .name = "Protocol Buffers message",
       .description = "A serialised Protocol Buffers message (binary wire format), decoded without a schema.",
       .category = Category::Data,
@@ -352,7 +352,7 @@ void register_protobuf(Registry& registry) {
   read_options.push_back(OptionSpec::boolean("typed_keys", "Keep wire types", false,
                                              "Add the wire type to each key (\"3:f32\") so that encoding again "
                                              "reproduces it exactly."));
-  add_codec(registry, {.format_id = "protobuf",
+  add_codec(registry, {.format_id = "pb",
                        .read = binary_reader(parse_protobuf),
                        .write = binary_writer(write_protobuf, "Protocol Buffers"),
                        .read_options = std::move(read_options),

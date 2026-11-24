@@ -23,6 +23,7 @@ void register_archive_family(Registry& registry) {
   archive::register_squashfs_format(registry);
   archive::register_dmg_format(registry);
   archive::register_legacy_formats(registry);
+  archive::register_extract(registry);
   archive::register_bridges(registry);
 }
 

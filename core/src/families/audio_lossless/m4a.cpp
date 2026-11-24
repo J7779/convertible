@@ -715,15 +715,8 @@ void register_m4a(Registry& registry) {
   alac_codec.write_options = options;
   registry.add_codec(std::move(alac_codec));
 
-  // Any audio-only MPEG-4 file: ALAC in-house, other codecs through the
-  // media registry. Slightly more expensive than a dedicated reader so that
-  // one registered by another family for the same format wins.
-  Codec m4a_reader;
-  m4a_reader.format_id = "m4a";
-  m4a_reader.kind = Kind::Audio;
-  m4a_reader.read = read_m4a;
-  m4a_reader.read_cost = 12;
-  registry.add_codec(std::move(m4a_reader));
+  // Other audio-only MPEG-4 files are read by the audio_lossy family's "m4a"
+  // reader, which hands anything that is not AAC to read_mp4_audio().
 }
 
 }  // namespace cvt::audio

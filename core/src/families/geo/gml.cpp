@@ -723,7 +723,7 @@ int sniff_georss(ByteView data, std::string_view) {
                     head.find("RDF") != std::string_view::npos;
   const bool geo = head.find("http://www.georss.org/georss") != std::string_view::npos ||
                    head.find("http://www.w3.org/2003/01/geo/wgs84_pos#") != std::string_view::npos;
-  return feed && geo ? 91 : 0;
+  return feed && geo ? 96 : 0;  // above a plain RSS or Atom feed
 }
 
 }  // namespace

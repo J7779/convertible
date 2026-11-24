@@ -209,7 +209,7 @@ std::string c_header(ByteView data, std::string_view variable_name, std::size_t 
 
 // --------------------------------------------------------------------------- uuencode
 
-std::string uuencode(ByteView data, std::string_view filename) {
+std::string uuencode(ByteView data, std::string_view filename, const Progress* progress) {
   std::string name;
   for (const char c : filename) {
     if (static_cast<unsigned char>(c) > 0x20 && c != 0x7F) name.push_back(c);
@@ -219,6 +219,10 @@ std::string uuencode(ByteView data, std::string_view filename) {
   std::string out = "begin 644 " + name + "\n";
   out.reserve(out.size() + data.size() / 45 * 62 + 80);
   for (std::size_t offset = 0; offset < data.size(); offset += 45) {
+    if (progress != nullptr && offset % (45 * 23302) == 0 &&
+        !progress->report(static_cast<double>(offset) / static_cast<double>(data.size()))) {
+      return out;
+    }
     const std::size_t count = std::min<std::size_t>(45, data.size() - offset);
     out.push_back(uu_char(static_cast<std::uint32_t>(count)));
     for (std::size_t i = 0; i < count; i += 3) {

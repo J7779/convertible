@@ -94,6 +94,46 @@ TEST_CASE("document/html: character references") {
   CHECK(has_url(d, "https://e.com/?a=1&copy=2&b=3"));
 }
 
+TEST_CASE("document/html: East Asian legacy encodings, declared or not") {
+  struct Case {
+    std::string_view stem;
+    std::string_view first;
+    std::string_view second;
+  };
+  const Case cases[] = {
+      {"shift_jis", "こんにちは、世界。字幕のテストです。", "東京の空はとても青い。"},
+      {"gbk", "你好，世界。这是字幕测试。", "北京的天空非常蓝。"},
+      {"big5", "你好，世界。這是字幕測試。", "臺北的天空非常藍。"},
+      {"euc_kr", "안녕하세요, 세계. 자막 시험입니다.", "서울의 하늘은 아주 파랗다."},
+  };
+  const auto read = [](const std::string& file, std::string_view options = {}) {
+    auto doc = test::read_as<ir::Document>("html", test::fixture("document/legacy/" + file), options);
+    return doc ? *doc : ir::Document{};
+  };
+  for (const Case& c : cases) {
+    INFO(c.stem);
+    // <meta charset> names the encoding.
+    const ir::Document meta = read(std::string(c.stem) + "_meta.html");
+    CHECK(meta.metadata.title == c.second);
+    CHECK(ir::plain_text(meta) == std::string(c.first) + "\n");
+    // No declaration: the shared detector recognises the charset.
+    const std::string text = ir::plain_text(read(std::string(c.stem) + "_nometa.html"));
+    CHECK(text.find(c.first) != std::string::npos);
+    CHECK(text.find(c.second) != std::string::npos);
+    CHECK(text.find("\xEF\xBF\xBD") == std::string::npos);  // no U+FFFD
+  }
+  // The same page as a help file would hand it over: no declaration, the
+  // charset of the file's locale as the fallback (CHM pages, LCID 0x0411).
+  document::HtmlReadOptions options;
+  options.fallback_encoding = "windows-31j";
+  const auto chm_page = document::parse_html(test::fixture("document/legacy/shift_jis_nometa.html"), options);
+  REQUIRE_OK(chm_page);
+  CHECK(ir::plain_text(*chm_page).find("東京の空はとても青い。") != std::string::npos);
+  // source_encoding accepts the East Asian charsets too.
+  const ir::Document forced = read("gbk_nometa.html", R"({"source_encoding":"gbk"})");
+  CHECK(ir::plain_text(forced).find("北京的天空非常蓝。") != std::string::npos);
+}
+
 TEST_CASE("document/html: character encodings are detected and decoded") {
   const auto read = [](std::string_view fixture) {
     auto doc = test::read_as<ir::Document>("html", test::fixture(std::string("document/python/") + std::string(fixture)));

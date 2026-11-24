@@ -12,7 +12,6 @@ using enum sniff::Family;
 constexpr KnownFormat rows[] = {
     // ---- archives ----------------------------------------------------------------------------------------------
     {"zip", "ZIP archive", Archive, "zip", "application/zip", 95, "The universal compressed archive.", {{0, "'PK' 03 04"}, {0, "'PK' 05 06"}}},
-    {"zipx", "WinZip extended archive", Archive, "zipx", "application/x-zipx", 4, "ZIP using newer compression methods (WinZip).", {}, named(Zip)},
     {"7z", "7-Zip archive", Archive, "7z", "application/x-7z-compressed", 80, "High-ratio archive of 7-Zip (LZMA/LZMA2).", {{0, "'7z' BC AF 27 1C"}}},
     {"rar", "RAR archive", Archive, "rar", "application/vnd.rar", 75, "RARLAB archive (RAR 4 and RAR 5).", {{0, "'Rar!' 1A 07"}}},
     {"tar", "tar archive", Archive, "tar", "application/x-tar", 75, "Unix tape archive bundling files without compression.", {{257, "'ustar'"}}, named(Tar)},
@@ -53,7 +52,6 @@ constexpr KnownFormat rows[] = {
     {"iscab", "InstallShield cabinet", Archive, "cab hdr", "application/x-installshield-cab", 3, "InstallShield setup data cabinet.", {{0, "'ISc('"}}},
     {"cpio", "cpio archive", Archive, "cpio", "application/x-cpio", 6, "Unix archive used by RPM and initramfs.",
      {{0, "'07070'"}, {0, "C7 71"}, {0, "71 C7"}}},
-    {"a", "Static library", Archive, "a lib ar", "application/x-archive", 15, "Unix ar archive of object files (static library).", {{0, "'!<arch>' 0A"}}},
     {"wim", "Windows imaging archive", Archive, "wim swm esd", "application/x-ms-wim", 6, "File-based disk image of Windows setup.",
      {{0, "'MSWIM' 00 00 00"}}},
     {"xar", "XAR archive", Archive, "xar xip", "application/x-xar", 4, "eXtensible ARchive (Apple software packages).", {{0, "'xar!'"}}},

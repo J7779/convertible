@@ -459,6 +459,14 @@ void get_tns(
                 top -= get9_n_lessbits(num_start_band_bits,
                                        pInputStream);
 
+                /* Convertible: a damaged stream can make `top` negative;
+                 * stored in the unsigned tempInt it would index far
+                 * outside the band table below. */
+                if (top < 0)
+                {
+                    top = 0;
+                }
+
                 tempInt = MINIMUM(top, tns_bands);
 
                 pFilt->start_coef = SCALE_FACTOR_BAND_OFFSET(tempInt);

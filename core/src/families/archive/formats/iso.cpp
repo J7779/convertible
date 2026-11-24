@@ -491,7 +491,7 @@ int sniff_iso(std::span<const std::byte> data, std::string_view) {
   const std::size_t at = 16 * iso::sector;
   if (data.size() < at + 6) return 0;
   const std::string_view id = as_chars(data.subspan(at + 1, 5));
-  if (id == "CD001" && std::to_integer<int>(data[at + 6]) == 1) return 90;
+  if (id == "CD001" && data.size() > at + 6 && std::to_integer<int>(data[at + 6]) == 1) return 90;  // the version byte follows the id
   if (id == "BEA01") return 85;
   return 0;
 }

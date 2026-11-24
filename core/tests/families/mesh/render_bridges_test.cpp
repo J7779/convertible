@@ -119,14 +119,19 @@ TEST_CASE("mesh/render: point clouds, textures, degenerate input and limits") {
   REQUIRE_OK(textured);
   CHECK(coverage(textured->frames[0]) > 0.2);
   if (Registry::instance().has_reader("png")) {
-    // The 4x4 checker gives dark and light quadrants.
+    // The texture is a 4x4 one-texel checker with a linear magnification
+    // filter (as the file asks): the drawn quad shows its pattern as clearly
+    // darker and lighter areas, where the material colour alone would be flat.
     const ir::Frame& f = textured->frames[0];
-    int dark = 0, light = 0;
+    int darkest = 255, lightest = 0;
     for (std::uint32_t y = 20; y < 44; y += 4) {
-      for (std::uint32_t x = 20; x < 44; x += 4) (f.rgba[f.offset(x, y)] < 60 ? dark : light)++;
+      for (std::uint32_t x = 20; x < 44; x += 4) {
+        darkest = std::min<int>(darkest, f.rgba[f.offset(x, y)]);
+        lightest = std::max<int>(lightest, f.rgba[f.offset(x, y)]);
+      }
     }
-    CHECK(dark > 3);
-    CHECK(light > 3);
+    CHECK(darkest < 100);
+    CHECK(lightest > 200);
   }
 
   ir::Mesh single;

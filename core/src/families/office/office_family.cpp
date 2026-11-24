@@ -26,6 +26,10 @@ void register_office_family(Registry& registry) {
   office::register_mail(registry);
   // Last: wraps the Document readers registered above.
   office::register_image_extraction(registry);
+  // A comic is made of pictures or pages read as such, not of a picture
+  // rendered from some other file (Codec::direct_only).
+  registry.set_direct_only({"cbz"}, Kind::Image);
+  registry.set_direct_only({"cbz"}, Kind::Document);
 }
 
 }  // namespace cvt

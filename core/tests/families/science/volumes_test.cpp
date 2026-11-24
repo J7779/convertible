@@ -30,27 +30,27 @@ Json volume(const std::string& format, const std::string& file) {
 }  // namespace
 
 TEST_CASE("science/volumes: decodes nibabel, pynrrd and SimpleITK volumes") {
-  check_volume(volume("nifti", "vol.nii"));
+  check_volume(volume("nii", "vol.nii"));
   check_volume(volume("nii.gz", "vol.nii.gz"));
-  check_volume(volume("nifti", "scaled.nii"), 0.5, -1.0);
+  check_volume(volume("nii", "scaled.nii"), 0.5, -1.0);
   check_volume(volume("nrrd", "vol_gzip.nrrd"));
   check_volume(volume("nrrd", "vol_raw.nrrd"));
   check_volume(volume("nrrd", "vol_ascii.nrrd"));
   check_volume(volume("mha", "vol.mha"));
   check_volume(volume("mha", "vol_zlib.mha"));
-  const Json nii = volume("nifti", "vol.nii");
+  const Json nii = volume("nii", "vol.nii");
   CHECK(nii["dtype"].as_string() == "int16");
   CHECK(nii["attributes"]["pixdim"] == Json::array({0.5, 0.5, 2.0}));
   CHECK(nii["attributes"]["descrip"].as_string() == "synthetic");
   CHECK(volume("mha", "vol.mha")["attributes"]["ElementSpacing"].as_string() == "0.5 0.5 2");
   // An Analyze header alone gives its fields and a clear warning.
   std::vector<std::string> warnings;
-  const auto analyze = test::read_as<ir::Data>("nifti", test::fixture("science/arrays/analyze.hdr"), "", &warnings);
+  const auto analyze = test::read_as<ir::Data>("nii", test::fixture("science/arrays/analyze.hdr"), "", &warnings);
   REQUIRE_OK(analyze);
   CHECK(analyze->value["variables"][0]["attributes"]["format"].as_string() == "Analyze 7.5");
   CHECK(analyze->value["variables"][0]["attributes"]["dim"] == Json::array({4, 3, 2}));
   CHECK(warnings.size() == 1);
-  CHECK(detected(test::fixture("science/arrays/vol.nii"), "vol.nii") == "nifti");
+  CHECK(detected(test::fixture("science/arrays/vol.nii"), "vol.nii") == "nii");
   CHECK(detected(test::fixture("science/arrays/vol.nii.gz"), "vol.nii.gz") == "nii.gz");
   CHECK(detected(test::fixture("science/arrays/vol_gzip.nrrd")) == "nrrd");
   CHECK(detected(test::fixture("science/arrays/vol.mha")) == "mha");
@@ -67,15 +67,15 @@ TEST_CASE("science/volumes: slices render as frames") {
   CHECK(image->frames[0].rgba[0] == 0);
   CHECK(image->frames[0].rgba[image->frames[0].offset(1, 0)] == 2);  // 1/123*255 = 2.07
   // NIfTI is shown with the first row at the bottom.
-  const auto nifti = test::read_as<ir::Image>("nifti", test::fixture("science/arrays/vol.nii"));
+  const auto nifti = test::read_as<ir::Image>("nii", test::fixture("science/arrays/vol.nii"));
   REQUIRE_OK(nifti);
   CHECK(nifti->frames[0].rgba[nifti->frames[0].offset(0, 2)] == 0);
 }
 
 TEST_CASE("science/volumes: writers round trip arrays and images") {
-  const Json source = volume("nifti", "vol.nii");
+  const Json source = volume("nii", "vol.nii");
   ir::Data data{Json::object({{"variables", Json::array({source})}})};
-  for (const char* format : {"nifti", "nii.gz", "nrrd", "mha"}) {
+  for (const char* format : {"nii", "nii.gz", "nrrd", "mha"}) {
     INFO(format);
     const auto written = test::write_from(format, data);
     REQUIRE_OK(written);
@@ -103,7 +103,7 @@ TEST_CASE("science/volumes: writers round trip arrays and images") {
     f.rgba[4] = f.rgba[5] = f.rgba[6] = 255;
     stack.frames.push_back(f);
   }
-  for (const char* format : {"nifti", "nrrd", "mha"}) {
+  for (const char* format : {"nii", "nrrd", "mha"}) {
     INFO(format);
     const auto written = test::write_from(format, stack);
     REQUIRE_OK(written);
@@ -113,8 +113,8 @@ TEST_CASE("science/volumes: writers round trip arrays and images") {
     for (std::size_t k = 0; k < 3; ++k) CHECK(test::pixels_equal(back->frames[k], stack.frames[k]));
   }
   // The NIfTI description is dropped unless metadata is kept.
-  const auto stripped = test::write_from("nifti", data);
-  const auto kept = test::write_from("nifti", data, R"({"strip_metadata":false})");
+  const auto stripped = test::write_from("nii", data);
+  const auto kept = test::write_from("nii", data, R"({"strip_metadata":false})");
   REQUIRE_OK(stripped);
   REQUIRE_OK(kept);
   CHECK(test::str(*stripped).find("synthetic") == std::string::npos);
@@ -123,7 +123,7 @@ TEST_CASE("science/volumes: writers round trip arrays and images") {
 
 TEST_CASE("science/volumes: hostile input") {
   for (const auto& [format, name] : std::vector<std::pair<std::string, std::string>>{
-           {"nifti", "vol.nii"}, {"nii.gz", "vol.nii.gz"}, {"nrrd", "vol_gzip.nrrd"}, {"nrrd", "vol_ascii.nrrd"},
+           {"nii", "vol.nii"}, {"nii.gz", "vol.nii.gz"}, {"nrrd", "vol_gzip.nrrd"}, {"nrrd", "vol_ascii.nrrd"},
            {"mha", "vol_zlib.mha"}}) {
     CHECK(test::fuzz_reader<ir::Data>(format, test::fixture("science/arrays/" + name)) > 0);
     CHECK(test::fuzz_reader<ir::Image>(format, test::fixture("science/arrays/" + name), 64) > 0);

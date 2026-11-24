@@ -653,6 +653,9 @@ void register_bridges(Registry& registry) {
   to_table.cost = 25;
   to_table.lossy = true;
   to_table.label = "extract the tables of a document";
+  to_table.after_reader_only = true;  // only documents read as such have tables
+  // Source code read as a document is one code block: no SQL dump of it.
+  to_table.excluded_target_categories = {Category::Code};
   to_table.options = {OptionSpec::choice("tables", "Tables", "all", {"first", "all"},
                                          "Extract every table (one sheet each) or only the first one.")};
   registry.add_bridge(std::move(to_table));

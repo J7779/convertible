@@ -34,6 +34,7 @@ struct cvt_result {
   std::string format;
   std::string extension;
   std::string mime;
+  std::string filename;
   std::string warnings_json = "[]";
 };
 
@@ -98,6 +99,7 @@ void fill_success(cvt_result& result, cvt::ConvertOutput&& output) {
   result.format = std::move(output.format_id);
   result.extension = std::move(output.extension);
   result.mime = std::move(output.mime);
+  result.filename = std::move(output.filename);
   Json warnings = Json::array();
   for (std::string& warning : output.warnings) warnings.push_back(std::move(warning));
   result.warnings_json = cvt::util::dump_json(warnings);
@@ -159,9 +161,10 @@ char* cvt_formats_json(void) {
       entry["category"] = cvt::category_name(format->category);
       entry["extensions"] = format->extensions;
       entry["mime"] = format->mime.empty() ? std::string("application/octet-stream") : format->mime;
-      entry["readable"] = registry.has_reader(format->id);
+      entry["readable"] = !format->output_only && registry.has_reader(format->id);
       entry["writable"] = registry.has_writer(format->id);
       entry["popularity"] = format->popularity;
+      entry["output_only"] = format->output_only;
       out.push_back(std::move(entry));
     }
     return out;
@@ -195,6 +198,7 @@ char* cvt_targets_json(const char* source_format_id) {
       entry["mime"] = target.format->mime.empty() ? std::string("application/octet-stream") : target.format->mime;
       entry["lossy"] = target.lossy;
       entry["compress"] = target.same_format;
+      entry["role"] = std::string(cvt::target_role(*source, target));
       out.push_back(std::move(entry));
     }
     return out;
@@ -282,6 +286,44 @@ cvt_result* cvt_convert_file(const char* input_path, const char* output_path, co
   });
 }
 
+cvt_result* cvt_pack(const cvt_pack_input* inputs, size_t count, const char* target_format_id, const char* options_json,
+                     cvt_progress_fn progress, void* user) {
+  return convert_guarded([&](cvt_result& result) {
+    if (inputs == nullptr && count != 0) {
+      failure(&result, cvt::Status::InvalidArgument, "inputs is NULL but count is not zero");
+      return;
+    }
+    if (target_format_id == nullptr || *target_format_id == '\0') {
+      failure(&result, cvt::Status::InvalidArgument, "no target format was given");
+      return;
+    }
+    auto options = cvt::Options::parse(view_or_empty(options_json));
+    if (!options) {
+      failure(&result, options.error().code, options.error().message);
+      return;
+    }
+    cvt::PackRequest request;
+    for (size_t i = 0; i < count; ++i) {
+      const cvt_pack_input& input = inputs[i];
+      if (input.data == nullptr && input.size != 0) {
+        failure(&result, cvt::Status::InvalidArgument, "input " + std::to_string(i) + " has no data but a size");
+        return;
+      }
+      request.inputs.push_back({cvt::as_bytes(std::span<const std::uint8_t>(input.data, input.size)),
+                                std::string(view_or_empty(input.name))});
+    }
+    request.target_id = target_format_id;
+    request.options = std::move(*options);
+    request.progress = make_progress(progress, user);
+    auto output = cvt::run_pack(cvt::Registry::instance(), request);
+    if (!output) {
+      failure(&result, output.error().code, output.error().message);
+      return;
+    }
+    fill_success(result, std::move(*output));
+  });
+}
+
 int cvt_result_status(const cvt_result* result) { return result != nullptr ? result->status : CVT_ERR_INVALID_ARGUMENT; }
 
 const char* cvt_result_message(const cvt_result* result) { return result != nullptr ? result->message.c_str() : ""; }
@@ -298,6 +340,8 @@ const char* cvt_result_format(const cvt_result* result) { return result != nullp
 const char* cvt_result_extension(const cvt_result* result) { return result != nullptr ? result->extension.c_str() : ""; }
 
 const char* cvt_result_mime(const cvt_result* result) { return result != nullptr ? result->mime.c_str() : ""; }
+
+const char* cvt_result_filename(const cvt_result* result) { return result != nullptr ? result->filename.c_str() : ""; }
 
 const char* cvt_result_warnings_json(const cvt_result* result) {
   return result != nullptr ? result->warnings_json.c_str() : "[]";

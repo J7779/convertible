@@ -578,6 +578,9 @@ int sniff_pcd(ByteView data, std::string_view /*filename*/) {
   const bool fields = head.find("\nFIELDS ") != std::string_view::npos || head.starts_with("FIELDS ");
   const bool marker = head.find("\nDATA ") != std::string_view::npos;
   if (fields && marker && (head.find("VERSION") != std::string_view::npos || head.find("POINTS") != std::string_view::npos)) return 94;
+  // The PCL writer's comment line, followed by the header (a cut file still
+  // names its format).
+  if (head.starts_with("# .PCD v") && (fields || head.find("\nVERSION ") != std::string_view::npos)) return 90;
   return 0;
 }
 

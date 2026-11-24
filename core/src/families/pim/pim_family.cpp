@@ -18,6 +18,13 @@ void register_pim_family(Registry& registry) {
   pim::register_feeds(registry);
   pim::register_bibliographies(registry);
   pim::register_mail(registry);
+
+  // Playlists, cue sheets and feeds have a schema of their own (a location
+  // column, a title and items): their writers take what their readers make
+  // (Codec::ir_tag), so a CSV or a JSON file is not offered as a playlist.
+  registry.set_ir_tag({"m3u", "m3u8", "pls", "asx", "xspf", "wpl", "cue"}, Kind::Data, "playlist");
+  registry.set_ir_tag({"m3u", "m3u8", "pls", "asx", "xspf", "wpl", "cue"}, Kind::Table, "playlist");
+  registry.set_ir_tag({"atom", "rss", "json-feed"}, Kind::Data, "feed");
 }
 
 }  // namespace cvt

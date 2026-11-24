@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -37,11 +38,58 @@ std::size_t skip_id3(ByteView data) {
   return pos;
 }
 
+// Number of consecutive frames of one stream starting at `pos`, at most
+// `wanted`; `reached_end` tells whether the chain ended exactly at the end of
+// the data (a short file).
+int chain_length(ByteView data, std::size_t pos, int wanted, bool& reached_end) {
+  reached_end = false;
+  const std::size_t end = data.size();
+  std::optional<FrameHeader> first;
+  int count = 0;
+  while (count < wanted) {
+    if (pos == end || (pos < end && end - pos < 4 && count > 0)) {
+      reached_end = true;
+      break;
+    }
+    if (pos + 4 > end) break;
+    const auto h = mpeg::parse_header(mpeg::header_word(data, pos));
+    if (!h || h->bitrate_index == 0) break;
+    if (first && h->stream_key() != first->stream_key()) break;
+    if (!first) first = h;
+    const std::size_t size = h->frame_bytes(h->bitrate_kbps);
+    if (size < 4) break;
+    pos += size;
+    ++count;
+  }
+  return count;
+}
+
+// MPEG audio has no magic beyond an 11-bit sync word, which random binary
+// data (pictures, other containers) contains all the time. A file is taken
+// for MPEG audio only when a chain of frames starts where the audio starts
+// (offset 0 or right after the ID3v2 tag), or when a long chain of frames
+// is found a little later (junk before the first frame); the second case
+// is worth less than a real magic number.
 int sniff_layer(ByteView data, int layer) {
   const std::size_t start = skip_id3(data);
-  const auto h = mpeg::probe_stream(data, start, start == 0 ? 4096 : 16384);
-  if (!h || h->layer != layer) return 0;
-  return start > 0 ? 93 : 90;
+  if (start >= data.size()) return 0;
+  const std::size_t window = std::min<std::size_t>(data.size() - start, start == 0 ? 4096 : 16384);
+  const auto d = as_u8(data);
+  for (std::size_t pos = start; pos < start + window && pos + 4 <= data.size(); ++pos) {
+    if (d[pos] != 0xFF) continue;
+    const auto h = mpeg::parse_header(mpeg::header_word(data, pos));
+    if (!h || h->bitrate_index == 0) continue;
+    bool reached_end = false;
+    const int frames = chain_length(data, pos, 4, reached_end);
+    if (pos == start) {
+      if (frames >= 3 || (reached_end && frames >= 1)) return h->layer == layer ? (start > 0 ? 93 : 90) : 0;
+    } else if (frames >= 4 || (reached_end && frames >= 3)) {
+      return h->layer == layer ? 70 : 0;
+    }
+  }
+  // Free-format streams (no bit rate in the header) are rare and look like
+  // noise to a quick test: they are recognised by their extension only.
+  return 0;
 }
 
 Result<AnyIR> read_mpeg(ReadContext& ctx) {

@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 
+#include "families/audio_lossless/audio_dsp.hpp"
 #include "families/audio_lossless/common.hpp"
 #include "families/audio_lossless/tags.hpp"
 #include "families/audio_lossy/xiph/ogg_container.hpp"
@@ -319,10 +320,12 @@ class OpusPacketDecoder final : public codec::AudioDecoder {
 class OpusPacketEncoder final : public codec::AudioEncoder {
  public:
   Result<void> configure(const codec::AudioEncodeParams& params) override {
-    if (params.sample_rate != 48000) {
-      return fail(Status::InvalidArgument, "the Opus encoder takes 48 kHz input (got {} Hz)", params.sample_rate);
-    }
+    if (params.sample_rate == 0) return fail(Status::InvalidArgument, "the Opus encoder needs a sample rate");
     if (params.channels < 1 || params.channels > 8) return fail(Status::InvalidArgument, "Opus encodes 1 to 8 channels");
+    // Opus always runs at 48 kHz: other input rates are converted here, so
+    // that a muxer can hand over its source audio as it is.
+    resample_ = params.sample_rate != 48000;
+    if (resample_) CVT_TRY(resampler_.configure(params.sample_rate, 48000, params.channels));
     OpusSettings s;
     const double per_channel = params.quality >= 90 ? 80.0 : params.quality >= 75 ? 64.0 : params.quality >= 50 ? 48.0 : 32.0;
     s.bitrate_bps = params.bitrate_kbps ? *params.bitrate_kbps * 1000 : static_cast<std::uint32_t>(per_channel * 1000 * params.channels);
@@ -331,7 +334,11 @@ class OpusPacketEncoder final : public codec::AudioEncoder {
     return encoder_.open(params.channels, s);
   }
   Result<void> send_chunk(const codec::AudioChunk& chunk) override {
-    buffer_.insert(buffer_.end(), chunk.samples.begin(), chunk.samples.end());
+    if (resample_) {
+      resampler_.process(chunk.samples, buffer_);
+    } else {
+      buffer_.insert(buffer_.end(), chunk.samples.begin(), chunk.samples.end());
+    }
     return drain(false);
   }
   Result<std::optional<codec::Packet>> receive_packet() override {
@@ -343,7 +350,10 @@ class OpusPacketEncoder final : public codec::AudioEncoder {
     return std::optional<codec::Packet>(std::move(ready_[next_++]));
   }
   [[nodiscard]] Bytes extradata() const override { return make_opus_head(encoder_.head()); }
-  Result<void> flush() override { return drain(true); }
+  Result<void> flush() override {
+    if (resample_) resampler_.flush(buffer_);
+    return drain(true);
+  }
   [[nodiscard]] std::uint32_t frame_size() const override { return 960; }
   [[nodiscard]] std::uint32_t delay() const override { return static_cast<std::uint32_t>(encoder_.head().pre_skip); }
 
@@ -368,6 +378,8 @@ class OpusPacketEncoder final : public codec::AudioEncoder {
     return {};
   }
   Encoder encoder_;
+  bool resample_ = false;
+  audio::dsp::Resampler resampler_;
   std::vector<float> buffer_;
   std::vector<codec::Packet> ready_;
   std::size_t next_ = 0;

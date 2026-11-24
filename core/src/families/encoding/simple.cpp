@@ -36,9 +36,14 @@ std::string input_as_text(ByteView input) {
 }
 
 void add_binary_encoding(Registry& registry, BinaryEncoding encoding) {
-  registry.add_format(describe(encoding.id, std::move(encoding.name), std::move(encoding.description),
-                               std::move(encoding.extensions), std::move(encoding.mime), encoding.popularity,
-                               std::move(encoding.sniff)));
+  FormatInfo info = describe(encoding.id, std::move(encoding.name), std::move(encoding.description),
+                             std::move(encoding.extensions), std::move(encoding.mime), encoding.popularity,
+                             std::move(encoding.sniff));
+  if (encoding.describe) {
+    registry.add_format(std::move(info));
+  } else {
+    registry.add_known_format(std::move(info));
+  }
 
   Codec codec;
   codec.format_id = encoding.id;
@@ -47,11 +52,34 @@ void add_binary_encoding(Registry& registry, BinaryEncoding encoding) {
   codec.read_options = std::move(encoding.decode_options);
 
   if (encoding.encode) {
-    codec.write = [encode = std::move(encoding.encode), expansion = encoding.expansion](
+    codec.write = [encode = std::move(encoding.encode), expansion = encoding.expansion, chunk = std::move(encoding.chunk)](
                       const AnyIR& value, WriteContext& ctx) -> Result<Bytes> {
       const ir::Blob& blob = value.get<ir::Blob>();
       if (expansion != 0 && blob.bytes.size() > ctx.limits.max_output_bytes / expansion) {
         return fail(Status::Limit, "the encoded output would exceed the limit of {} bytes", ctx.limits.max_output_bytes);
+      }
+      // Large inputs of encodings that can be cut: encode piece by piece so
+      // that progress is reported and a cancellation is seen about every MiB.
+      constexpr std::size_t piece_target = std::size_t{1} << 20;
+      const std::size_t block = chunk ? chunk(ctx.options) : 0;
+      if (block != 0 && block <= piece_target && blob.bytes.size() > 4 * piece_target) {
+        const std::size_t piece = piece_target / block * block;
+        Bytes out;
+        out.reserve(static_cast<std::size_t>(std::min<std::uint64_t>(
+            ctx.limits.max_output_bytes, static_cast<std::uint64_t>(blob.bytes.size()) * 2)));
+        ir::Blob part;
+        part.filename = blob.filename;
+        part.mime = blob.mime;
+        part.format_id = blob.format_id;
+        for (std::size_t at = 0; at < blob.bytes.size(); at += piece) {
+          CVT_TRY(ctx.checkpoint(static_cast<double>(at) / static_cast<double>(blob.bytes.size())));
+          const ByteView view = ByteView(blob.bytes).subspan(at, std::min(piece, blob.bytes.size() - at));
+          part.bytes.assign(view.begin(), view.end());
+          CVT_TRY_ASSIGN(const std::string text, encode(part, ctx));
+          CVT_TRY(ctx.limits.check_output(out.size() + text.size()));
+          append(out, as_bytes(text));
+        }
+        return out;
       }
       CVT_TRY_ASSIGN(const std::string text, encode(blob, ctx));
       CVT_TRY(ctx.limits.check_output(text.size()));

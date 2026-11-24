@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <initializer_list>
 #include <map>
 #include <optional>
 #include <span>
@@ -162,6 +163,13 @@ struct FormatInfo {
   /// and the file name (may be empty); returns a confidence 0..100, where 0
   /// means "not this format". Must be fast, re-entrant and must not throw.
   std::function<int(std::span<const std::byte> data, std::string_view filename)> sniff;
+  /// An output-only ("generator") format: something made from other content
+  /// that has no content of its own to read back - a barcode generated from
+  /// text, minified CSS, a CSV variant with semicolons. It is offered as a
+  /// target, never detected (not even by extension) and never offered as a
+  /// source: list_targets() is empty for it and plan_conversion() refuses it
+  /// as a source.
+  bool output_only = false;
 };
 
 // --------------------------------------------------------------------------- codecs
@@ -203,6 +211,21 @@ struct Codec {
   /// when the source is `format_id` too, never for other sources that reach
   /// its kind (every file reaches Blob through the implicit reader).
   bool same_format_only = false;
+  /// When not empty, the writer is used only for these source formats: a
+  /// token-level rewrite of one language (minified HTML from html, formatted
+  /// CSS from css) must not be offered for every file that reaches its kind.
+  std::vector<std::string> only_from;
+  /// A dialect of the IR kind that only codecs with the same tag understand.
+  /// Vector scenes travel as `Data` (a tagged JSON envelope, "vector-scene"):
+  /// any Data writer (json, yaml) may dump them, but a tagged writer (svg,
+  /// eps, dxf) accepts only values read by a reader with the same tag, with
+  /// no bridge in between, so json -> svg is never offered.
+  std::string ir_tag;
+  /// The writer accepts only a value read by the source format's own reader,
+  /// with no bridge in between ("extract" undoes an archive or a compressed
+  /// stream; wrapping any file into an archive first just to unwrap it again is
+  /// not a conversion).
+  bool direct_only = false;
 };
 
 /// Cost of the engine-provided "read any format as ir::Blob" step.
@@ -230,6 +253,11 @@ struct Bridge {
   /// a video must not end up as a sound file: Image -> Video excludes
   /// Category::Audio). The planner skips the bridge for such targets.
   std::vector<Category> excluded_target_categories;
+  /// The bridge extracts structure the source must already have (the tables
+  /// of a document): it is used only right after the reader, never after
+  /// another bridge that just made the value up (plain text inferred as a
+  /// document has no tables, so txt -> xlsx is not offered).
+  bool after_reader_only = false;
 };
 
 // --------------------------------------------------------------------------- registry
@@ -262,6 +290,20 @@ class Registry {
   /// Used by the detection-only known-formats database.
   void add_known_format(FormatInfo info);
   void add_codec(Codec codec);
+  /// Give every codec of `kind` registered so far for these formats the IR
+  /// dialect `tag` (Codec::ir_tag): for families whose Data codecs share a
+  /// schema (sequences, molecules, palettes, keys) and are registered through
+  /// helpers that do not know about tags.
+  void set_ir_tag(std::initializer_list<std::string_view> format_ids, Kind kind, std::string_view tag);
+  /// Mark the writers of `kind` registered so far for these formats
+  /// Codec::direct_only: they need content of their own kind read straight
+  /// from the source (a palette from a picture, a playlist from a playlist),
+  /// never one made by a bridge from something else.
+  void set_direct_only(std::initializer_list<std::string_view> format_ids, Kind kind);
+  /// Restrict the writers of `kind` registered so far for these formats to
+  /// the given source formats (Codec::only_from).
+  void set_only_from(std::initializer_list<std::string_view> format_ids, Kind kind,
+                     std::initializer_list<std::string_view> sources);
   void add_bridge(Bridge bridge);
   /// The audio/video decoder and encoder factories (see codec/registry.hpp).
   /// Families register implementations here during registration; container
@@ -315,6 +357,9 @@ class Registry {
   Entry& entry_for(std::string id);
 
   std::map<std::string, Entry, std::less<>> formats_;
+  // formats() in its order, built by finalize() and dropped by any later
+  // registration (detection asks for it once per file).
+  std::vector<const FormatInfo*> sorted_formats_;
   std::vector<Codec> codecs_;
   std::map<std::string, std::vector<std::size_t>, std::less<>> codecs_by_format_;
   std::vector<Bridge> bridges_;

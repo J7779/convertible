@@ -114,7 +114,7 @@ struct WriteSyntax {
   std::string item_break = " ";
   /// Escape a line that would otherwise start a block construct.
   std::function<std::string(const std::string& line)> escape_line_start;
-  /// Raw markup of this format (e.g. "mediawiki") passes through verbatim.
+  /// Raw markup of this format (e.g. "wiki") passes through verbatim.
   std::string raw_format;
 };
 

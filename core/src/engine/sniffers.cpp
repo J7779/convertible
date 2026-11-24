@@ -502,8 +502,8 @@ Verdict classify_ole(const View& v, std::string_view filename) {
     if (!id.empty()) return found(id, 90);
   }
   if (f.word) return found(refine(filename, "doc", {"dot"}), 95);
-  if (f.workbook) return found(refine(filename, "xls", {"xlt", "xla"}), 95);
-  if (f.powerpoint) return found(refine(filename, "ppt", {"pps", "pot"}), 95);
+  if (f.workbook) return found(refine(filename, "xls", {"xla"}), 95);
+  if (f.powerpoint) return found("ppt", 95);
   if (f.msg) return found(refine(filename, "msg", {"oft"}), 95);
   if (f.visio) return found(refine(filename, "vsd", {"vss", "vst"}), 95);
   if (f.quill) return found("pub", 92);
@@ -763,7 +763,7 @@ Verdict classify_ogg(const View& v) {
   const int kinds = int{vorbis} + int{opus} + int{flac} + int{speex} + int{other_audio};
   if (kinds == 1 && opus) return found("opus", 95);
   if (kinds == 1 && speex) return found("spx", 95);
-  if (kinds == 1 && flac) return found("oga", 92);
+  if (kinds == 1 && flac) return found("ogg-flac", 92);
   if (vorbis || kinds > 0) return found("ogg", 92);
   return base_reading("ogg", 80);
 }
@@ -1292,7 +1292,7 @@ Verdict classify_der(const View& v, std::string_view filename) {
     const Tlv tbs_first = der_at(v, a.content);
     const Tlv alg = der_at(v, der_next(a));
     if (!tbs_first.ok) return container_only();
-    if (tbs_first.tag == 0xA0) return found("crt", 92);
+    if (tbs_first.tag == 0xA0) return found("der", 92);
     if (tbs_first.tag == 0x06 && alg.ok && alg.tag == 0x04) return found("private-key", 85);  // encrypted PKCS #8
     if (tbs_first.tag == 0x02) {
       const Tlv x = der_at(v, der_next(tbs_first));
@@ -1300,7 +1300,7 @@ Verdict classify_der(const View& v, std::string_view filename) {
       const Tlv z = der_at(v, der_next(y));
       if (x.ok && y.ok && x.tag == 0x30 && y.tag == 0x30 && z.ok) {
         if (z.tag == 0xA0) return found("csr", 92);
-        if (z.tag == 0x30) return found("crt", 90);
+        if (z.tag == 0x30) return found("der", 90);
         if (z.tag == 0x17 || z.tag == 0x18) return found("crl", 90);
       }
     }

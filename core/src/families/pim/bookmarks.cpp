@@ -619,7 +619,7 @@ Result<Json> read_link(std::string_view format, const ReadContext& ctx) {
     }
   } else {
     CVT_TRY_ASSIGN(const std::string text, decode_text(ctx.input, "auto"));
-    if (format == "url-shortcut") {
+    if (format == "url") {
       url = ini_value(text, "InternetShortcut", "URL");
     } else {
       url = ini_value(text, "Desktop Entry", "URL");
@@ -654,8 +654,8 @@ Result<Bytes> write_link(std::string_view format, const Json& value) {
   if (url.empty()) return fail(Status::Encode, "the data has no \"url\" to write as a link");
   const std::string clean_url = util::replace_all(util::replace_all(url, "\r", ""), "\n", "");
   const std::string clean_title = util::replace_all(util::replace_all(title, "\r", " "), "\n", " ");
-  if (format == "url-shortcut") return to_bytes("[InternetShortcut]\r\nURL=" + clean_url + "\r\n");
-  if (format == "desktop-link") {
+  if (format == "url") return to_bytes("[InternetShortcut]\r\nURL=" + clean_url + "\r\n");
+  if (format == "desktop") {
     std::string out = "[Desktop Entry]\nVersion=1.0\nType=Link\nName=" + (clean_title.empty() ? clean_url : clean_title) + "\n";
     out += "URL=" + clean_url + "\nIcon=text-html\n";
     return to_bytes(out);
@@ -769,7 +769,7 @@ void register_bookmarks(Registry& registry) {
     std::function<int(ByteView, std::string_view)> sniff;
   };
   const LinkFormat links[] = {
-      {"url-shortcut", "Internet shortcut", "Windows Internet Shortcut file.", "url", "application/x-mswinurl",
+      {"url", "Internet shortcut", "Windows Internet Shortcut file.", "url", "application/x-mswinurl",
        [](ByteView data, std::string_view) {
          return util::istarts_with(util::trim(sniff_text(data, 256)), "[InternetShortcut]") ? 95 : 0;
        }},
@@ -778,9 +778,11 @@ void register_bookmarks(Registry& registry) {
          const std::string head = sniff_text(data, 1024);
          // A binary property list says nothing about being a link; trust the name then.
          if (head.starts_with("bplist00")) return util::iends_with(filename, ".webloc") && head.find("URL") != std::string::npos ? 97 : 0;
-         return head.find("<plist") != std::string::npos && head.find("<key>URL</key>") != std::string::npos ? 90 : 0;
+         return head.find("<plist") != std::string::npos && head.find("<key>URL</key>") != std::string::npos
+                    ? (util::iends_with(filename, ".webloc") || filename.find('.') == std::string_view::npos ? 97 : 88)
+                    : 0;
        }},
-      {"desktop-link", "Desktop link", "freedesktop.org desktop entry of type Link.", "desktop", "application/x-desktop",
+      {"desktop", "Desktop link", "freedesktop.org desktop entry of type Link.", "desktop", "application/x-desktop",
        [](ByteView data, std::string_view) {
          const std::string head = sniff_text(data, 1024);
          return head.find("[Desktop Entry]") != std::string::npos && head.find("Type=Link") != std::string::npos ? 92 : 0;
@@ -791,6 +793,7 @@ void register_bookmarks(Registry& registry) {
     Codec codec;
     codec.format_id = link.id;
     codec.kind = Kind::Data;
+    codec.ir_tag = "web-link";  // {"url": ...}: only the link formats read and write it (Codec::ir_tag)
     const std::string id = link.id;
     codec.read = [id](ReadContext& ctx) -> Result<AnyIR> {
       CVT_TRY_ASSIGN(Json value, read_link(id, ctx));

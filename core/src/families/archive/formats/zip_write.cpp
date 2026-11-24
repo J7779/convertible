@@ -200,7 +200,14 @@ Result<Bytes> write_zip(const ir::Archive& archive, WriteContext& ctx) {
     const ByteView content = e.type == EntryType::File      ? e.data()
                              : e.type == EntryType::Symlink ? as_bytes(e.link_target())
                                                             : ByteView{};
-    r.crc = util::crc32(content);
+    // In pieces, so that a cancellation is seen while a large file is summed.
+    r.crc = 0;
+    constexpr std::size_t crc_piece = std::size_t{4} << 20;
+    for (std::size_t at = 0; at < content.size(); at += crc_piece) {
+      // The checksum is the first tenth of the entry's share of the progress.
+      CVT_TRY(ctx.checkpoint((static_cast<double>(done) + 0.1 * static_cast<double>(at)) / span));
+      r.crc = util::crc32(content.subspan(at, std::min(crc_piece, content.size() - at)), r.crc);
+    }
     r.uncompressed = content.size();
     Bytes payload;
     if (e.type != EntryType::Directory) {

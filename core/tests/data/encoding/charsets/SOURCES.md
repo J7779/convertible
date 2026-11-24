@@ -10,8 +10,8 @@ in this directory to regenerate). The texts are made-up sentences and well-known
 | `<codec>.txt` | one reference text encoded with Python's codec `<codec>` (`str.encode(codec)`): shift_jis, cp932, euc_jp, iso2022_jp, gbk, gb18030, big5, euc_kr, koi8_r, cp1251, cp866, iso8859_5, cp1253, iso8859_7, cp1250, iso8859_2, cp852, mac_roman, cp850, cp437, cp037, cp500, cp1255, iso8859_15 |
 | `index.txt` | which reference text each encoded file holds |
 
-The decoding tables themselves (`core/src/families/encoding/charset_tables.inc`) come from Python's
-codecs through `charsets_gen.py`; IBM-1047, which Python lacks, from glibc 2.39 iconv
+The decoding tables themselves (`core/src/util/charset_tables.inc`, shared by every family
+through `util/charsets.hpp`) come from Python's codecs through `charsets_gen.py`; IBM-1047, which Python lacks, from glibc 2.39 iconv
 (`iconv -f IBM1047 -t UTF-32BE` for every byte, in a throwaway Ubuntu 24.04 container).
 
 Exhaustive check while developing (a script driving our CLI): for all 40 charsets, every character

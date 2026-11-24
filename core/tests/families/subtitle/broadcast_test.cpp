@@ -72,7 +72,7 @@ TEST_CASE("subtitle/ebu-tt and smpte-tt: decode hand-written documents") {
 }
 
 TEST_CASE("subtitle/sami: decodes a file written by pycaption and picks languages") {
-  const auto subs = test::read_as<ir::Subtitles>("sami", test::fixture("subtitle/pycaption.smi"));
+  const auto subs = test::read_as<ir::Subtitles>("smi", test::fixture("subtitle/pycaption.smi"));
   REQUIRE_OK(subs);
   check_cues(*subs, pycaption_script(), 0, false);
   CHECK(subs->metadata.at("language") == "en");
@@ -81,16 +81,16 @@ TEST_CASE("subtitle/sami: decodes a file written by pycaption and picks language
       ".FRFRCC { Name: French; lang: fr-FR; }\n--></STYLE></HEAD><BODY>\n"
       "<SYNC Start=1000><P Class=ENUSCC>Hello<P Class=FRFRCC>Bonjour\n"
       "<SYNC Start=2000><P Class=ENUSCC>&nbsp;<P Class=FRFRCC>&nbsp;\n</BODY></SAMI>";
-  const auto english = test::read_as<ir::Subtitles>("sami", test::bytes(two_languages));
+  const auto english = test::read_as<ir::Subtitles>("smi", test::bytes(two_languages));
   REQUIRE_OK(english);
   REQUIRE(english->cues.size() == 1);
   CHECK(english->cues[0].text == "Hello");
-  const auto french = test::read_as<ir::Subtitles>("sami", test::bytes(two_languages), R"({"sami_language":"fr"})");
+  const auto french = test::read_as<ir::Subtitles>("smi", test::bytes(two_languages), R"({"sami_language":"fr"})");
   REQUIRE_OK(french);
   REQUIRE(french->cues.size() == 1);
   CHECK(french->cues[0].text == "Bonjour");
   CHECK(french->cues[0].end_ms == 2000);
-  CHECK_STATUS(test::read_as<ir::Subtitles>("sami", test::bytes(two_languages), R"({"sami_language":"de"})"),
+  CHECK_STATUS(test::read_as<ir::Subtitles>("smi", test::bytes(two_languages), R"({"sami_language":"de"})"),
                Status::InvalidArgument);
 }
 
@@ -159,7 +159,7 @@ TEST_CASE("subtitle: broadcast and XML formats round-trip the sample track") {
   const Format formats[] = {
       {"ttml", 0, true, ""},   {"ttml", 0, true, R"({"ttml_profile":"imsc1","ttml_time_format":"offset"})"},
       {"dfxp", 0, true, ""},   {"ebu-tt", 0, true, ""},
-      {"sami", 0, true, ""},   {"srv3", 0, false, ""},
+      {"smi", 0, true, ""},   {"srv3", 0, false, ""},
       {"json3", 0, false, ""}, {"scc", 34, true, ""},
       {"ebu-stl", 20, false, ""}, {"ebu-stl", 17, false, R"({"stl_fps":30})"},
   };
@@ -219,7 +219,7 @@ TEST_CASE("subtitle: broadcast and XML formats are detected; damaged input is an
   CHECK(detected("subtitle/timing_forms.ttml", "x.xml") == "ttml");
   CHECK(detected("subtitle/ebu_tt_d.xml", "x.xml") == "ebu-tt");
   CHECK(detected("subtitle/smpte_tt.xml", "x.xml") == "smpte-tt");
-  CHECK(detected("subtitle/pycaption.smi", "") == "sami");
+  CHECK(detected("subtitle/pycaption.smi", "") == "smi");
   CHECK(detected("subtitle/youtube.srv3", "") == "srv3");
   CHECK(detected("subtitle/youtube.json3", "x.json") == "json3");
   CHECK(detected("subtitle/pycaption.scc", "") == "scc");
@@ -232,7 +232,7 @@ TEST_CASE("subtitle: broadcast and XML formats are detected; damaged input is an
   const Case cases[] = {
       {"ttml", "subtitle/timing_forms.ttml"}, {"dfxp", "subtitle/pycaption.dfxp"},
       {"ebu-tt", "subtitle/ebu_tt_d.xml"},    {"smpte-tt", "subtitle/smpte_tt.xml"},
-      {"sami", "subtitle/pycaption.smi"},     {"srv3", "subtitle/youtube.srv3"},
+      {"smi", "subtitle/pycaption.smi"},     {"srv3", "subtitle/youtube.srv3"},
       {"json3", "subtitle/youtube.json3"},    {"scc", "subtitle/pycaption.scc"},
       {"scc", "subtitle/rollup_painton.scc"}, {"ebu-stl", "subtitle/handmade.stl"},
   };

@@ -20,6 +20,7 @@
 
 #include "convertible/convertible.hpp"
 #include "util/json.hpp"
+#include "util/text.hpp"
 
 #if defined(_WIN32)
 #  include <fcntl.h>
@@ -217,10 +218,39 @@ Arguments parse_arguments(const std::vector<std::string>& args) {
   return out;
 }
 
-// "--opt key=value" pairs become a JSON object. Values that parse as JSON
-// (numbers, true/false, quoted strings) keep their type; anything else is a
-// string, so `--opt encoding=utf-16le` needs no quoting.
-std::optional<std::string> options_json(const std::vector<std::string>& pairs, std::string& error) {
+// The value of one "--opt key=value" as the option's declared type says
+// (`spec` is its entry in the conversion's options schema, or null): enum and
+// string values stay text whatever they look like (vcard_version=3.0, a
+// password of digits), numbers and booleans are parsed. Text that does not
+// parse is passed on unchanged so that the engine reports the bad value.
+Json typed_option_value(const std::string& text, const Json* spec) {
+  const std::string type = spec != nullptr ? (*spec)["type"].as_string() : std::string();
+  if (type == "enum" || type == "string") return Json(text);
+  if (type == "bool") {
+    const std::string lower = cvt::util::to_lower(cvt::util::trim(text));
+    if (lower == "true" || lower == "1" || lower == "yes" || lower == "on") return Json(true);
+    if (lower == "false" || lower == "0" || lower == "no" || lower == "off") return Json(false);
+    return Json(text);
+  }
+  if (type == "int") {
+    if (const auto value = cvt::util::parse_int(cvt::util::trim(text))) return Json(static_cast<std::int64_t>(*value));
+    return Json(text);
+  }
+  if (type == "float") {
+    if (const auto value = cvt::util::parse_double(cvt::util::trim(text))) return Json(*value);
+    return Json(text);
+  }
+  // Unknown key (the engine will warn about it): values that parse as JSON
+  // (numbers, true/false, quoted strings) keep their type, anything else is
+  // a string, so `--opt encoding=utf-16le` needs no quoting.
+  auto value = cvt::util::parse_json(text);
+  return value && !value->is_structured() ? std::move(*value) : Json(text);
+}
+
+// "--opt key=value" pairs become a JSON object, typed by `schema` (the
+// conversion's options schema as returned by options_schema_json; may be an
+// empty array when the route is not known yet).
+std::optional<std::string> options_json(const std::vector<std::string>& pairs, const Json& schema, std::string& error) {
   if (pairs.empty()) return std::string();
   Json object = Json::object();
   for (const std::string& pair : pairs) {
@@ -229,9 +259,12 @@ std::optional<std::string> options_json(const std::vector<std::string>& pairs, s
       error = "expected key=value after --opt, got '" + pair + "'";
       return std::nullopt;
     }
-    const std::string text = pair.substr(equals + 1);
-    auto value = cvt::util::parse_json(text);
-    object[pair.substr(0, equals)] = value && !value->is_structured() ? std::move(*value) : Json(text);
+    const std::string key = pair.substr(0, equals);
+    const Json* spec = nullptr;
+    for (const Json& entry : schema.elements()) {
+      if (entry["key"].as_string() == key) spec = &entry;
+    }
+    object[key] = typed_option_value(pair.substr(equals + 1), spec);
   }
   return cvt::util::dump_json(object);
 }
@@ -391,7 +424,19 @@ int command_convert(const Arguments& args) {
     return CVT_OK;
   }
 
-  const auto options = options_json(args.options, error);
+  // Type the --opt values by the planned conversion's options schema (the
+  // source is detected for that only when options were given; standard
+  // input cannot be read twice, so it falls back to guessing by appearance).
+  Json schema = Json::array();
+  if (!args.options.empty()) {
+    std::string source = args.source;
+    if (source.empty() && !from_stdin) {
+      std::string ignored;
+      if (const auto detected = format_of(input, false, ignored)) source = *detected;
+    }
+    if (!source.empty()) schema = parse_or(cvt::options_schema_json(source, args.target), Json::array());
+  }
+  const auto options = options_json(args.options, schema, error);
   if (!options) return fail(CVT_ERR_INVALID_ARGUMENT, error);
 
   // Decide where the result goes.

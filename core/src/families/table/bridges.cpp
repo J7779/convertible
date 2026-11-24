@@ -244,7 +244,10 @@ void register_bridges(Registry& registry) {
     Bridge bridge;
     bridge.from = Kind::Table;
     bridge.to = Kind::Archive;
-    bridge.cost = 25;
+    // Above the cost of packing the file itself (implicit Blob read + wrap):
+    // "md -> zip" or "xlsx -> zip" means the file in an archive, not one CSV
+    // per table. The bridge only serves sources that have no bytes of their own.
+    bridge.cost = 2000;
     bridge.label = "one file per sheet";
     bridge.fn = table_to_archive;
     bridge.options = {

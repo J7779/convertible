@@ -28,15 +28,16 @@ inline constexpr int max_nesting = 64;
 
 /// One format description; `add_format` fills a FormatInfo from it.
 struct FormatSpec {
-  std::string id;
-  std::string name;
-  std::string description;
+  std::string id{};
+  std::string name{};
+  std::string description{};
   Category category = Category::Data;
-  std::vector<std::string> extensions;
-  std::string mime;
+  std::vector<std::string> extensions{};
+  std::string mime{};
   int popularity = 10;
-  std::vector<Signature> signatures;
-  std::function<int(ByteView data, std::string_view filename)> sniff;
+  std::vector<Signature> signatures{};
+  std::function<int(ByteView data, std::string_view filename)> sniff{};
+  bool output_only = false;  ///< generated from other content only (barcodes): see FormatInfo::output_only
 };
 void add_format(Registry& registry, FormatSpec spec);
 

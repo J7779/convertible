@@ -461,14 +461,14 @@ namespace cvt::science {
 
 void register_netcdf(Registry& registry) {
   using namespace arrays;
-  add_format(registry, {.id = "netcdf",
+  add_format(registry, {.id = "nc",
                         .name = "NetCDF classic",
                         .description = "Network Common Data Form, classic / 64-bit offset / CDF-5 encoding.",
                         .extensions = {"nc", "cdf", "netcdf"},
                         .mime = "application/x-netcdf",
                         .popularity = 28,
                         .signatures = {Signature::at(0, "'CDF' 01"), Signature::at(0, "'CDF' 02"), Signature::at(0, "'CDF' 05")}});
-  add_collection_codecs(registry, "netcdf", read_netcdf, write_netcdf, {},
+  add_collection_codecs(registry, "nc", read_netcdf, write_netcdf, {},
                         {OptionSpec::choice("netcdf_format", "NetCDF format", "auto", {"auto", "classic", "64bit-offset", "cdf5"},
                                             "Classic is the most compatible; CDF-5 adds unsigned and 64-bit integers; auto picks the "
                                             "oldest that holds the data.")});

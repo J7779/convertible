@@ -132,3 +132,50 @@ Files written by Convertible from the SRT above were read back:
 - ttconv 1.2.3 (`tt convert ... --otype srt`): ttml, ttml with
   `ttml_profile=imsc1`, ebu-tt, ebu-stl and scc outputs give identical texts
   (including italics) and times within one frame.
+
+
+## legacy/: East Asian legacy encodings
+
+Four two-cue SRT files in the legacy multi-byte encodings, made with the
+codecs of the Python 3.14 standard library (independent of Convertible's
+tables, which the reader under test uses) by the script below, run in a
+scratch directory as `python3 -I make_cjk.py out`; the files in
+`out/subtitle/` are copied here (the HTML files of the same run are in
+`../document/legacy/`). Synthetic sentences ("hello world, this is a
+subtitle test", "the sky over the capital is very blue").
+
+| File | Encoding | Cue 1 / cue 2 |
+| --- | --- | --- |
+| `shift_jis.srt` | `shift_jis` | こんにちは、世界。字幕のテストです。 / 東京の空はとても青い。 |
+| `gbk.srt` | `gbk` | 你好，世界。这是字幕测试。 / 北京的天空非常蓝。 |
+| `big5.srt` | `big5` | 你好，世界。這是字幕測試。 / 臺北的天空非常藍。 |
+| `euc_kr.srt` | `euc_kr` | 안녕하세요, 세계. 자막 시험입니다. / 서울의 하늘은 아주 파랗다. |
+
+```python
+"""Writes the East Asian legacy-encoding fixtures (synthetic text) with Python's codecs."""
+import os
+import sys
+
+TEXTS = {
+    # file stem: (codec, html charset label, first line, second line)
+    "shift_jis": ("shift_jis", "Shift_JIS", "こんにちは、世界。字幕のテストです。", "東京の空はとても青い。"),
+    "gbk": ("gbk", "GBK", "你好，世界。这是字幕测试。", "北京的天空非常蓝。"),
+    "big5": ("big5", "Big5", "你好，世界。這是字幕測試。", "臺北的天空非常藍。"),
+    "euc_kr": ("euc_kr", "EUC-KR", "안녕하세요, 세계. 자막 시험입니다.", "서울의 하늘은 아주 파랗다."),
+}
+
+out = sys.argv[1]
+os.makedirs(os.path.join(out, "subtitle"), exist_ok=True)
+os.makedirs(os.path.join(out, "document"), exist_ok=True)
+for stem, (codec, label, first, second) in TEXTS.items():
+    srt = ("1\r\n00:00:01,000 --> 00:00:03,000\r\n%s\r\n\r\n"
+           "2\r\n00:00:04,000 --> 00:00:06,000\r\n%s\r\n\r\n") % (first, second)
+    open(os.path.join(out, "subtitle", "%s.srt" % stem), "wb").write(srt.encode(codec))
+    # Without a charset declaration: the reader must recognise the encoding.
+    html = "<!DOCTYPE html>\n<html><body>\n<h1>%s</h1>\n<p>%s</p>\n</body></html>\n" % (first, second)
+    open(os.path.join(out, "document", "%s_nometa.html" % stem), "wb").write(html.encode(codec))
+    # With <meta charset>.
+    html = ("<!DOCTYPE html>\n<html><head><meta charset=\"%s\"><title>%s</title></head><body>\n"
+            "<p>%s</p>\n</body></html>\n") % (label, second, first)
+    open(os.path.join(out, "document", "%s_meta.html" % stem), "wb").write(html.encode(codec))
+```

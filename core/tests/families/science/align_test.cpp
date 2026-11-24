@@ -41,8 +41,8 @@ TEST_CASE("science/alignments: decodes Biopython PHYLIP, Clustal, Stockholm and 
            {"phylip", "msa.phy"},
            {"phylip", "msa_sequential.phy"},
            {"clustal", "msa.aln"},
-           {"stockholm", "msa.sto"},
-           {"nexus", "msa.nex"}}) {
+           {"sto", "msa.sto"},
+           {"nex", "msa.nex"}}) {
     INFO(file);
     const auto table = test::read_as<ir::Table>(format, test::fixture("science/bio/" + file));
     REQUIRE_OK(table);
@@ -57,7 +57,7 @@ TEST_CASE("science/alignments: decodes Biopython PHYLIP, Clustal, Stockholm and 
 TEST_CASE("science/alignments: every writer round trips through every reader") {
   const auto source = test::read_as<ir::Table>("clustal", test::fixture("science/bio/msa.aln"));
   REQUIRE_OK(source);
-  for (const char* format : {"phylip", "clustal", "stockholm", "nexus", "fasta"}) {
+  for (const char* format : {"phylip", "clustal", "sto", "nex", "fasta"}) {
     INFO(format);
     const auto written = test::write_from(format, *source);
     REQUIRE_OK(written);
@@ -102,7 +102,7 @@ TEST_CASE("science/newick: decodes Biopython trees, NEXUS trees agree") {
   CHECK(root["children"][2]["name"].as_string() == "inner");
   CHECK(root["children"][2]["children"][0]["length"].as_double() == 0.001);
   CHECK(root["children"][2]["children"][1]["length"].as_double() == 2.0);
-  const auto nexus = test::read_as<ir::Data>("nexus", test::fixture("science/bio/tree.nex"));
+  const auto nexus = test::read_as<ir::Data>("nex", test::fixture("science/bio/tree.nex"));
   REQUIRE_OK(nexus);
   CHECK(nexus->value["trees"][0]["name"].as_string() == "tree1");
   CHECK(nexus->value["trees"][0]["root"] == root);
@@ -110,9 +110,9 @@ TEST_CASE("science/newick: decodes Biopython trees, NEXUS trees agree") {
   const auto newick = test::write_from("newick", *data);
   REQUIRE_OK(newick);
   CHECK(test::str(*newick) == test::fixture_text("science/bio/tree.nwk"));
-  const auto nex = test::write_from("nexus", *data);
+  const auto nex = test::write_from("nex", *data);
   REQUIRE_OK(nex);
-  const auto back = test::read_as<ir::Data>("nexus", *nex);
+  const auto back = test::read_as<ir::Data>("nex", *nex);
   REQUIRE_OK(back);
   CHECK(back->value["trees"][0]["root"] == root);
   CHECK(detected(test::fixture("science/bio/tree.nwk"), "t.nwk") == "newick");
@@ -121,7 +121,7 @@ TEST_CASE("science/newick: decodes Biopython trees, NEXUS trees agree") {
 TEST_CASE("science/nexus: TRANSLATE tables, quoted names and comments") {
   const std::string text =
       "#NEXUS\n[a comment]\nbegin trees;\n translate 1 'first one', 2 second;\n tree t = [&U] (1:1,(2:2,3:3)x);\nend;\n";
-  const auto data = test::read_as<ir::Data>("nexus", as_bytes(text));
+  const auto data = test::read_as<ir::Data>("nex", as_bytes(text));
   REQUIRE_OK(data);
   const Json& tree = data->value["trees"][0];
   CHECK(tree["rooted"].as_bool(true) == false);
@@ -144,8 +144,8 @@ TEST_CASE("science/alignments: hostile input") {
   REQUIRE_OK(deep_data);
   CHECK_OK(test::write_from("newick", *deep_data));
   for (const auto& [format, name] : std::vector<std::pair<std::string, std::string>>{
-           {"phylip", "msa.phy"}, {"clustal", "msa.aln"}, {"stockholm", "msa.sto"}, {"nexus", "msa.nex"},
-           {"nexus", "tree.nex"}, {"newick", "tree.nwk"}}) {
+           {"phylip", "msa.phy"}, {"clustal", "msa.aln"}, {"sto", "msa.sto"}, {"nex", "msa.nex"},
+           {"nex", "tree.nex"}, {"newick", "tree.nwk"}}) {
     CHECK(test::fuzz_reader<ir::Data>(format, test::fixture("science/bio/" + name)) > 0);
   }
 }

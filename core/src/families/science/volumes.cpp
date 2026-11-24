@@ -622,7 +622,7 @@ void register_volumes(Registry& registry) {
                           return (h.starts_with("ObjectType") || h.starts_with("NDims")) && h.find("DimSize") != std::string_view::npos ? 92 : 0;
                         }});
   register_volume(registry, "mha", read_metaimage, write_metaimage_array, false, {options::compression_level(9), options::preset()});
-  add_format(registry, {.id = "nifti",
+  add_format(registry, {.id = "nii",
                         .name = "NIfTI-1 volume",
                         .description = "Neuroimaging Informatics Technology Initiative volume (.nii); Analyze 7.5 headers.",
                         .category = Category::Image,
@@ -630,7 +630,7 @@ void register_volumes(Registry& registry) {
                         .mime = "application/x-nifti",
                         .popularity = 18,
                         .sniff = sniff_nifti});
-  register_volume(registry, "nifti", read_nifti,
+  register_volume(registry, "nii", read_nifti,
                   [](const Array& a, const Json& extra, WriteContext& ctx) { return write_nifti_array(a, extra, ctx, false); },
                   true, {options::strip_metadata()});
   add_format(registry, {.id = "nii.gz",

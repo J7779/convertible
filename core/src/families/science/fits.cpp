@@ -471,7 +471,7 @@ Result<AnyIR> read_fits_image(ReadContext& ctx) {
   }
   if (chosen == nullptr) return fail(Status::Decode, "the FITS file has no 2-D image");
   imaging::Window window = imaging::window_from_options(ctx.options);
-  CVT_TRY_ASSIGN(ir::Image image, imaging::array_to_image(chosen->array, window, ctx.options.get_bool("flip_vertical", true), ctx));
+  CVT_TRY_ASSIGN(ir::Image image, imaging::array_to_image(chosen->array, window, ctx.options.get_bool("flip_vertical", true), ctx, true));
   if (!options::resolved_strip_metadata(ctx.options)) {
     for (const auto& [key, value] : chosen->header.items()) {
       if (!value.is_structured()) image.metadata["FITS:" + key] = value.is_string() ? value.as_string() : util::dump_json(value);

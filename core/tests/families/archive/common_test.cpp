@@ -19,7 +19,8 @@ ir::ArchiveEntry file(std::string path, std::string_view text = "x") {
   return e;
 }
 
-ir::ArchiveEntry link(std::string path, std::string target) {
+// Not "link": POSIX declares ::link(const char*, const char*) in <unistd.h>.
+ir::ArchiveEntry symlink_entry(std::string path, std::string target) {
   ir::ArchiveEntry e;
   e.path = std::move(path);
   e.symlink_target = std::move(target);
@@ -34,11 +35,11 @@ TEST_CASE("archive/common: reader sink sanitises names and enforces symlink safe
   REQUIRE_OK(sink.add(file("../evil.txt")));      // escapes: skipped
   REQUIRE_OK(sink.add(file("/abs/path.txt")));    // made relative
   REQUIRE_OK(sink.add(file("C:\\win\\x.txt")));   // drive and backslashes
-  REQUIRE_OK(sink.add(link("ok", "abs/path.txt")));
-  REQUIRE_OK(sink.add(link("sub/up", "../abs")));
-  REQUIRE_OK(sink.add(link("bad1", "/etc/passwd")));
-  REQUIRE_OK(sink.add(link("bad2", "../../outside")));
-  REQUIRE_OK(sink.add(link("dirlink", "abs")));
+  REQUIRE_OK(sink.add(symlink_entry("ok", "abs/path.txt")));
+  REQUIRE_OK(sink.add(symlink_entry("sub/up", "../abs")));
+  REQUIRE_OK(sink.add(symlink_entry("bad1", "/etc/passwd")));
+  REQUIRE_OK(sink.add(symlink_entry("bad2", "../../outside")));
+  REQUIRE_OK(sink.add(symlink_entry("dirlink", "abs")));
   REQUIRE_OK(sink.add(file("dirlink/through.txt")));  // written through a link: dropped
   const ir::Archive archive = sink.finish("comment");
   std::vector<std::string> paths;
@@ -79,7 +80,7 @@ TEST_CASE("archive/common: write policy normalises modes and times") {
   auto b = file("dir/b.txt");
   b.unix_mode = 0600;
   in.entries.push_back(b);  // mtime unknown
-  in.entries.push_back(link("l", "a.sh"));
+  in.entries.push_back(symlink_entry("l", "a.sh"));
   in.entries.push_back(file("a.sh", "second"));  // duplicate: last wins
 
   WriteContext ctx;

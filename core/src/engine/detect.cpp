@@ -51,6 +51,7 @@ std::vector<Detection> detect_candidates(const Registry& registry, ByteView data
   std::vector<Detection> candidates;
 
   for (const FormatInfo* format : registry.formats()) {
+    if (format->output_only) continue;  // generated, never read: nothing to detect
     int content = 0;
     for (const Signature& signature : format->signatures) {
       if (signature.matches(data)) content = std::max(content, signature_confidence(signature));

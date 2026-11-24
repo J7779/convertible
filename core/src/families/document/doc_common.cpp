@@ -9,10 +9,10 @@
 #include <utility>
 
 #include "engine/standard_options.hpp"
-#include "families/document/charset_tables.hpp"
 #include "ir/any.hpp"
 #include "util/crc.hpp"
 #include "util/deflate.hpp"
+#include "util/charsets.hpp"
 #include "util/text.hpp"
 
 namespace cvt::document {
@@ -87,39 +87,34 @@ std::string normalize_label(std::string_view label) {
   return out;
 }
 
+// WHATWG labels the shared charset module does not spell the same way.
+std::string_view whatwg_alias(std::string_view name) {
+  if (name == "iso-8859-8-i" || name == "csiso88598i" || name == "logical" || name == "visual") return "iso-8859-8";
+  if (name == "koi8-ru" || name == "koi") return name == "koi" ? "koi8-r" : "koi8-u";
+  if (name == "x-sjis" || name == "ms-kanji") return "shift_jis";
+  if (name == "x-euc-jp") return "euc-jp";
+  if (name == "x-gbk" || name == "gb-2312" || name == "chinese") return "gbk";
+  if (name == "big5-hkscs" || name == "cn-big5") return "big5";
+  if (name == "ks-c-5601-1987" || name == "windows-949") return "euc-kr";
+  return name;
+}
+
 }  // namespace
 
 bool is_known_charset(std::string_view label) {
   const std::string name = normalize_label(label);
   if (name == "us-ascii" || name == "ascii" || name == "ansi-x3.4-1968") return true;
   if (util::parse_encoding(name)) return true;
-  return charsets::find_table(name) != nullptr;
+  return util::decode_labelled({}, whatwg_alias(name)).has_value();
 }
 
 bool decode_charset(ByteView data, std::string_view label, std::string& out) {
+  // Every charset of util/charsets.hpp: Unicode, the single-byte code pages
+  // and the East Asian multi-byte encodings (Shift_JIS, GBK, Big5, EUC-KR ...).
   const std::string name = normalize_label(label);
-  if (name == "us-ascii" || name == "ascii" || name == "ansi-x3.4-1968") {
-    // WHATWG: ASCII labels mean windows-1252.
-    out = util::decode_text(data, util::TextEncoding::Windows1252).text;
-    return true;
-  }
-  if (const auto encoding = util::parse_encoding(name)) {
-    out = util::decode_text(data, *encoding).text;
-    return true;
-  }
-  const auto* table = charsets::find_table(name);
-  if (table == nullptr) return false;
-  std::string text;
-  text.reserve(data.size() + data.size() / 4);
-  for (const std::byte b : data) {
-    const auto value = std::to_integer<std::uint8_t>(b);
-    if (value < 0x80) {
-      text.push_back(static_cast<char>(value));
-    } else {
-      util::append_utf8(text, (*table)[value - 0x80]);
-    }
-  }
-  out = std::move(text);
+  auto decoded = util::decode_labelled(data, whatwg_alias(name));
+  if (!decoded) return false;
+  out = std::move(decoded->text);
   return true;
 }
 
@@ -130,10 +125,21 @@ std::string decode_document_text(ByteView data, const Context& ctx, std::string_
     ctx.warn("Unknown source encoding '" + std::string(requested) + "'; the encoding was detected instead.");
   }
   const util::EncodingGuess guess = util::guess_encoding(data);
-  if (!guess.confident) {
-    ctx.warn("The text is not valid Unicode; it was read as Windows-1252. Set 'source_encoding' if that is wrong.");
+  util::CharsetText decoded;
+  if (guess.confident) {
+    util::DecodedText unicode = util::decode_text(data, guess.encoding);
+    decoded.text = std::move(unicode.text);
+    decoded.replaced = unicode.replaced;
+  } else {
+    // Not Unicode: a legacy charset the shared detector is confident about
+    // (East Asian multi-byte text decodes cleanly in only one), else Windows-1252.
+    decoded = util::decode_auto(data, "windows-1252");
+    if (decoded.charset == "windows-1252") {
+      ctx.warn("The text is not valid Unicode; it was read as Windows-1252. Set 'source_encoding' if that is wrong.");
+    } else {
+      ctx.warn("The text is not valid Unicode; it was read as " + decoded.charset + ". Set 'source_encoding' if that is wrong.");
+    }
   }
-  util::DecodedText decoded = util::decode_text(data, guess.encoding);
   if (decoded.replaced > 0) {
     ctx.warn(std::to_string(decoded.replaced) + " malformed byte sequence(s) were replaced with U+FFFD.");
   }
@@ -147,8 +153,9 @@ std::string decode_document_text(ByteView data, const Context& ctx, std::string_
 namespace {
 
 std::vector<std::string> source_encoding_choices() {
-  return {"auto",        "utf-8",        "utf-16le",     "utf-16be",     "windows-1252", "iso-8859-1",
-          "iso-8859-2",  "iso-8859-15",  "windows-1250", "windows-1251", "koi8-r",       "macintosh"};
+  std::vector<std::string> out = {"auto", "utf-8", "utf-16le", "utf-16be"};
+  for (const util::CharsetInfo& charset : util::legacy_charsets()) out.emplace_back(charset.id);
+  return out;
 }
 
 }  // namespace

@@ -80,6 +80,31 @@ TEST_CASE("audio_lossy/mp3: detection and conversion through the engine") {
   }
 }
 
+TEST_CASE("audio_lossy/mpeg: binary files of other formats are never taken for MPEG audio") {
+  // Pictures and textures are full of 0xFF bytes that look like frame syncs:
+  // the sniffers need a chain of consistent frames where the audio starts.
+  const Registry& registry = Registry::instance();
+  for (const char* file : {"detect/image/pattern.tiff", "detect/image/pattern.ico", "detect/image/pattern.ppm",
+                           "detect/image/pattern.sgi", "detect/image/pattern.ras", "detect/image/pattern.dpx",
+                           "detect/image/mac.tiff", "image_modern/misc/tex/etc1.pvr", "image_modern/misc/tex/bc7.pvr",
+                           "image_modern/misc/tex/astc12x12.astc", "image_modern/misc/tex/astc8x5.astc",
+                           "detect/video/clip.dv", "detect/audio/tone.au"}) {
+    INFO(file);
+    const Bytes data = test::fixture(file);
+    for (const char* id : {"mp1", "mp2", "mp3"}) {
+      const FormatInfo* format = registry.find(id);
+      REQUIRE(format != nullptr);
+      CHECK(format->sniff(data, "") == 0);
+    }
+    const auto detected = detect_format(registry, data, "");
+    if (detected) {
+      CHECK(detected->format->id != "mp1");
+      CHECK(detected->format->id != "mp2");
+      CHECK(detected->format->id != "mp3");
+    }
+  }
+}
+
 TEST_CASE("audio_lossy/mp3: damaged input is an error or a partial decode, never a crash") {
   for (const char* name : {"mpeg/lame_cbr24_mono_8000.mp3", "mpeg/ff_mp2_48_mono_24000.mp2", "mpeg/lame_free200_js_44100.mp3"}) {
     const Bytes data = test::fixture(std::string("audio_lossy/") + name);

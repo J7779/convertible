@@ -1231,7 +1231,8 @@ void register_script_literals(Registry& registry) {
       .sniff = [](ByteView data, std::string_view filename) {
         const std::string_view head = text_head(data, 64);
         if (!has_extension(filename, {"lua"})) return 0;
-        return head.starts_with("return {") || head.starts_with("{") || head.starts_with("return{") ? 70 : 0;
+        // Above Lua source by name (80): a file that only returns a table is data.
+        return head.starts_with("return {") || head.starts_with("{") || head.starts_with("return{") ? 84 : 0;
       },
   });
   add_codec(registry, {.format_id = "lua-table",

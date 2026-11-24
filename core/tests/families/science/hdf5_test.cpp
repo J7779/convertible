@@ -41,15 +41,15 @@ void check_common(const Json& data) {
 }  // namespace
 
 TEST_CASE("science/hdf5: decodes h5py files with the earliest format (symbol tables, v1 B-tree chunks)") {
-  const auto data = test::read_as<ir::Data>("hdf5", test::fixture("science/arrays/earliest.h5"));
+  const auto data = test::read_as<ir::Data>("h5", test::fixture("science/arrays/earliest.h5"));
   REQUIRE_OK(data);
   check_common(data->value);
   CHECK((*find_var(data->value, "/compact"))["data"] == Json::array({7, 8, 9}));
-  CHECK(detected(test::fixture("science/arrays/earliest.h5")) == "hdf5");
+  CHECK(detected(test::fixture("science/arrays/earliest.h5")) == "h5");
 }
 
 TEST_CASE("science/hdf5: decodes the latest format (dense links and attributes, chunk indexes)") {
-  const auto data = test::read_as<ir::Data>("hdf5", test::fixture("science/arrays/latest.h5"));
+  const auto data = test::read_as<ir::Data>("h5", test::fixture("science/arrays/latest.h5"));
   REQUIRE_OK(data);
   check_common(data->value);
   for (int i = 0; i < 20; ++i) {
@@ -69,12 +69,12 @@ TEST_CASE("science/hdf5: MATLAB 7.3 files, cycles and conversions") {
   CHECK((*find_var(mat->value, "/m"))["data"] == Json::array({Json::array({1.0, 2.0}), Json::array({3.0, 4.0})}));
   CHECK(detected(test::fixture("science/arrays/mat73.mat"), "m.mat") == "mat");
   std::vector<std::string> warnings;
-  const auto cycle = test::read_as<ir::Data>("hdf5", test::fixture("science/arrays/cycle.h5"), "", &warnings);
+  const auto cycle = test::read_as<ir::Data>("h5", test::fixture("science/arrays/cycle.h5"), "", &warnings);
   REQUIRE_OK(cycle);
   CHECK(cycle->value["variables"].size() == 1);
   CHECK(warnings.size() == 1);
   // HDF5 -> NumPy archive keeps every dataset.
-  const auto converted = test::convert(test::fixture("science/arrays/earliest.h5"), "hdf5", "npz");
+  const auto converted = test::convert(test::fixture("science/arrays/earliest.h5"), "h5", "npz");
   REQUIRE(converted.ok());
   const auto npz = test::read_as<ir::Data>("npz", converted.data);
   REQUIRE_OK(npz);
@@ -82,7 +82,7 @@ TEST_CASE("science/hdf5: MATLAB 7.3 files, cycles and conversions") {
 }
 
 TEST_CASE("science/hdf5: hostile input") {
-  CHECK(test::fuzz_reader<ir::Data>("hdf5", test::fixture("science/arrays/earliest.h5"), 96) > 0);
-  CHECK(test::fuzz_reader<ir::Data>("hdf5", test::fixture("science/arrays/latest.h5"), 96) > 0);
-  CHECK_STATUS(test::read_as<ir::Data>("hdf5", as_bytes("\x89HDF\r\n\x1a\n")), Status::Decode);
+  CHECK(test::fuzz_reader<ir::Data>("h5", test::fixture("science/arrays/earliest.h5"), 96) > 0);
+  CHECK(test::fuzz_reader<ir::Data>("h5", test::fixture("science/arrays/latest.h5"), 96) > 0);
+  CHECK_STATUS(test::read_as<ir::Data>("h5", as_bytes("\x89HDF\r\n\x1a\n")), Status::Decode);
 }

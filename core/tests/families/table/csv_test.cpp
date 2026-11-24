@@ -83,7 +83,7 @@ TEST_CASE("table/csv: semicolons, decimal commas, BOM and the Excel sep= hint") 
   const auto plain = read_fixture("csv", "csv/semicolon_bom.csv");
   REQUIRE_OK(plain);
   CHECK_MESSAGE(test::tables_equal(renamed(*plain, ""), text_numbers), test::table_diff(renamed(*plain, ""), text_numbers));
-  const auto comma = read_fixture("csv-semicolon", "csv/semicolon_bom.csv", R"({"decimal_separator":"comma"})");
+  const auto comma = read_fixture("csv", "csv/semicolon_bom.csv", R"({"decimal_separator":"comma"})");
   REQUIRE_OK(comma);
   CHECK_MESSAGE(test::tables_equal(renamed(*comma, ""), real_numbers), test::table_diff(renamed(*comma, ""), real_numbers));
   CHECK(comma->sheets[0].rows[1][2].text == "3,50");  // the text as written

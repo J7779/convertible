@@ -238,18 +238,18 @@ TEST_CASE("data/avro: container errors") {
 TEST_CASE("data/protobuf: guessing and keeping wire types") {
   // field 1 varint 150, field 2 string "testing", field 3 fixed32 1.5f, field 4 nested {1: 1}
   const Bytes message = hex("089601120774657374696e671d0000c03f22020801");
-  CHECK(td::read_bytes("protobuf", message).value() == td::json(R"({"1": 150, "2": "testing", "3": 1.5, "4": {"1": 1}})"));
-  const auto typed = td::read_bytes("protobuf", message, R"({"typed_keys": true})");
+  CHECK(td::read_bytes("pb", message).value() == td::json(R"({"1": 150, "2": "testing", "3": 1.5, "4": {"1": 1}})"));
+  const auto typed = td::read_bytes("pb", message, R"({"typed_keys": true})");
   REQUIRE_OK(typed);
   CHECK(*typed == td::json(R"({"1:varint": 150, "2:string": "testing", "3:float": 1.5, "4:message": {"1:varint": 1}})"));
-  CHECK(td::write_bytes("protobuf", *typed).value() == message);
-  CHECK(td::read_bytes("protobuf", message, R"({"fixed_as": "int"})").value()["3"] == Json(1069547520));
-  CHECK(td::read_bytes("protobuf", hex("080108020803")).value() == td::json(R"({"1": [1, 2, 3]})"));
-  CHECK(td::read_bytes("protobuf", hex("0a0300ff01")).value() == td::json(R"({"1": {"$binary": "AP8B"}})"));
-  CHECK_STATUS(td::read_bytes("protobuf", hex("0a05ff")), Status::Decode);
-  CHECK_STATUS(td::read_bytes("protobuf", hex("ffffffffffffffffffffff01")), Status::Decode);
-  CHECK_STATUS(td::write_bytes("protobuf", td::json(R"({"name": 1})")), Status::Encode);
-  CHECK(td::write_bytes("protobuf", td::json(R"({"1:sint": -1, "2:double": 2, "3": [1, 2]})")).value() ==
+  CHECK(td::write_bytes("pb", *typed).value() == message);
+  CHECK(td::read_bytes("pb", message, R"({"fixed_as": "int"})").value()["3"] == Json(1069547520));
+  CHECK(td::read_bytes("pb", hex("080108020803")).value() == td::json(R"({"1": [1, 2, 3]})"));
+  CHECK(td::read_bytes("pb", hex("0a0300ff01")).value() == td::json(R"({"1": {"$binary": "AP8B"}})"));
+  CHECK_STATUS(td::read_bytes("pb", hex("0a05ff")), Status::Decode);
+  CHECK_STATUS(td::read_bytes("pb", hex("ffffffffffffffffffffff01")), Status::Decode);
+  CHECK_STATUS(td::write_bytes("pb", td::json(R"({"name": 1})")), Status::Encode);
+  CHECK(td::write_bytes("pb", td::json(R"({"1:sint": -1, "2:double": 2, "3": [1, 2]})")).value() ==
         hex("08011100000000000000401801" "1802"));
 }
 
@@ -263,20 +263,20 @@ TEST_CASE("data/flexbuffers: hostile input") {
 }
 
 TEST_CASE("data/pickle: only plain data is read, nothing is executed") {
-  const auto global = td::read("pickle", "cos\nsystem\n(S'echo hi'\ntR.");
+  const auto global = td::read("pkl", "cos\nsystem\n(S'echo hi'\ntR.");
   REQUIRE_STATUS(global, Status::Decode);
   CHECK(global.error().message.find("os.system") != std::string::npos);
-  CHECK_STATUS(td::read("pickle", "\x80\x04\x95\x10\x00\x00\x00\x00\x00\x00\x00\x8c\x08" "builtins\x8c\x04" "eval\x93."sv),
+  CHECK_STATUS(td::read("pkl", "\x80\x04\x95\x10\x00\x00\x00\x00\x00\x00\x00\x8c\x08" "builtins\x8c\x04" "eval\x93."sv),
                Status::Decode);
-  CHECK_STATUS(td::read("pickle", "(i__main__\nX\n."), Status::Decode);  // INST
-  CHECK_STATUS(td::read("pickle", "]q\x00h\x00" "a."sv), Status::Decode);  // a list containing itself
-  CHECK(td::read("pickle", "\x80\x02" "c__builtin__\nset\nq\x00]q\x01(K\x01K\x02" "e\x85q\x02Rq\x03."sv).value() ==
+  CHECK_STATUS(td::read("pkl", "(i__main__\nX\n."), Status::Decode);  // INST
+  CHECK_STATUS(td::read("pkl", "]q\x00h\x00" "a."sv), Status::Decode);  // a list containing itself
+  CHECK(td::read("pkl", "\x80\x02" "c__builtin__\nset\nq\x00]q\x01(K\x01K\x02" "e\x85q\x02Rq\x03."sv).value() ==
         td::json("[1, 2]"));
-  CHECK(td::read("pickle", "(lp0\nI1\naI2\na."sv).value() == td::json("[1, 2]"));
-  CHECK(td::read("pickle", "\x80\x02\x8a\x09\x00\x00\x00\x00\x00\x00\x00\x00\x01."sv).value() ==
+  CHECK(td::read("pkl", "(lp0\nI1\naI2\na."sv).value() == td::json("[1, 2]"));
+  CHECK(td::read("pkl", "\x80\x02\x8a\x09\x00\x00\x00\x00\x00\x00\x00\x00\x01."sv).value() ==
         td::json(R"({"$bigint": "18446744073709551616"})"));
-  CHECK_STATUS(td::read("pickle", "\x80\x05\x97."sv), Status::Decode);  // out-of-band buffer
-  CHECK_STATUS(td::read("pickle", "]"), Status::Decode);
+  CHECK_STATUS(td::read("pkl", "\x80\x05\x97."sv), Status::Decode);  // out-of-band buffer
+  CHECK_STATUS(td::read("pkl", "]"), Status::Decode);
 }
 
 TEST_CASE("data/bplist: cycles and expansion bombs are rejected") {
@@ -315,9 +315,9 @@ TEST_CASE("data/binary: our own encodings survive truncation and corruption") {
   const Json value = td::json(R"({"s": "text é", "i": [1, -200, 70000, 5000000000], "f": [1.5, 1e300], "n": null,
       "b": {"$binary": "AAEC"}, "d": {"$date": "2024-05-01T12:00:00Z"}, "o": {"x": [{"y": true}]}})");
   for (const std::string_view format : {"msgpack", "cbor", "bson", "ubjson", "bjdata", "smile", "bplist", "avro", "bencode",
-                                        "protobuf"}) {
+                                        "pb"}) {
     INFO("format ", format);
-    const Json input = format == "bencode" || format == "protobuf" ? td::json(R"({"1": "text", "2": [1, 2], "3": {"4": "x"}})") : value;
+    const Json input = format == "bencode" || format == "pb" ? td::json(R"({"1": "text", "2": [1, 2], "3": {"4": "x"}})") : value;
     const auto bytes = td::write_bytes(format, input);
     REQUIRE_OK(bytes);
     CHECK(test::fuzz_reader<ir::Data>(format, *bytes) > 0);

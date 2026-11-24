@@ -22,9 +22,10 @@
 #include "decint.h"
 
 
-/*The ANSI offsetof macro is broken on some platforms (e.g., older DECs).*/
-#define _ogg_offsetof(_type,_field)\
- ((size_t)((char *)&((_type *)0)->_field-(char *)0))
+/*Convertible: the standard offsetof instead of upstream's member access
+   through a null pointer (undefined behaviour that UBSan reports).*/
+#include <stddef.h>
+#define _ogg_offsetof(_type,_field) offsetof(_type,_field)
 
 /*The number of internal tokens associated with each of the spec tokens.*/
 static const unsigned char OC_DCT_TOKEN_MAP_ENTRIES[TH_NDCT_TOKENS]={

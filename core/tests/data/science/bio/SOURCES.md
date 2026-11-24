@@ -15,7 +15,7 @@ The generator scripts are listed inline; run them in this directory.
 | `reads_sanger.fastq` | 2 reads, `read1` `ACGTNACGTA` Phred 40,39,30,20,2,10,35,38,41,0; `read2` `GGGTTTAAAC` Phred 5..14 | `SeqIO.write(..., "fastq")` | `gen_seq.py` |
 | `reads_illumina13.fastq` | same reads, Phred+64 | `SeqIO.write(..., "fastq-illumina")` | `gen_seq.py` |
 | `reads_solexa.fastq` | same reads, Solexa+64 scores | `SeqIO.write(..., "fastq-solexa")` | `gen_seq.py` |
-| `construct.gb` | GenBank record `TEST0001.1`, 95 bp circular DNA (`ATGGCTAAACGTTGA` + `ACGT`x20), features source / CDS (translation `MAKR`, wrapped note) / complement misc_feature | `SeqIO.write(..., "genbank")` | `gen_seq.py` |
+| `construct.gb` | GenBank record `TEST0001.1`, 95 bp circular DNA (`ATGGCTAAACGTTGA` + `ACGT`x20), features source / CDS (translation `MAKR`, wrapped note) / complement misc_feature | `SeqIO.write(..., "gbk")` | `gen_seq.py` |
 | `construct.embl` | the same record as EMBL | `SeqIO.write(..., "embl")` | `gen_seq.py` |
 | `test_protein.swiss` | invented UniProt entry `TEST1_SYNTH` / `Q00000`, 30 aa, 2 features | written by hand in a text editor (Biopython cannot write this format); checked with `SeqIO.read("test_protein.swiss", "swiss")`, which reports id Q00000, 30 aa and features CHAIN [0:30], DOMAIN [4:20] | - |
 
@@ -50,7 +50,7 @@ r.features = [
              qualifiers={"gene": ["tstA"], "codon_start": ["1"], "translation": ["MAKR"],
                          "note": ["a long note that will need to wrap across more than one line in the flat file output format"]}),
   SeqFeature(FeatureLocation(20, 40, strand=-1), type="misc_feature", qualifiers={"label": ["reverse bit"]})]
-SeqIO.write([r], "construct.gb", "genbank")
+SeqIO.write([r], "construct.gb", "gbk")
 SeqIO.write([r], "construct.embl", "embl")
 ```
 
@@ -86,9 +86,9 @@ Biopython 1.88 `AlignIO.write`, and one tree written with `Phylo.write`
 | `msa_sequential.phy` | strict sequential PHYLIP | `AlignIO.write(aln, "msa_sequential.phy", "phylip-sequential")` |
 | `msa_relaxed.phy` | relaxed PHYLIP, names `a_rather_long_name_1`, `a_rather_long_name_2`, `short` | `AlignIO.write(long, "msa_relaxed.phy", "phylip-relaxed")` |
 | `msa.aln` | Clustal | `AlignIO.write(aln, "msa.aln", "clustal")` |
-| `msa.sto` | Stockholm | `AlignIO.write(aln, "msa.sto", "stockholm")` |
-| `msa.nex` | NEXUS DATA block | `AlignIO.write(aln, "msa.nex", "nexus")` |
+| `msa.sto` | Stockholm | `AlignIO.write(aln, "msa.sto", "sto")` |
+| `msa.nex` | NEXUS DATA block | `AlignIO.write(aln, "msa.nex", "nex")` |
 | `tree.nwk` | Newick `((taxonA:0.1,taxonB:0.25)0.95:0.05,'taxon C':0.3,(D:0.001,E:2)inner:0.4):0;` | `Phylo.write(tree, "tree.nwk", "newick")` |
-| `tree.nex` | the same tree as a NEXUS TAXA + TREES file | `Phylo.write(tree, "tree.nex", "nexus")` |
+| `tree.nex` | the same tree as a NEXUS TAXA + TREES file | `Phylo.write(tree, "tree.nex", "nex")` |
 
 The tree was read with `Phylo.read(io.StringIO("((taxonA:0.1,taxonB:0.25)0.95:0.05,'taxon C':0.3,(D:1e-3,E:2)inner:0.4);"), "newick")`.

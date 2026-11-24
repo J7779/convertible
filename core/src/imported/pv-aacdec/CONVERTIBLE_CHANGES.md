@@ -11,4 +11,8 @@
 - The OSCL platform macros (`OSCL_IMPORT_REF`, `OSCL_EXPORT_REF`,
   `OSCL_UNUSED_ARG`) and a `cvt_pv_` prefix for every global symbol come from
   a force-included header (`core/src/families/audio_lossy/aac/pv_aacdec_rename.h`).
-  The source files themselves are unchanged.
+  The source files themselves are unchanged, except:
+- `get_tns.cpp`: the TNS filter's upper band (`top`) is clamped at zero after
+  the start-band length is subtracted. A damaged stream made it negative, the
+  unsigned `tempInt` then held a huge value and `SCALE_FACTOR_BAND_OFFSET`
+  read far outside the band table (a crash with GCC builds on Linux).

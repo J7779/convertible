@@ -552,7 +552,7 @@ Result<Json> parse_pickle(ByteView input, ReadContext& ctx) {
 
 void register_pickle(Registry& registry) {
   registry.add_format(FormatInfo{
-      .id = "pickle",
+      .id = "pkl",
       .name = "Python pickle",
       .description = "Python's object serialisation; read as plain data only, never executed.",
       .category = Category::Data,
@@ -563,7 +563,7 @@ void register_pickle(Registry& registry) {
                      Signature::at(0, "80 05 95")},
       .sniff = [](ByteView, std::string_view filename) { return has_extension(filename, {"pkl", "pickle"}) ? 75 : 0; },
   });
-  add_codec(registry, {.format_id = "pickle",
+  add_codec(registry, {.format_id = "pkl",
                        .read = binary_reader(parse_pickle),
                        .write = nullptr,
                        .read_options = common_read_options(true, false)});

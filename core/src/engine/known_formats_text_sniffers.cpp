@@ -260,7 +260,7 @@ constexpr RootMapping roots[] = {
     {"metalink", "", "metalink", 95},
     {"xfdf", "", "xfdf", 95},
     {"PMML", "", "pmml", 95},
-    {"Workbook", "urn:schemas-microsoft-com:office:spreadsheet", "xmlss", 95},
+    {"Workbook", "urn:schemas-microsoft-com:office:spreadsheet", "spreadsheetml", 95},
     {"wordDocument", "http://schemas.microsoft.com/office/word/2003/wordml", "wordml", 95},
     {"MMC_ConsoleFile", "", "msc", 95},
     {"qgis", "", "qgs", 95},
@@ -608,7 +608,7 @@ std::string_view interpreter_id(std::string_view line) {
 }
 
 std::string_view pem_label_id(std::string_view label) {
-  if (label == "CERTIFICATE" || label == "TRUSTED CERTIFICATE" || label == "X509 CERTIFICATE") return "crt";
+  if (label == "CERTIFICATE" || label == "TRUSTED CERTIFICATE" || label == "X509 CERTIFICATE") return "pem";
   if (label == "CERTIFICATE REQUEST" || label == "NEW CERTIFICATE REQUEST") return "csr";
   if (label.ends_with("PRIVATE KEY")) return "private-key";
   if (label == "X509 CRL") return "crl";
@@ -774,14 +774,14 @@ Verdict by_pem(const Ctx& c) {
   const std::size_t close = c.text.find("-----", pem + 11);
   if (close == npos || close - pem >= 80) return nothing();
   const std::string_view id = pem_label_id(c.text.substr(pem + 11, close - pem - 11));
-  if ((id == "crt" || id == "private-key" || id == "csr" || id == "crl") && has_ext(c.filename, "pem")) return found("pem", 93);
+  if ((id == "pem" || id == "private-key" || id == "csr" || id == "crl") && has_ext(c.filename, "pem")) return found("pem", 93);
   return found(id, 93);
 }
 
 Verdict by_ssh_key(const Ctx& c) {
   for (const std::string_view key : {"ssh-rsa AAAA"sv, "ssh-ed25519 AAAA"sv, "ssh-dss AAAA"sv, "ecdsa-sha2-nistp"sv,
                                      "sk-ssh-ed25519@openssh.com AAAA"sv, "sk-ecdsa-sha2-nistp256@openssh.com AAAA"sv}) {
-    if (c.body.starts_with(key)) return found("ssh-pubkey", 92);
+    if (c.body.starts_with(key)) return found("ssh-pub", 92);
   }
   return nothing();
 }
@@ -1191,7 +1191,7 @@ constexpr TextRule text_rules[] = {
     {"sh fish py pl rb js php lua tcl r ps1 awk applescript groovy swift jl ex erl raku cr scala scm rkt ts hs ml makefile dart",
      by_shebang},
     {"crt csr private-key crl p7b asc pem", by_pem},
-    {"ssh-pubkey", by_ssh_key},
+    {"ssh-pub", by_ssh_key},
     {"xbm php vcf vcs ics vtt ass m3u m3u8 pls url desktop reg inf service unity yaml tbd diff tex texi ris bib roff ged pgn sgf "
      "vcf-variant gff3 sam gbk nex sto mol2 jdx vhdr mtx wrl x3dv usda ma bvh ifc step pcd e00 asc-grid prj kicad_pcb "
      "kicad_sch gbr pbxproj sln puml nb cmake proto bat glsl tscn tres rpp org ly erl ex clj hs cob feature ldif abc-music "

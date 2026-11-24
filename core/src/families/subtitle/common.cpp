@@ -11,8 +11,8 @@
 #include <utility>
 #include <vector>
 
-#include "families/subtitle/codepages.hpp"
 #include "families/subtitle/subtitle.hpp"
+#include "util/charsets.hpp"
 #include "util/text.hpp"
 
 namespace cvt::subtitle {
@@ -26,41 +26,6 @@ using namespace std::string_view_literals;
 constexpr std::int64_t max_time_ms = 1000LL * 3600 * 1000;
 
 std::int64_t clamp_time(std::int64_t ms) { return std::clamp<std::int64_t>(ms, 0, max_time_ms); }
-
-// ---------------------------------------------------------------------------- code pages
-
-const codepages::CodePage* find_codepage(std::string_view name) {
-  for (const codepages::CodePage& page : codepages::tables) {
-    if (util::iequals(page.name, name)) return &page;
-  }
-  // Common aliases.
-  static constexpr std::array<std::pair<std::string_view, std::string_view>, 14> aliases = {{
-      {"cp1250", "windows-1250"}, {"cp1251", "windows-1251"}, {"cp1253", "windows-1253"},
-      {"cp1254", "windows-1254"}, {"cp1255", "windows-1255"}, {"cp1256", "windows-1256"},
-      {"cp1257", "windows-1257"}, {"cp874", "windows-874"},   {"latin2", "iso-8859-2"},
-      {"cyrillic", "iso-8859-5"}, {"greek", "iso-8859-7"},    {"ibm437", "cp437"},
-      {"ibm850", "cp850"},        {"macintosh", "mac-roman"},
-  }};
-  for (const auto& [alias, canonical] : aliases) {
-    if (util::iequals(alias, name)) return find_codepage(canonical);
-  }
-  return nullptr;
-}
-
-std::string decode_with(ByteView data, const codepages::CodePage& page) {
-  std::string out;
-  out.reserve(data.size() + data.size() / 4);
-  for (const std::byte b : data) {
-    const auto value = std::to_integer<std::uint8_t>(b);
-    if (value < 0x80) {
-      out.push_back(static_cast<char>(value));
-    } else {
-      const char16_t mapped = page.high[value - 0x80];
-      util::append_utf8(out, mapped == 0 ? util::replacement_character : static_cast<char32_t>(mapped));
-    }
-  }
-  return out;
-}
 
 /// Letters that are frequent in the languages a code page serves; a decode
 /// producing many of them is likely right.
@@ -161,26 +126,28 @@ std::optional<std::pair<std::string, std::size_t>> decode_reference(std::string_
 // ---------------------------------------------------------------------------- encodings
 
 std::optional<std::string> decode_codepage(ByteView data, std::string_view name) {
-  const codepages::CodePage* page = find_codepage(name);
-  if (page == nullptr) return std::nullopt;
-  return decode_with(data, *page);
+  // The shared legacy charsets (util/charsets.hpp): single-byte code pages and
+  // the East Asian multi-byte ones.
+  auto decoded = util::decode_labelled(data, name);
+  if (!decoded) return std::nullopt;
+  return std::move(decoded->text);
 }
 
 std::string guess_codepage(ByteView data) {
   // Score a bounded sample: long files say nothing new after 64 KiB.
   const ByteView sample = data.first(std::min<std::size_t>(data.size(), 64 * 1024));
+  // East Asian text decodes cleanly in exactly one multi-byte charset, which
+  // the shared detector recognises; single-byte pages are scored below.
+  const std::vector<util::CharsetGuess> guesses = util::detect_charsets(sample);
+  if (!guesses.empty() && util::is_multibyte_charset(guesses.front().id) && guesses.front().confidence >= 60) {
+    return guesses.front().id;
+  }
   std::string best = "windows-1252";
   double best_score = -1e300;
   for (const Profile& profile : profiles) {
-    std::string decoded;
-    if (profile.page == "windows-1252") {
-      decoded = util::decode_text(sample, util::TextEncoding::Windows1252).text;
-    } else {
-      const codepages::CodePage* page = find_codepage(profile.page);
-      if (page == nullptr) continue;
-      decoded = decode_with(sample, *page);
-    }
-    const double score = score_decode(decoded, profile);
+    const auto decoded = util::decode_labelled(sample, profile.page);
+    if (!decoded) continue;
+    const double score = score_decode(decoded->text, profile);
     if (score > best_score + 1e-9) {
       best_score = score;
       best = std::string(profile.page);
@@ -192,21 +159,15 @@ std::string guess_codepage(ByteView data) {
 Result<std::string> decode_bytes(ByteView data, std::string_view encoding) {
   std::string text;
   if (encoding.empty() || util::iequals(encoding, "auto")) {
+    // A byte order mark or valid Unicode first, then the legacy code pages.
     const util::EncodingGuess guess = util::guess_encoding(data);
     if (guess.confident || guess.encoding != util::TextEncoding::Windows1252) {
       text = util::decode_text(data, guess.encoding).text;
     } else {
-      const std::string page = guess_codepage(data);
-      if (page == "windows-1252") {
-        text = util::decode_text(data, util::TextEncoding::Windows1252).text;
-      } else {
-        text = *decode_codepage(data, page);
-      }
+      text = decode_codepage(data, guess_codepage(data)).value_or(std::string());
     }
-  } else if (const auto parsed = util::parse_encoding(encoding)) {
-    text = util::decode_text(data, *parsed).text;
-  } else if (auto decoded = decode_codepage(data, encoding)) {
-    text = std::move(*decoded);
+  } else if (auto decoded = util::decode_labelled(data, encoding)) {
+    text = std::move(decoded->text);
   } else {
     return fail(Status::InvalidArgument, "unknown character encoding '{}'", util::sanitize_utf8(encoding));
   }
@@ -221,9 +182,10 @@ Result<std::string> decode_input(const ReadContext& ctx) {
 // ---------------------------------------------------------------------------- options
 
 std::vector<OptionSpec> common_read_options() {
-  std::vector<std::string> encodings = {"auto",     "utf-8",  "utf-16le", "utf-16be",
-                                        "utf-32le", "utf-32be", "latin1",  "windows-1252"};
-  for (const codepages::CodePage& page : codepages::tables) encodings.emplace_back(page.name);
+  std::vector<std::string> encodings = {"auto", "utf-8", "utf-16le", "utf-16be", "utf-32le", "utf-32be", "latin1"};
+  for (const util::CharsetInfo& charset : util::legacy_charsets()) {
+    if (charset.id != "iso-8859-1") encodings.emplace_back(charset.id);
+  }
   return {
       OptionSpec::choice("source_encoding", "Source encoding", "auto", std::move(encodings),
                          "Character encoding of text subtitles; 'auto' detects Unicode and guesses legacy code pages.")

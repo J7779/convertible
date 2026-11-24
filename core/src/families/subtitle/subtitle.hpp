@@ -47,14 +47,16 @@ void register_bridges(Registry& registry);       // bridges.cpp: Subtitles -> Ta
 
 /// Decode the input bytes to UTF-8 text (BOM removed) honouring the
 /// `source_encoding` option: "auto" detects UTF-8/16/32 by BOM and content,
-/// then picks the most plausible legacy single-byte code page.
+/// then the most plausible legacy code page: an East Asian multi-byte charset
+/// (Shift_JIS, GBK, Big5, EUC-KR ...) when the text decodes cleanly in it,
+/// else the best-scoring single-byte one (util/charsets.hpp has the tables).
 [[nodiscard]] Result<std::string> decode_input(const ReadContext& ctx);
 /// As above for explicit bytes and option value.
 [[nodiscard]] Result<std::string> decode_bytes(ByteView data, std::string_view encoding);
-/// Decode bytes of a known single-byte code page ("windows-1251", "cp850",
-/// "iso-8859-7", ...). nullopt when the name is not known.
+/// Decode bytes of a known legacy charset ("windows-1251", "cp850", "gbk",
+/// "shift_jis", "iso-8859-7", ...). nullopt when the name is not known.
 [[nodiscard]] std::optional<std::string> decode_codepage(ByteView data, std::string_view name);
-/// Best legacy code page for non-UTF-8 bytes (one of the names above or
+/// Best legacy charset for non-UTF-8 bytes (one of the names above or
 /// "windows-1252").
 [[nodiscard]] std::string guess_codepage(ByteView data);
 

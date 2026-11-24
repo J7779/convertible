@@ -298,7 +298,9 @@ Result<AnyIR> read_bam(ReadContext& ctx) {
     return refs[static_cast<std::size_t>(id)];
   };
   std::vector<std::string> header_lines;
-  for (const auto line : lines_of(std::string(header_text.substr(0, header_text.find('\0'))))) {
+  // Named: lines_of returns views, which a temporary string would leave dangling.
+  const std::string header_string(header_text.substr(0, header_text.find('\0')));
+  for (const auto line : lines_of(header_string)) {
     if (!line.empty()) header_lines.emplace_back(line);
   }
   std::vector<std::vector<ir::Cell>> rows;

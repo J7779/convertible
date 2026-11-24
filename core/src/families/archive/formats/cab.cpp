@@ -351,8 +351,8 @@ void register_cab_formats(Registry& registry) {
   ArchiveFormat chm;
   chm.info.id = "chm";
   chm.info.name = "Compiled HTML Help";
-  chm.info.description = "Windows help file (ITSF): its HTML pages, images and tables of contents, extracted as files. Read only.";
-  chm.info.category = Category::Archive;
+  chm.info.description = "Windows help file (ITSF): converts to documents or extracts its pages and images as files.";
+  chm.info.category = Category::Ebook;
   chm.info.extensions = {"chm"};
   chm.info.mime = "application/vnd.ms-htmlhelp";
   chm.info.popularity = 15;

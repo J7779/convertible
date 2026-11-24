@@ -1119,7 +1119,8 @@ int sniff_man(ByteView data, std::string_view filename) {
   const bool content = rest.starts_with(".TH ") || rest.starts_with(".Dd ") || rest.starts_with(".Dd\n") ||
                        head.find("\n.TH ") != std::string_view::npos || head.find("\n.SH ") != std::string_view::npos;
   if (!content) return 0;
-  return has_extension(filename, {"man", "1", "2", "3", "4", "5", "6", "7", "8", "9", "mdoc"}) ? 85 : 72;
+  // Above the generic roff reading of the detection database (88).
+  return has_extension(filename, {"man", "1", "2", "3", "4", "5", "6", "7", "8", "9", "mdoc"}) ? 92 : 90;
 }
 
 }  // namespace

@@ -581,14 +581,14 @@ int sniff_xml_root(ByteView data, std::string_view root) {
 }  // namespace
 
 void register_spectra(Registry& registry) {
-  add_format(registry, {.id = "jcamp",
+  add_format(registry, {.id = "jdx",
                         .name = "JCAMP-DX spectrum",
                         .description = "IUPAC JCAMP-DX spectrum (IR, UV-Vis, NMR, MS ...).",
                         .extensions = {"jdx", "dx", "jcamp", "jcm"},
                         .mime = "chemical/x-jcamp-dx",
                         .popularity = 15,
                         .sniff = sniff_jcamp});
-  add_codec(registry, "jcamp", Kind::Table, read_jcamp, write_jcamp, {},
+  add_codec(registry, "jdx", Kind::Table, read_jcamp, write_jcamp, {},
             {OptionSpec::choice("jcamp_form", "Data form", "asdf", {"asdf", "affn"},
                                 "ASDF (DIFDUP) is compact; AFFN writes plain numbers.")});
   add_format(registry, {.id = "mzml",

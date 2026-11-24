@@ -182,7 +182,7 @@ void register_symbology(Registry& registry, std::string id, std::string name, st
                         .extensions = {"png"},
                         .mime = "image/png",
                         .popularity = popularity,
-                        .sniff = [](ByteView, std::string_view) { return 0; }});
+                        .output_only = true});
   std::vector<OptionSpec> write_options = barcode_options(id);
   write_options.push_back(OptionSpec::choice("barcode_output", "Output", "png", {"png", "svg", "pbm"},
                                              "Picture format written for the symbol."));

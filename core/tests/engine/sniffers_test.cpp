@@ -126,7 +126,7 @@ TEST_CASE("sniffers: Ogg by the codec of the first packet") {
   };
   CHECK(id_of(Family::Ogg, page("\x01vorbis\0\0\0\0")) == "ogg");
   CHECK(id_of(Family::Ogg, page("OpusHead\x01\x02")) == "opus");
-  CHECK(id_of(Family::Ogg, page("\x7F" "FLAC\x01\0")) == "oga");
+  CHECK(id_of(Family::Ogg, page("\x7F" "FLAC\x01\0")) == "ogg-flac");
   CHECK(id_of(Family::Ogg, page("Speex   1.2")) == "spx");
   CHECK(id_of(Family::Ogg, page("\x80theora\x03\x02")) == "ogv");
   CHECK(id_of(Family::Ogg, page("\x80theora\x03\x02") + page("\x01vorbis\0\0\0\0")) == "ogv");
@@ -294,7 +294,7 @@ TEST_CASE("sniffers: disk images, SQLite, ASF and DER") {
   CHECK(id_of(Family::Der, "\x30\x0B\x06\x09\x2A\x86\x48\x86\xF7\x0D\x01\x07\x02"s) == "p7b");
   CHECK(id_of(Family::Der, "\x30\x0B\x06\x09\x2A\x86\x48\x86\xF7\x0D\x01\x07\x02"s, "mail.p7s") == "p7s");
   CHECK(id_of(Family::Der, "\x30\x0A\x02\x01\x03\x30\x05\x06\x03\x2A\x03\x04"s) == "p12");
-  CHECK(id_of(Family::Der, "\x30\x0C\x30\x08\xA0\x03\x02\x01\x02\x02\x01\x01\x30\x00"s) == "crt");
+  CHECK(id_of(Family::Der, "\x30\x0C\x30\x08\xA0\x03\x02\x01\x02\x02\x01\x01\x30\x00"s) == "der");
   CHECK(id_of(Family::Der, "\x30\x0D\x02\x01\x00\x30\x05\x06\x03\x2B\x65\x70\x04\x02\x04\x00"s) == "private-key");
   all_prefixes(fat, "x.img");
 }
@@ -332,7 +332,7 @@ TEST_CASE("sniffers: JSON dialects") {
 TEST_CASE("sniffers: line-oriented text formats") {
   CHECK(id_of(Family::Text, "#!/usr/bin/env -S python3 -u\nprint(1)\n", "", "py") == "py");
   CHECK(id_of(Family::Text, "#!/bin/bash\necho\n", "", "sh") == "sh");
-  CHECK(id_of(Family::Text, "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n", "", "crt") == "crt");
+  CHECK(id_of(Family::Text, "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n", "", "pem") == "pem");
   CHECK(id_of(Family::Text, "-----BEGIN CERTIFICATE-----\nMIIB\n", "chain.pem", "pem") == "pem");
   CHECK(id_of(Family::Text, "1\n00:00:01,000 --> 00:00:02,000\nHi\n", "", "srt") == "srt");
   CHECK(id_of(Family::Text, "#EXTM3U\n#EXT-X-VERSION:3\n", "", "m3u8") == "m3u8");

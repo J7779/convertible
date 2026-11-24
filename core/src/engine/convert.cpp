@@ -6,10 +6,15 @@
 #include <exception>
 #include <limits>
 #include <new>
+#include <format>
+#include <optional>
+#include <set>
+#include <string>
 #include <system_error>
 
 #include "engine/detect.hpp"
 #include "engine/planner.hpp"
+#include "ir/archive.hpp"
 #include "util/fs.hpp"
 #include "util/mapped_file.hpp"
 #include "util/text.hpp"
@@ -77,8 +82,13 @@ std::unexpected<Error> step_failure(Error error, const Progress& progress) {
   return std::unexpected(std::move(error));
 }
 
-Result<Bytes> run_native(const Registry& registry, const Plan& plan, const ConvertRequest& request, const Limits& limits,
-                         const Options& options, const Warnings& warnings) {
+struct Written {
+  Bytes data;
+  std::string filename;  // WriteContext::output_filename
+};
+
+Result<Written> run_native(const Registry& registry, const Plan& plan, const ConvertRequest& request, const Limits& limits,
+                           const Options& options, const Warnings& warnings) {
   const Progress& progress = request.progress;
   const auto base_context = [&](Context& ctx, const std::vector<OptionSpec>& specs, double begin, double end,
                                 std::string_view stage) -> Result<void> {
@@ -107,7 +117,16 @@ Result<Bytes> run_native(const Registry& registry, const Plan& plan, const Conve
     value = std::move(*decoded);
   } else {
     ir::Blob blob;
-    blob.bytes.assign(request.input.begin(), request.input.end());
+    // Copied in pieces so that a cancellation is seen while a large file is
+    // taken in (a 100 MiB copy is a noticeable pause in a Debug build).
+    constexpr std::size_t piece = std::size_t{8} << 20;
+    blob.bytes.reserve(request.input.size());
+    for (std::size_t at = 0; at < request.input.size(); at += piece) {
+      const double fraction = static_cast<double>(at) / static_cast<double>(request.input.size());
+      if (!progress.report(0.45 * fraction, "Reading")) return std::unexpected(cancelled_error());
+      const ByteView part = request.input.subspan(at, std::min(piece, request.input.size() - at));
+      blob.bytes.insert(blob.bytes.end(), part.begin(), part.end());
+    }
     blob.filename = filename;
     blob.format_id = plan.source->id;
     blob.mime = plan.source->mime;
@@ -149,7 +168,24 @@ Result<Bytes> run_native(const Registry& registry, const Plan& plan, const Conve
   auto encoded = plan.writer->write(value, ctx);
   if (!encoded) return step_failure(std::move(encoded).error(), progress);
   if (progress.cancelled()) return std::unexpected(cancelled_error());
-  return encoded;
+  return Written{std::move(*encoded), base_name(ctx.output_filename)};
+}
+
+// A writer named its output (extract): report that name, the format found
+// from the name and the bytes, the name's own extension and that format's
+// MIME type.
+void describe_named_output(const Registry& registry, ConvertOutput& output, std::string filename) {
+  const std::vector<std::string> extensions = filename_extensions(filename);
+  const auto detected = detect_format(registry, output.data, filename);
+  if (detected) {
+    output.format_id = detected->format->id;
+    output.mime = detected->format->mime.empty() ? std::string("application/octet-stream") : detected->format->mime;
+  } else {
+    output.format_id = "bin";
+    output.mime = "application/octet-stream";
+  }
+  output.extension = extensions.empty() ? std::string() : extensions.back();
+  output.filename = std::move(filename);
 }
 
 Result<ConvertOutput> convert_checked(const Registry& registry, const ConvertRequest& request) {
@@ -167,8 +203,10 @@ Result<ConvertOutput> convert_checked(const Registry& registry, const ConvertReq
 
   ConvertOutput output;
   fill_format_fields(output, *source, *target);
-  CVT_TRY_ASSIGN(output.data, run_native(registry, plan, request, *limits, options, warnings));
+  CVT_TRY_ASSIGN(Written written, run_native(registry, plan, request, *limits, options, warnings));
+  output.data = std::move(written.data);
   CVT_TRY(limits->check_output(output.data.size()));
+  if (!written.filename.empty()) describe_named_output(registry, output, std::move(written.filename));
   request.progress.report(1.0, "Done");
   output.warnings = warnings.list();
   return output;
@@ -254,6 +292,94 @@ Result<Limits> effective_limits(const Limits& base, const Options& options) {
     }
   }
   return limits;
+}
+
+namespace {
+
+// "a.txt", "a.txt" -> "a.txt", "a (2).txt".
+std::string unique_name(std::string name, std::set<std::string>& used) {
+  if (used.insert(name).second) return name;
+  const std::size_t slash = name.rfind('/');
+  const std::size_t dot = name.rfind('.');
+  const bool has_extension = dot != std::string::npos && dot > (slash == std::string::npos ? 0 : slash + 1);
+  const std::string stem = has_extension ? name.substr(0, dot) : name;
+  const std::string extension = has_extension ? name.substr(dot) : std::string();
+  for (std::size_t n = 2;; ++n) {
+    std::string candidate = stem + " (" + std::to_string(n) + ")" + extension;
+    if (used.insert(candidate).second) return candidate;
+  }
+}
+
+Result<ConvertOutput> pack_checked(const Registry& registry, const PackRequest& request) {
+  auto limits = effective_limits(request.limits, request.options);
+  if (!limits) return std::unexpected(std::move(limits).error());
+  CVT_TRY_ASSIGN(const FormatInfo* target, resolve_target(registry, request.target_id));
+  const Codec* writer = nullptr;
+  for (const Codec* codec : registry.codecs_for(target->id)) {
+    if (codec->kind == Kind::Archive && codec->write && !codec->direct_only) writer = codec;
+  }
+  if (writer == nullptr) {
+    return fail(Status::UnsupportedConversion, "'{}' cannot hold several files; choose zip, 7z or a tar format", target->id);
+  }
+  if (request.inputs.empty()) return fail(Status::InvalidArgument, "there are no files to pack");
+  CVT_TRY(limits->check_archive_entries(request.inputs.size()));
+  std::uint64_t total = 0;
+  for (const PackInput& input : request.inputs) total += input.data.size();
+  CVT_TRY(limits->check_input(total));
+
+  ir::Archive archive;
+  std::set<std::string> used;
+  for (std::size_t i = 0; i < request.inputs.size(); ++i) {
+    if (!request.progress.report(0.3 * static_cast<double>(i) / static_cast<double>(request.inputs.size()), "Reading")) {
+      return fail(Status::Cancelled, "the conversion was cancelled");
+    }
+    const PackInput& input = request.inputs[i];
+    // Names come from the user's files: drop parent and current-directory
+    // segments and drive or root prefixes instead of refusing the file.
+    std::string cleaned;
+    for (const std::string_view segment : util::split(util::sanitize_utf8(input.name), '/', false)) {
+      for (const std::string_view part : util::split(segment, '\\', false)) {
+        if (part.empty() || part == "." || part == ".." || part.ends_with(':')) continue;
+        if (!cleaned.empty()) cleaned += '/';
+        cleaned += part;
+      }
+    }
+    std::optional<std::string> path = ir::sanitize_archive_path(cleaned);
+    if (!path || path->empty()) path = std::format("file{}", i + 1);
+    ir::ArchiveEntry entry;
+    entry.path = unique_name(std::move(*path), used);
+    entry.bytes.assign(input.data.begin(), input.data.end());
+    archive.entries.push_back(std::move(entry));
+  }
+
+  const Options options = step_options(request.options);
+  Warnings warnings;
+  warn_unknown_options(options, writer->write_options, warnings);
+  WriteContext ctx;
+  CVT_TRY_ASSIGN(ctx.options, options.normalized(writer->write_options));
+  ctx.progress = request.progress.sub(0.3, 1.0, "Writing");
+  ctx.limits = *limits;
+  ctx.warnings = warnings;
+  ctx.registry = &registry;
+  ctx.format_id = target->id;
+  ConvertOutput output;
+  output.format_id = target->id;
+  output.extension = target->extensions.empty() ? target->id : target->extensions.front();
+  output.mime = target->mime.empty() ? std::string("application/octet-stream") : target->mime;
+  auto encoded = writer->write(AnyIR(std::move(archive)), ctx);
+  if (!encoded) return step_failure(std::move(encoded).error(), request.progress);
+  if (request.progress.cancelled()) return fail(Status::Cancelled, "the conversion was cancelled");
+  output.data = std::move(*encoded);
+  CVT_TRY(limits->check_output(output.data.size()));
+  request.progress.report(1.0, "Done");
+  output.warnings = warnings.list();
+  return output;
+}
+
+}  // namespace
+
+Result<ConvertOutput> run_pack(const Registry& registry, const PackRequest& request) {
+  return guarded([&] { return pack_checked(registry, request); });
 }
 
 Result<ConvertOutput> run_conversion(const Registry& registry, const ConvertRequest& request) {

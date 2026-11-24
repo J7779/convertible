@@ -25,7 +25,8 @@ SBCS = [
     ("iso-8859-13", "iso8859_13"), ("iso-8859-14", "iso8859_14"), ("iso-8859-15", "iso8859_15"),
     ("iso-8859-16", "iso8859_16"), ("windows-1250", "cp1250"), ("windows-1251", "cp1251"), ("windows-1252", "cp1252"),
     ("windows-1253", "cp1253"), ("windows-1254", "cp1254"), ("windows-1255", "cp1255"), ("windows-1256", "cp1256"),
-    ("windows-1257", "cp1257"), ("windows-1258", "cp1258"), ("koi8-r", "koi8_r"), ("koi8-u", "koi8_u"),
+    ("windows-1257", "cp1257"), ("windows-1258", "cp1258"), ("windows-874", "cp874"), ("koi8-r", "koi8_r"),
+    ("koi8-u", "koi8_u"),
     ("macintosh", "mac_roman"), ("ibm437", "cp437"), ("ibm850", "cp850"), ("ibm852", "cp852"), ("ibm866", "cp866"),
     ("ibm037", "cp037"), ("ibm500", "cp500"), ("ibm1047", None),
 ]

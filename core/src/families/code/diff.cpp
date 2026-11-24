@@ -417,15 +417,16 @@ int sniff_by_name(ByteView data, std::string_view filename, std::initializer_lis
 }  // namespace
 
 void register_diff(Registry& registry) {
-  for (const std::string_view id : {"diff", "patch"}) {
+  // One format: ".patch" is an extension of "diff", not a second id.
+  for (const std::string_view id : {"diff"}) {
     FormatInfo info;
     info.id = std::string(id);
-    info.name = id == "diff" ? "Diff" : "Patch";
+    info.name = "Diff / patch";
     info.description = "Unified or context diff; renders as an inline or side-by-side document.";
     info.category = Category::Code;
-    info.extensions = {std::string(id)};
-    info.mime = id == "diff" ? "text/x-diff" : "text/x-patch";
-    info.popularity = id == "diff" ? 30 : 30;
+    info.extensions = {"diff", "patch"};
+    info.mime = "text/x-diff";
+    info.popularity = 30;
     info.sniff = sniff_diff;
     registry.add_format(std::move(info));
 

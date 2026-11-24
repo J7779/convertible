@@ -945,7 +945,7 @@ void register_more_bases(Registry& registry) {
   add_binary_encoding(registry, {
       .id = "pem", .name = "PEM armoured Base64",
       .description = "Base64 between '-----BEGIN label-----' and '-----END label-----' lines, as for keys and certificates.",
-      .extensions = {"pem", "asc"}, .mime = "application/x-pem-file", .popularity = 30,
+      .extensions = {"pem"}, .mime = "application/x-pem-file", .popularity = 30,
       .encode = [](const ir::Blob& blob, const WriteContext& ctx) -> Result<std::string> {
         const std::string label = ctx.options.get_string("label", "DATA");
         if (label.empty() || label.size() > 64 ||
@@ -964,6 +964,9 @@ void register_more_bases(Registry& registry) {
       .sniff = [](ByteView data, std::string_view) {
         return util::trim_left(as_chars(data).substr(0, 256)).starts_with("-----BEGIN ") ? 90 : 0;
       },
+      // The science family describes PEM (certificates and keys); this adds
+      // the armour itself as a Blob codec.
+      .describe = false,
   });
   add_binary_encoding(registry, {
       .id = "base91", .name = "basE91 text", .description = "basE91: about 23% overhead, using 91 printable ASCII characters.",

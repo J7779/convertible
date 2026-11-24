@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "engine/registry.hpp"
+#include "families/mesh/common.hpp"
 #include "families/vector/cad_dxf.hpp"
 #include "families/vector/cad_internal.hpp"
 #include "families/vector/vector_codecs.hpp"
@@ -99,10 +100,31 @@ Result<AnyIR> read_mesh(ReadContext& ctx) {
   if (!scene.mesh || scene.mesh->positions.empty()) {
     return fail(Status::Decode, "the DXF has no 3D faces (3DFACE, polyface or polygon mesh, MESH)");
   }
-  return AnyIR(std::move(*scene.mesh));
+  ir::Mesh mesh = std::move(*scene.mesh);
+  mesh.source_up_axis = "Z";  // DXF is +Z up; the reader has turned it into +Y up
+  CVT_TRY(mesh::finish_read(mesh, ctx));
+  return AnyIR(std::move(mesh));
 }
 
-Result<Bytes> write_mesh(const AnyIR& value, WriteContext& ctx) { return write_mesh_dxf(value.get<ir::Mesh>(), ctx); }
+// 3D faces only: no normals, texture coordinates, colours or materials; +Z
+// up, so the shared preparation turns the mesh's +Y up into it (and the
+// reader turns it back).
+mesh::WriterTraits dxf_mesh_traits() {
+  mesh::WriterTraits traits;
+  traits.up = mesh::WriterTraits::Up::Z;
+  traits.normals = false;
+  traits.texcoords = false;
+  traits.colors = false;
+  traits.materials = false;
+  return traits;
+}
+
+Result<Bytes> write_mesh(const AnyIR& value, WriteContext& ctx) {
+  // The mesh family's shared options and preparation (quality, metadata,
+  // optional arrays, axis), as for every other mesh writer.
+  CVT_TRY_ASSIGN(const ir::Mesh prepared, mesh::prepare_for_write(value.get<ir::Mesh>(), ctx, dxf_mesh_traits()));
+  return write_mesh_dxf(prepared, ctx);
+}
 
 }  // namespace
 
@@ -125,7 +147,7 @@ void register_dxf(Registry& registry) {
   format.read_options = {
       OptionSpec::choice("space", "Drawing space", "model", {"model", "paper"},
                          "Draw model space (the drawing) or paper space (the layout sheet)."),
-      OptionSpec::text("layers", "Layers", "",
+      OptionSpec::text("dxf_layers", "Layers", "",
                        "Comma-separated layer names to draw; empty draws every layer."),
       OptionSpec::number("max_page_size", "Largest page size (px)", 4096.0, 0.0, 10000000.0,
                          "When rendering, drawings larger than this are scaled down to fit; 0 keeps the true scale.")
@@ -141,17 +163,17 @@ void register_dxf(Registry& registry) {
   };
   register_vector_format(registry, std::move(format));
 
-  Codec mesh;
-  mesh.format_id = "dxf";
-  mesh.kind = Kind::Mesh;
-  mesh.read = read_mesh;
-  mesh.write = write_mesh;
-  mesh.lossy = true;
-  mesh.read_cost = 20;
-  mesh.write_cost = 20;
-  mesh.read_options = {};
-  mesh.write_options = {};
-  registry.add_codec(std::move(mesh));
+  Codec mesh_codec;
+  mesh_codec.format_id = "dxf";
+  mesh_codec.kind = Kind::Mesh;
+  mesh_codec.read = read_mesh;
+  mesh_codec.write = write_mesh;
+  mesh_codec.lossy = true;
+  mesh_codec.read_cost = 20;
+  mesh_codec.write_cost = 20;
+  mesh_codec.read_options = {};
+  mesh_codec.write_options = mesh::mesh_write_options(dxf_mesh_traits());
+  registry.add_codec(std::move(mesh_codec));
 }
 
 void register_dwg(Registry& registry) {

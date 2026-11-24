@@ -16,6 +16,13 @@ void register_code_family(Registry& registry) {
   code::register_minify(registry);
   code::register_devtools(registry);
   code::register_wasm(registry);
+  // Schema-bound Data codecs (see Codec::ir_tag): ignore-pattern lists and HTTP requests.
+  registry.set_ir_tag({"gitignore", "dockerignore"}, Kind::Data, "ignore-patterns");
+  registry.set_ir_tag({"curl", "http", "fetch-js", "python-requests"}, Kind::Data, "http-request");
+  // Text tools (a date, a UUID, a colour explained) and configuration
+  // writers take content read as such, never one made by a bridge.
+  registry.set_only_from({"color", "datetime", "uuid-info"}, Kind::PlainText, {"txt"});
+  registry.set_direct_only({"editorconfig", "npmrc", "http-headers"}, Kind::Data);
 }
 
 }  // namespace cvt

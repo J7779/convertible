@@ -60,5 +60,6 @@ struct RenderOptions {
 void register_pdf(Registry& registry);
 void register_xps(Registry& registry);
 void register_fdf(Registry& registry);
+void register_vector_pdf(Registry& registry);  // vector_pdf.cpp: vector scenes as true vector PDF
 
 }  // namespace cvt::pdf

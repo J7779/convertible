@@ -22,5 +22,6 @@ void register_wim_format(Registry& registry);         // formats/wim.cpp
 void register_squashfs_format(Registry& registry);    // formats/squashfs.cpp
 void register_dmg_format(Registry& registry);         // formats/dmg.cpp: dmg (UDIF + HFS+)
 void register_legacy_formats(Registry& registry);     // formats/legacy.cpp: lha/lzh, arj, arc, zoo, sit
+void register_extract(Registry& registry);            // formats/extract.cpp: the "extract" target
 
 }  // namespace cvt::archive

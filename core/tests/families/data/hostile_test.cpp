@@ -83,7 +83,7 @@ TEST_CASE("data/hostile: truncations, corruptions and noise never crash a text r
       {"querystring", "a[b][]=1&c=2"},
       {"http-headers", "A: b\r\nC: d\r\n"},
       {"reg", "Windows Registry Editor Version 5.00\r\n[K]\r\n\"a\"=dword:00000001\r\n"},
-      {"ndjson", "{\"a\":1}\n{\"b\":2}\n"},
+      {"jsonl", "{\"a\":1}\n{\"b\":2}\n"},
       {"json-seq", "\x1e{\"a\":1}\n"},
   };
   for (const auto& [format, text] : samples) {

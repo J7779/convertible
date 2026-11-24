@@ -23,8 +23,13 @@ tests/
   support/test_support.hpp  engine helpers: convert, read_as<T>, write_from, fuzz_reader, random_bytes
   support/fixtures.hpp      fixture("family/name") -> bytes of tests/data/family/name
   support/metrics.hpp       PSNR, SSIM, audio SNR, text similarity, data/table/mesh comparison, generators
-  engine/  util/  codec/    tests of the shared code
+  engine/  util/  codec/    tests of the shared code; engine/catalogue_test.cpp enforces the
+                            format-id policy, engine/known_formats_test.cpp + data/detect/ the
+                            detection of real files, determinism_test / cancel_latency_test the
+                            byte-identical output and prompt cancellation of every writer
   families/<family>/        tests of one format family (see families/README.md)
+  integration/              real files across families through the C ABI; every offered
+                            target converts (see integration/README.md)
   data/<family>/            fixtures + SOURCES.md (see data/README.md)
   cli_smoke.cmake           end-to-end run of the CLI
 ```

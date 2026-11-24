@@ -168,6 +168,7 @@ Registry::Entry& Registry::entry_for(std::string id) {
 }
 
 void Registry::add_format(FormatInfo info) {
+  sorted_formats_.clear();
   info.id = normalize_format_id(info.id);
   if (info.id.empty()) return;
   Entry& entry = entry_for(info.id);
@@ -195,10 +196,12 @@ void Registry::add_format(FormatInfo info) {
   }
   for (Signature& signature : info.signatures) target.signatures.push_back(std::move(signature));
   if (info.sniff) target.sniff = std::move(info.sniff);
+  if (info.output_only) target.output_only = true;
   entry.authoritative = true;
 }
 
 void Registry::add_known_format(FormatInfo info) {
+  sorted_formats_.clear();
   info.id = normalize_format_id(info.id);
   if (info.id.empty()) return;
   Entry& entry = entry_for(info.id);
@@ -224,6 +227,40 @@ void Registry::add_codec(Codec codec) {
   codecs_.push_back(std::move(codec));
 }
 
+void Registry::set_ir_tag(std::initializer_list<std::string_view> format_ids, Kind kind, std::string_view tag) {
+  for (const std::string_view id : format_ids) {
+    const auto it = codecs_by_format_.find(normalize_format_id(id));
+    if (it == codecs_by_format_.end()) continue;
+    for (const std::size_t index : it->second) {
+      if (codecs_[index].kind == kind) codecs_[index].ir_tag = std::string(tag);
+    }
+  }
+}
+
+void Registry::set_direct_only(std::initializer_list<std::string_view> format_ids, Kind kind) {
+  for (const std::string_view id : format_ids) {
+    const auto it = codecs_by_format_.find(normalize_format_id(id));
+    if (it == codecs_by_format_.end()) continue;
+    for (const std::size_t index : it->second) {
+      if (codecs_[index].kind == kind && codecs_[index].write) codecs_[index].direct_only = true;
+    }
+  }
+}
+
+void Registry::set_only_from(std::initializer_list<std::string_view> format_ids, Kind kind,
+                             std::initializer_list<std::string_view> sources) {
+  for (const std::string_view id : format_ids) {
+    const auto it = codecs_by_format_.find(normalize_format_id(id));
+    if (it == codecs_by_format_.end()) continue;
+    for (const std::size_t index : it->second) {
+      Codec& codec = codecs_[index];
+      if (codec.kind != kind || !codec.write) continue;
+      codec.only_from.clear();
+      for (const std::string_view source : sources) codec.only_from.push_back(normalize_format_id(source));
+    }
+  }
+}
+
 void Registry::add_bridge(Bridge bridge) { bridges_.push_back(std::move(bridge)); }
 
 void Registry::finalize() {
@@ -237,6 +274,10 @@ void Registry::finalize() {
   for (auto& [id, entry] : formats_) {
     if (entry.info.name.empty()) entry.info.name = util::to_upper(id);
   }
+  sorted_formats_.clear();
+  sorted_formats_.reserve(formats_.size());
+  for (const auto& [id, entry] : formats_) sorted_formats_.push_back(&entry.info);
+  std::ranges::sort(sorted_formats_, by_popularity);
 }
 
 const FormatInfo* Registry::find(std::string_view id) const {
@@ -253,6 +294,7 @@ const FormatInfo* Registry::resolve(std::string_view id_or_extension) const {
 }
 
 std::vector<const FormatInfo*> Registry::formats() const {
+  if (!sorted_formats_.empty() && sorted_formats_.size() == formats_.size()) return sorted_formats_;
   std::vector<const FormatInfo*> out;
   out.reserve(formats_.size());
   for (const auto& [id, entry] : formats_) out.push_back(&entry.info);
@@ -265,8 +307,10 @@ std::vector<const FormatInfo*> Registry::formats_with_extension(std::string_view
   for (const auto& [id, entry] : formats_) {
     if (std::ranges::find(entry.info.extensions, extension) != entry.info.extensions.end()) out.push_back(&entry.info);
   }
-  // A format whose primary extension matches outranks one that merely lists it.
+  // A format whose primary extension matches outranks one that merely lists
+  // it; an output-only format (csv-semicolon) comes after every real one.
   std::ranges::stable_sort(out, [&](const FormatInfo* a, const FormatInfo* b) {
+    if (a->output_only != b->output_only) return b->output_only;
     const bool a_primary = a->extensions.front() == extension;
     const bool b_primary = b->extensions.front() == extension;
     if (a_primary != b_primary) return a_primary;
@@ -349,7 +393,7 @@ std::vector<std::string> Registry::validate() const {
   std::map<std::string, std::string, std::less<>> untested_known_owner;
   for (const auto& [id, entry] : formats_) {
     const FormatInfo& info = entry.info;
-    if (!info.signatures.empty() || info.sniff) continue;
+    if (!info.signatures.empty() || info.sniff || info.output_only) continue;
     if (!entry.authoritative) {
       for (const std::string& extension : info.extensions) {
         const auto [it, inserted] = untested_known_owner.emplace(extension, id);

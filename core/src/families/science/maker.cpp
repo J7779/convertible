@@ -717,7 +717,7 @@ void register_maker(Registry& registry) {
                             }
                           }
                           if (hits == 0) return 0;
-                          return has_extension(name, "gcode") || has_extension(name, "gco") || has_extension(name, "ngc") ? 92 : (hits >= 3 ? 60 : 30);
+                          return has_extension(name, "gcode") || has_extension(name, "gco") || has_extension(name, "ngc") ? 92 : (hits >= 3 ? 70 : 30);
                         }});
   add_codec(registry, "gcode", Kind::Data,
             [](ReadContext& ctx) -> Result<AnyIR> {
@@ -777,14 +777,14 @@ void register_maker(Registry& registry) {
             },
             nullptr, preview_options(), {}, 30, 10, true);
 
-  add_format(registry, {.id = "gerber", .name = "Gerber layer", .description = "RS-274X PCB artwork layer.",
+  add_format(registry, {.id = "gbr", .name = "Gerber layer", .description = "RS-274X PCB artwork layer.",
                         .category = Category::Model3D, .extensions = {"gbr", "ger", "gtl", "gbl", "gto", "gbo", "gts", "gbs", "gko", "gm1"},
                         .mime = "application/vnd.gerber", .popularity = 15,
                         .sniff = [](ByteView d, std::string_view) {
                           const std::string_view h = head_text(d, 4096);
                           return h.find("%FS") != std::string_view::npos && h.find("%ADD") != std::string_view::npos ? 93 : (h.find("%FSLA") != std::string_view::npos ? 80 : 0);
                         }});
-  add_codec(registry, "gerber", Kind::Data,
+  add_codec(registry, "gbr", Kind::Data,
             [](ReadContext& ctx) -> Result<AnyIR> {
               CVT_TRY_ASSIGN(GerberResult r, parse_gerber(input_text(ctx.input), ctx));
               return ir::Data{std::move(r.summary)};
@@ -792,7 +792,7 @@ void register_maker(Registry& registry) {
             nullptr);
   std::vector<OptionSpec> gerber_opts = preview_options();
   gerber_opts.push_back(OptionSpec::text("layer_color", "Layer colour", "b87333", "Colour of copper/artwork (RRGGBB)."));
-  add_codec(registry, "gerber", Kind::Image,
+  add_codec(registry, "gbr", Kind::Image,
             [](ReadContext& ctx) -> Result<AnyIR> {
               CVT_TRY_ASSIGN(const GerberResult r, parse_gerber(input_text(ctx.input), ctx));
               if (!r.bounds.valid()) return fail(Status::Decode, "the Gerber file draws nothing");

@@ -905,7 +905,7 @@ int sniff_dicom(ByteView data, std::string_view name) {
 }  // namespace
 
 void register_dicom(Registry& registry) {
-  add_format(registry, {.id = "dicom",
+  add_format(registry, {.id = "dcm",
                         .name = "DICOM image",
                         .description = "Digital Imaging and Communications in Medicine file.",
                         .category = Category::Image,
@@ -917,8 +917,8 @@ void register_dicom(Registry& registry) {
   std::vector<OptionSpec> image_read = imaging::window_options("linear", 0.0);
   image_read.push_back(OptionSpec::choice("dicom_window", "Window", "file", {"file", "auto"},
                                           "Use the window centre/width stored in the file, or the full data range."));
-  add_codec(registry, "dicom", Kind::Image, read_dicom_image, write_dicom, image_read, {}, 20, 20, true);
-  add_codec(registry, "dicom", Kind::Data, read_dicom_data, nullptr, {options::strip_metadata()}, {}, 10, 10);
+  add_codec(registry, "dcm", Kind::Image, read_dicom_image, write_dicom, image_read, {}, 20, 20, true);
+  add_codec(registry, "dcm", Kind::Data, read_dicom_data, nullptr, {options::strip_metadata()}, {}, 10, 10);
 }
 
 }  // namespace cvt::science

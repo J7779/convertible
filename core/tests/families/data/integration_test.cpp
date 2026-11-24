@@ -15,11 +15,11 @@ namespace td = cvt::test::data;
 
 TEST_CASE("data/registry: the shared registry stays consistent") {
   CHECK(Registry::instance().validate().empty());
-  for (const std::string_view id : {"json", "jsonc", "json5", "hjson", "ndjson", "json-seq", "yaml", "toml", "xml", "ini",
+  for (const std::string_view id : {"json", "jsonc", "json5", "hjson", "jsonl", "json-seq", "yaml", "toml", "xml", "ini",
                                     "properties", "env", "reg", "plist", "bplist", "openstep-plist", "hocon", "kdl", "edn",
                                     "sexp", "ron", "cson", "querystring", "http-headers", "lua-table", "php-serialized",
                                     "python-literal", "msgpack", "cbor", "bson", "ubjson", "bjdata", "smile", "ion",
-                                    "bencode", "torrent", "protobuf", "avro", "flexbuffers", "pickle"}) {
+                                    "bencode", "torrent", "pb", "avro", "flexbuffers", "pkl"}) {
     INFO("format ", id);
     const FormatInfo* info = Registry::instance().find(id);
     REQUIRE(info != nullptr);
@@ -39,8 +39,8 @@ TEST_CASE("data/detection: content and names identify the formats") {
       {"{\"a\": 1}", "data.json", "json"},
       {"{\"a\": 1}", "", "json"},
       {"[1, 2]", "", "json"},
-      {"{\"a\":1}\n{\"a\":2}\n", "", "ndjson"},
-      {"{\"a\":1}\n", "log.jsonl", "ndjson"},
+      {"{\"a\":1}\n{\"a\":2}\n", "", "jsonl"},
+      {"{\"a\":1}\n", "log.jsonl", "jsonl"},
       {"{a: 1}", "x.json5", "json5"},
       {"// c\n{}", "settings.jsonc", "jsonc"},
       {"a: 1\n", "config.yml", "yaml"},
@@ -64,7 +64,7 @@ TEST_CASE("data/detection: content and names identify the formats") {
       {"$ion_1_0 {a: 1}", "", "ion"},
       {":)\n\x00\xfa\xfb"sv, "", "smile"},
       {"d8:announce3:urle", "", "torrent"},
-      {"\x80\x04\x95\x00\x00\x00\x00\x00\x00\x00\x00N."sv, "", "pickle"},
+      {"\x80\x04\x95\x00\x00\x00\x00\x00\x00\x00\x00N."sv, "", "pkl"},
       {"\xd9\xd9\xf7\x01"sv, "", "cbor"},
       {"KEY=value\n", ".env", "env"},
       {"key=value\n", "messages.properties", "properties"},
@@ -168,7 +168,9 @@ TEST_CASE("data/options: every writer accepts its declared options") {
   // Each writer option is exercised with a non-default value and must succeed.
   const Json value = td::json(R"({"b": [1, 2.5, null], "a": {"t": "x\ny", "d": {"$date": "2024-05-01"}}})");
   for (const Codec& codec : Registry::instance().codecs()) {
-    if (codec.kind != Kind::Data || !codec.write) continue;
+    // Schema-bound writers (Codec::ir_tag: sequences, palettes, vector scenes ...) are
+    // tested by their families with values of their schema.
+    if (codec.kind != Kind::Data || !codec.write || !codec.ir_tag.empty()) continue;
     for (const OptionSpec& spec : codec.write_options) {
       INFO("format ", codec.format_id, " option ", spec.key);
       Json options = Json::object();

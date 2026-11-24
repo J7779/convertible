@@ -15,7 +15,7 @@ The two records most files hold:
 | File | Tool | Notes |
 | --- | --- | --- |
 | `bibtexparser.bib` | bibtexparser `BibTexWriter().write(db)` | both records; LaTeX accents `{\"u}`, `month = {mar}`, `Sample, Jr., Ben` |
-| `pybtex.bib` | pybtex `BibliographyData.to_string("bibtex")` | an `@inproceedings` with a corporate author `{Example Consortium}`, an editor and `{DNA}` |
+| `pybtex.bib` | pybtex `BibliographyData.to_string("bib")` | an `@inproceedings` with a corporate author `{Example Consortium}`, an editor and `{DNA}` |
 | `macros.bib` | hand-written | `@string` macros, `#` concatenation, `@comment`, `@preamble`, BibLaTeX `journaltitle`/`date`/`langid`/`urldate`, `{\O}`, `\`e`, `---`, `\emph`, math, quoted value with ``` `` '' ``` |
 | `rispy.ris` | rispy `rispy.dumps(entries)` | both records, numbered (`1.`) as rispy writes them |
 | `items.csl.json` | `json.dumps` | both records as CSL-JSON (particle "de la", suffix "Jr.") |

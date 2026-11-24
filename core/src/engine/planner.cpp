@@ -78,6 +78,7 @@ ReachTable compute_reach(const Registry& registry, std::string_view source_id, b
     for (std::size_t b = 0; b < bridges.size(); ++b) {
       const Bridge& bridge = bridges[b];
       if (!bridge.fn || bridge.from == bridge.to || excludes(bridge, target)) continue;
+      if (bridge.after_reader_only && layer > 1) continue;
       const Reach& from = layers[depth - 1][index_of(bridge.from)];
       if (!from.valid) continue;
       Reach reach = from;
@@ -120,8 +121,17 @@ NativeChoice pick_writer(const Registry& registry, const ReachTable& reach, std:
   for (const Codec* codec : registry.codecs_for(target_id)) {
     if (!codec->write) continue;
     if (codec->same_format_only && source_id != target_id) continue;
+    if (!codec->only_from.empty() && std::ranges::find(codec->only_from, source_id) == codec->only_from.end()) continue;
     const Reach& from = reach[index_of(codec->kind)];
     if (!from.valid) continue;
+    if (!codec->ir_tag.empty() &&
+        (from.reader == nullptr || from.bridge_count != 0 || from.reader->ir_tag != codec->ir_tag)) {
+      continue;
+    }
+    if (codec->direct_only && (from.reader == nullptr || from.bridge_count != 0)) continue;
+    // A direct-only writer expects plain content of its kind, not another
+    // reader's dialect (a vector scene is no .npmrc object).
+    if (codec->direct_only && !from.reader->ir_tag.empty() && from.reader->ir_tag != codec->ir_tag) continue;
     NativeChoice choice;
     choice.valid = true;
     choice.reach = from;
@@ -147,6 +157,21 @@ Plan to_plan(const NativeChoice& choice, const FormatInfo* source, const FormatI
   plan.cost = choice.cost;
   plan.lossy = choice.lossy_steps > 0;
   return plan;
+}
+
+// Targets ranked with the source's own category: the same category, and the
+// few neighbours users reach for first - a drawing becomes a picture or a
+// PDF, data becomes a spreadsheet and back, any page-like document a PDF.
+bool near_category(const FormatInfo& source, const FormatInfo& target) {
+  if (target.category == source.category) return true;
+  switch (source.category) {
+    case Category::Vector: return target.category == Category::Image || target.id == "pdf";
+    case Category::Data: return target.category == Category::Spreadsheet;
+    case Category::Spreadsheet: return target.category == Category::Data || target.id == "pdf";
+    case Category::Ebook:
+    case Category::Presentation: return target.id == "pdf" || target.id == "docx";
+    default: return false;
+  }
 }
 
 void add_specs(std::vector<OptionSpec>& out, const std::vector<OptionSpec>& specs) {
@@ -185,6 +210,10 @@ Result<Plan> plan_conversion(const Registry& registry, std::string_view source_i
   if (source == nullptr) return fail(Status::UnknownFormat, "unknown source format '{}'", source_id);
   const FormatInfo* target = registry.find(target_id);
   if (target == nullptr) return fail(Status::UnknownFormat, "unknown target format '{}'", target_id);
+  if (source->output_only) {
+    return fail(Status::UnsupportedConversion, "'{}' is an output-only format: it can be produced but not converted from",
+                source->id);
+  }
 
   const bool identity = source == target;
   const ReachTable reach = compute_reach(registry, source->id, !identity, target->category);
@@ -197,7 +226,7 @@ Result<Plan> plan_conversion(const Registry& registry, std::string_view source_i
 std::vector<TargetInfo> list_targets(const Registry& registry, std::string_view source_id) {
   std::vector<TargetInfo> out;
   const FormatInfo* source = registry.find(source_id);
-  if (source == nullptr) return out;
+  if (source == nullptr || source->output_only) return out;
 
   // Reachability depends on the target category (bridge exclusions): one
   // table per category, computed on first use.
@@ -227,8 +256,8 @@ std::vector<TargetInfo> list_targets(const Registry& registry, std::string_view 
   // byte-level targets (Base64, checksums ...) come last. The same-format
   // "compress" entry is flagged for UIs and sorts like any other.
   std::ranges::stable_sort(out, [source](const TargetInfo& a, const TargetInfo& b) {
-    const bool a_same = a.format->category == source->category && !a.byte_level;
-    const bool b_same = b.format->category == source->category && !b.byte_level;
+    const bool a_same = !a.byte_level && near_category(*source, *a.format);
+    const bool b_same = !b.byte_level && near_category(*source, *b.format);
     if (a_same != b_same) return a_same;
     if (!a_same) {
       if (a.byte_level != b.byte_level) return !a.byte_level;
@@ -239,6 +268,14 @@ std::vector<TargetInfo> list_targets(const Registry& registry, std::string_view 
     return a.format->id < b.format->id;
   });
   return out;
+}
+
+std::string_view target_role(const FormatInfo& source, const TargetInfo& target) {
+  if (target.same_format) return "compress";
+  if (target.format->id == "extract") return "extract";
+  if (target.format->category == Category::Archive && source.category != Category::Archive) return "archive";
+  if (target.byte_level) return "encode";
+  return "convert";
 }
 
 }  // namespace cvt

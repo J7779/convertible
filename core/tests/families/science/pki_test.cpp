@@ -152,7 +152,7 @@ TEST_CASE("science/jwk: jwcrypto keys <-> PEM, JWT decoding") {
 }
 
 TEST_CASE("science/pgp: GnuPG armour and packets") {
-  const Json armored = read("pgp-armor", "pubkey.asc");
+  const Json armored = read("asc", "pubkey.asc");
   CHECK(armored["armor"].as_string() == "PUBLIC KEY BLOCK");
   const Json& packets = armored["packets"];
   REQUIRE(packets.size() == 3);
@@ -161,20 +161,20 @@ TEST_CASE("science/pgp: GnuPG armour and packets") {
   CHECK(packets[0]["key_id"].as_string() == "45400F307C40605D");  // gpg --list-packets
   CHECK(packets[1]["user_id"].as_string() == "Test Key <test@test.example>");
   CHECK(packets[2]["issuer"].as_string() == "45400F307C40605D");
-  const Json binary = read("pgp", "pubkey.gpg");
+  const Json binary = read("gpg", "pubkey.gpg");
   CHECK(binary["packets"] == packets);
   // Armour <-> binary.
-  const auto bin = test::convert(pki("pubkey.asc"), "pgp-armor", "pgp");
+  const auto bin = test::convert(pki("pubkey.asc"), "asc", "gpg");
   REQUIRE(bin.ok());
   CHECK(bin.data == pki("pubkey.gpg"));
-  const auto asc = test::convert(pki("pubkey.gpg"), "pgp", "pgp-armor");
+  const auto asc = test::convert(pki("pubkey.gpg"), "gpg", "asc");
   REQUIRE(asc.ok());
-  const auto back = test::read_as<ir::Data>("pgp-armor", asc.data);
+  const auto back = test::read_as<ir::Data>("asc", asc.data);
   REQUIRE_OK(back);
   CHECK(back->value["data"] == binary["data"]);
-  CHECK(read("pgp-armor", "msg.txt.asc")["packets"][0]["type"].as_string() == "Signature");
-  CHECK(detected(pki("pubkey.asc")) == "pgp-armor");
-  CHECK(detected(pki("pubkey.gpg"), "k.gpg") == "pgp");
+  CHECK(read("asc", "msg.txt.asc")["packets"][0]["type"].as_string() == "Signature");
+  CHECK(detected(pki("pubkey.asc")) == "asc");
+  CHECK(detected(pki("pubkey.gpg"), "k.gpg") == "gpg");
 }
 
 TEST_CASE("science/asn1: torture inputs") {
@@ -198,7 +198,7 @@ TEST_CASE("science/asn1: torture inputs") {
   for (const auto& [format, name] : std::vector<std::pair<std::string, std::string>>{
            {"pem", "rsa_cert.pem"}, {"der", "rsa_cert.der"}, {"p7b", "bundle.p7b"}, {"pem", "test.crl"}, {"pem", "ec.csr"},
            {"ssh-pub", "ssh_rsa.pub"}, {"known-hosts", "known_hosts"}, {"jwk", "ec_pub.jwk"}, {"jwt", "token.jwt"},
-           {"pgp-armor", "pubkey.asc"}, {"pgp", "pubkey.gpg"}}) {
+           {"asc", "pubkey.asc"}, {"gpg", "pubkey.gpg"}}) {
     CHECK(test::fuzz_reader<ir::Data>(format, pki(name), 256) > 0);
   }
 }

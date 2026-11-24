@@ -6,15 +6,18 @@
 // families and are never claimed here; the generic ZIP sniff stays below
 // their scores.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include <algorithm>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "engine/registry.hpp"
+#include "engine/sniffers.hpp"
 #include "families/archive/archive_common.hpp"
 #include "families/archive/formats/formats.hpp"
 #include "families/archive/formats/zip_internal.hpp"
+#include "util/text.hpp"
 
 namespace cvt::archive {
 
@@ -62,6 +65,7 @@ struct Package {
   std::vector<Signature> signatures;
   std::function<int(std::span<const std::byte>, std::string_view)> sniff;
   bool writable = true;
+  Category category = Category::Archive;
 };
 
 void register_package(Registry& registry, Package p) {
@@ -69,7 +73,7 @@ void register_package(Registry& registry, Package p) {
   f.info.id = std::string(p.id);
   f.info.name = std::string(p.name);
   f.info.description = std::string(p.description);
-  f.info.category = Category::Archive;
+  f.info.category = p.category;
   f.info.extensions = std::move(p.extensions);
   f.info.mime = std::string(p.mime);
   f.info.popularity = p.popularity;
@@ -90,12 +94,22 @@ void register_package(Registry& registry, Package p) {
   register_archive_format(registry, std::move(f));
 }
 
-std::function<int(std::span<const std::byte>, std::string_view)> member_sniff(std::vector<std::string> members, int score) {
-  return [members = std::move(members), score](std::span<const std::byte> data, std::string_view) {
-    for (const std::string& m : members) {
-      if (!mentions(data, m)) return 0;
+// The content decides through the shared ZIP classifier (the same one the
+// detection database uses, so the confidences agree); the member names are
+// the fallback for packages the classifier does not single out.
+std::function<int(std::span<const std::byte>, std::string_view)> package_sniff(std::string id, std::vector<std::string> members,
+                                                                            int score) {
+  return [id = std::move(id), members = std::move(members), score](std::span<const std::byte> data, std::string_view name) {
+    const sniff::Verdict verdict = sniff::classify(sniff::Family::Zip, data, name, id);
+    int best = verdict.id == id ? verdict.confidence : 0;
+    // A plain ZIP named after the package (the id is its extension).
+    if (verdict.container && (verdict.id.empty() || verdict.base) && util::iends_with(name, "." + id)) {
+      best = std::max(best, sniff::named_confidence);
     }
-    return score;
+    if (!members.empty() && std::ranges::all_of(members, [&](const std::string& m) { return mentions(data, m); })) {
+      best = std::max(best, score);
+    }
+    return best;
   };
 }
 
@@ -109,21 +123,22 @@ void register_zip_formats(Registry& registry) {
                               {"zip", "zipx"}, "application/zip", 95,
                               {local, Signature::at(0, "'PK' 05 06"), Signature::at(0, "'PK' 07 08")}, sniff_zip, true});
   register_package(registry, {"jar", "Java archive", "A ZIP archive of Java classes and resources with a manifest.",
-                              {"jar"}, "application/java-archive", 40, {local}, member_sniff({"META-INF/MANIFEST.MF"}, 80), true});
+                              {"jar"}, "application/java-archive", 40, {}, package_sniff("jar", {"META-INF/MANIFEST.MF"}, 80), true});
   register_package(registry, {"apk", "Android package", "An Android application package (a signed ZIP archive).",
-                              {"apk"}, "application/vnd.android.package-archive", 45, {local},
-                              member_sniff({"AndroidManifest.xml"}, 88), true});
+                              {"apk"}, "application/vnd.android.package-archive", 45, {},
+                              package_sniff("apk", {"AndroidManifest.xml"}, 88), true});
   register_package(registry, {"ipa", "iOS application archive", "An iOS application bundle packed as a ZIP archive.",
-                              {"ipa"}, "application/x-ios-app", 20, {local}, member_sniff({"Payload/", ".app/"}, 85), true});
+                              {"ipa"}, "application/x-ios-app", 20, {}, package_sniff("ipa", {"Payload/", ".app/"}, 85), true});
   register_package(registry, {"xpi", "Firefox extension", "A Mozilla add-on package (a signed ZIP archive).", {"xpi"},
-                              "application/x-xpinstall", 10, {local},
-                              [](std::span<const std::byte> data, std::string_view) {
-                                return mentions(data, "META-INF/mozilla.rsa") || mentions(data, "install.rdf") ? 82 : 0;
+                              "application/x-xpinstall", 10, {},
+                              [](std::span<const std::byte> data, std::string_view name) {
+                                if (mentions(data, "META-INF/mozilla.rsa") || mentions(data, "install.rdf")) return 88;
+                                return package_sniff("xpi", {}, 0)(data, name);
                               }, true});
   register_package(registry, {"whl", "Python wheel", "A built Python package (a ZIP archive with .dist-info metadata).",
-                              {"whl"}, "application/x-wheel+zip", 15, {local}, member_sniff({".dist-info/WHEEL"}, 85), true});
+                              {"whl"}, "application/x-wheel+zip", 15, {}, package_sniff("whl", {".dist-info/WHEEL"}, 85), true});
   register_package(registry, {"nupkg", "NuGet package", "A .NET package (a ZIP archive with a .nuspec manifest).",
-                              {"nupkg", "snupkg"}, "application/x-nupkg", 10, {local}, member_sniff({".nuspec"}, 85), true});
+                              {"nupkg", "snupkg"}, "application/x-nupkg", 10, {}, package_sniff("nupkg", {".nuspec"}, 85), true});
   register_package(registry, {"crx", "Chrome extension",
                               "A Chromium browser extension: a signed header ('Cr24') followed by a ZIP archive. "
                               "Read only (a valid package needs the publisher's signature).",
@@ -134,8 +149,12 @@ void register_zip_formats(Registry& registry) {
                                 return (version == 2 || version == 3) && data[5] == std::byte{0} ? 90 : 0;
                               },
                               false});
-  register_package(registry, {"cbz", "Comic book archive (ZIP)", "Comic book pages as images in a ZIP archive.", {"cbz"},
-                              "application/vnd.comicbook+zip", 20, {local}, nullptr, true});
+  // Comic books: described here, read and written as archives of pages; the
+  // office family adds the Document and Image codecs on the same id. The
+  // content says "comic" only through ComicInfo.xml; otherwise the name decides.
+  register_package(registry, {"cbz", "Comic book (ZIP)", "Comic book pages as images in a ZIP archive.", {"cbz"},
+                              "application/vnd.comicbook+zip", 35, {}, package_sniff("cbz", {"ComicInfo.xml"}, 92), true,
+                              Category::Ebook});
 }
 
 }  // namespace cvt::archive

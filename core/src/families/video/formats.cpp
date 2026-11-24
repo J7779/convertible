@@ -6,6 +6,7 @@
 #include <string>
 
 #include "engine/registry.hpp"
+#include "engine/sniffers.hpp"
 #include "families/video/bitstream.hpp"
 #include "families/video/containers.hpp"
 #include "families/video/pipeline.hpp"
@@ -212,10 +213,8 @@ int sniff_iso(std::span<const std::byte> data, std::string_view, std::string_vie
       detected = "mov";
     } else if (brand == "M4V " || brand == "M4VH" || brand == "M4VP") {
       detected = "m4v";
-    } else if (brand == "M4A ") {
-      detected = "m4a";
-    } else if (brand == "M4B ") {
-      detected = "m4b";
+    } else if (brand == "M4A " || brand == "M4B " || brand == "M4P " || brand == "M4R ") {
+      return 0;  // MPEG-4 audio: detected by the audio_lossy family
     } else if (brand.starts_with("3g2")) {
       detected = "3g2";
     } else if (brand.starts_with("3gp") || brand.starts_with("3ge") || brand.starts_with("3gg")) {
@@ -243,9 +242,16 @@ int sniff_ebml(std::span<const std::byte> data, std::string_view filename, std::
   const bool webm = h.find("webm") != std::string_view::npos;
   const bool matroska = h.find("matroska") != std::string_view::npos;
   if (format_id == "webm") return webm ? 96 : 0;
-  if (format_id == "mka") return matroska && has_extension(filename, "mka") ? 97 : 0;
+  // The shared EBML classifier tells audio-only and subtitle-only Matroska
+  // apart by their track types; it decides for unnamed files.
+  const sniff::Verdict verdict = sniff::classify(sniff::Family::Ebml, data, filename, format_id);
+  if (format_id == "mka") {
+    if (matroska && has_extension(filename, "mka")) return 97;
+    return verdict.id == "mka" ? std::max(verdict.confidence, 96) : 0;
+  }
   // 3D and subtitle-only Matroska have database entries of their own.
   if (has_extension(filename, "mk3d") || has_extension(filename, "mks")) return 0;
+  if (!verdict.id.empty() && verdict.id != "mkv" && verdict.id != "webm" && !verdict.base) return 0;
   return matroska ? 95 : 0;
 }
 
@@ -276,11 +282,10 @@ void register_formats(Registry& registry) {
   f.signatures = {Signature::at(4, "'ftyp3g2'")};
   f.sniff = iso("3g2");
   add_container(registry, std::move(f), simple(demux_mp4), true);
-  f = format("m4a", "MPEG-4 audio", "AAC or ALAC audio in an MPEG-4 file.", C::Audio, {"m4a"}, "audio/mp4", 80);
-  f.sniff = iso("m4a");
-  add_container(registry, std::move(f), simple(demux_mp4), true);
-  f = format("m4b", "MPEG-4 audiobook", "MPEG-4 audio used for audiobooks.", C::Audio, {"m4b"}, "audio/mp4", 30);
-  f.sniff = iso("m4b");
+  // MPEG-4 audio (.m4a, and its aliases .m4b/.m4r) is described and detected
+  // by the audio_lossy family; this family adds the container codecs only.
+  f = FormatInfo{};
+  f.id = "m4a";
   add_container(registry, std::move(f), simple(demux_mp4), true);
 
   f = format("mkv", "Matroska video", "Open container that can hold almost any codec.", C::Video, {"mkv"},

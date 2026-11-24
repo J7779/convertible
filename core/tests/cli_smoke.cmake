@@ -67,6 +67,22 @@ if(NOT utf8 STREQUAL original)
 endif()
 run(0 convert hello.txt -t base64 --list-options)
 
+# --opt values are typed by the option schema: an enum whose choices look
+# like numbers ("4.0") stays text instead of becoming the number 4.
+file(WRITE "${WORK_DIR}/card.vcf" "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Sample Person\r\nN:Person;Sample;;;\r\nEND:VCARD\r\n")
+run(0 convert card.vcf -t vcf --opt vcard_version=4.0 -o card4.vcf --quiet)
+file(READ "${WORK_DIR}/card4.vcf" card4)
+if(NOT card4 MATCHES "VERSION:4\\.0")
+  message(FATAL_ERROR "--opt vcard_version=4.0 was not applied:\n${card4}")
+endif()
+run(0 convert hello.txt -t base64 --opt line_width=8 -o narrow.b64 --quiet)   # integers still parse
+file(STRINGS "${WORK_DIR}/narrow.b64" narrow_lines)
+list(GET narrow_lines 0 narrow_first)
+string(LENGTH "${narrow_first}" narrow_width)
+if(NOT narrow_width EQUAL 8)
+  message(FATAL_ERROR "--opt line_width=8 gave lines of ${narrow_width} characters")
+endif()
+
 # Failures map to the documented exit codes.
 run(6 convert hello.txt -t base64 --quiet)             # output exists, no --force
 run(0 convert hello.txt -t base64 --quiet --force)

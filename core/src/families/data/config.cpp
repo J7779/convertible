@@ -404,7 +404,12 @@ int sniff_ini(ByteView data, std::string_view filename) {
     const std::string_view next = nl == std::string_view::npos ? std::string_view() : util::trim_left(head.substr(nl + 1));
     const std::size_t eq = next.find('=');
     const std::size_t end = next.find('\n');
-    if (eq != std::string_view::npos && eq < end) return ext ? 80 : 64;
+    if (eq != std::string_view::npos && eq < end) {
+      // `key = "text"` is how TOML writes strings; INI rarely quotes. Without
+      // a name such a file is left to the TOML and text sniffers.
+      if (!ext && next.substr(eq).starts_with("= \"")) return 0;
+      return ext ? 80 : 64;
+    }
     return ext ? 75 : 30;
   }
   return ext ? 70 : 0;

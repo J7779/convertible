@@ -38,8 +38,9 @@ struct Window {
 [[nodiscard]] bool is_grey(const ir::Frame& frame);
 
 /// Slices of an array as images: shape [.., height, width] gives one frame
-/// per leading index; shape [h, w, 3|4] with `rgb_last` gives colour.
+/// per leading index; shape [h, w, 3|4] gives colour, and so does
+/// [3|4, h, w] when `colour_planes` (FITS: a three-plane cube is an RGB picture).
 [[nodiscard]] Result<ir::Image> array_to_image(const arrays::Array& array, const Window& window, bool flip_vertical,
-                                              const Context& ctx);
+                                              const Context& ctx, bool colour_planes = false);
 
 }  // namespace cvt::science::imaging

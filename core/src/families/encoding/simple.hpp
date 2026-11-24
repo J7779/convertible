@@ -67,6 +67,15 @@ struct BinaryEncoding {
   unsigned expansion = 4;
   /// Optional content test for detection (see FormatInfo::sniff).
   std::function<int(ByteView data, std::string_view filename)> sniff{};
+  /// For large inputs: given the writer's options, a size in input bytes
+  /// such that encoding pieces whose sizes are multiples of it and joining
+  /// the texts gives exactly the encoding of the whole (Base64 without line
+  /// breaks: 3); 0 when the options make that impossible. Lets the helper
+  /// report progress and honour cancellation while encoding. Null = never.
+  std::function<std::size_t(const Options& options)> chunk{};
+  /// False when another family owns the format's description (PEM: science);
+  /// the fields above then only fill gaps (Registry::add_known_format).
+  bool describe = true;
 };
 
 /// Register the format and its Blob codec.

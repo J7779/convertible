@@ -128,3 +128,16 @@ FB2 and OPML files; `mandoc -T lint` reports only style notes on the man page;
 in an `ubuntu:24.04` container with TeX Live 2023 and Texinfo 7,
 `pdflatex` and `xelatex` compile the LaTeX article and `makeinfo` (Info and
 HTML) accepts the Texinfo file without errors.
+
+
+## legacy/
+
+HTML pages in the East Asian legacy encodings, written by the same Python
+3.14 script as `../subtitle/legacy/` (`python3 -I make_cjk.py out`, the
+script is reproduced in `../subtitle/SOURCES.md`) with the standard library's
+codecs; synthetic sentences.
+
+| File | Encoding | Content |
+| --- | --- | --- |
+| `<enc>_meta.html` for `shift_jis`, `gbk`, `big5`, `euc_kr` | as named | `<meta charset>` with the label (Shift_JIS, GBK, Big5, EUC-KR), the second sentence as title, the first as the only paragraph |
+| `<enc>_nometa.html` for the same four | as named | no charset declaration: an `<h1>` with the first sentence and a paragraph with the second |

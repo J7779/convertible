@@ -242,7 +242,7 @@ TEST_CASE("vector/dxf: options select paper space and layers") {
   REQUIRE(line != nullptr);
   CHECK(rgb_is(line->stroke.paint.color, 255, 0, 0));
 
-  auto walls = read_dxf_fixture("common_r2000.dxf", opts(R"({"layers":"walls, DASHED_LAYER"})"));
+  auto walls = read_dxf_fixture("common_r2000.dxf", opts(R"({"dxf_layers":"walls, DASHED_LAYER"})"));
   REQUIRE_OK(walls);
   CHECK(scene_layers_only(*walls));
 }

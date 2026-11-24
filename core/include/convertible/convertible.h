@@ -65,7 +65,7 @@ CVT_API void cvt_string_free(char* s);
  *
  *   [{"id":"png","name":"PNG image","description":"...","category":"image",
  *     "extensions":["png"],"mime":"image/png","readable":true,"writable":true,
- *     "popularity":95}, ...]
+ *     "popularity":95,"output_only":false}, ...]
  *
  *   id          canonical lower-case identifier; pass it to the other calls
  *   category    one of: image audio video document ebook spreadsheet
@@ -76,7 +76,14 @@ CVT_API void cvt_string_free(char* s);
  *               (any file, readable or not, still converts to the universal
  *               encoding targets such as base64 or checksums)
  *   writable    the format can be produced
- *   popularity  0..100, how common the format is (the list's sort key)
+ *   popularity  0..100, how common the format is; the list is sorted by
+ *               popularity (highest first), ties by id, so the order is stable
+ *   output_only the format is only ever produced from other content (a
+ *               barcode from text, minified CSS): it is never detected,
+ *               never a source, and only appears in target lists
+ *
+ * Every entry has a non-empty id, name, category, extensions and mime; ids
+ * are unique.
  *
  * Caller frees with cvt_string_free(). Returns "[]" only on allocation failure.
  */
@@ -104,6 +111,23 @@ CVT_API char* cvt_detect(const uint8_t* data, size_t size, const char* filename)
  *              converting a file to its own format re-encodes it (with the
  *              "quality", "preset" and related options), so applications can
  *              offer it as a "Compress" action
+ *   role       what the target does, for grouping the list:
+ *                "compress"  the source format itself (same as compress:true)
+ *                "extract"   the file inside a compressed file or one-entry
+ *                            archive, under its own name and format (see
+ *                            cvt_result_filename); id "extract"
+ *                "archive"   the file packed into an archive or compressed
+ *                            (zip, 7z, tar.gz, gz ...)
+ *                "encode"    a byte-level rendering of any file (base64, hex,
+ *                            checksums ...); always listed last
+ *                "convert"   any other conversion
+ *              Unknown values may be added later; treat them as "convert".
+ *
+ * Order: the source's own category first (most popular first, the compress
+ * entry included), then real conversions to other categories (fewer
+ * intermediate steps first, faithful before lossy, then popularity), then the
+ * archive and byte-level targets. Output-only formats (barcodes, minified
+ * code; "output_only" in cvt_formats_json) appear only here, never as sources.
  *
  * `source_format_id` accepts a format id or a file extension. Returns "[]"
  * for NULL or unknown ids. Caller frees with cvt_string_free().
@@ -203,6 +227,33 @@ CVT_API cvt_result* cvt_convert_file(const char* input_path, const char* output_
                                      const char* source_format_id, const char* target_format_id,
                                      const char* options_json, cvt_progress_fn progress, void* user);
 
+/** One named file for cvt_pack(). */
+typedef struct cvt_pack_input {
+  const uint8_t* data; /**< the file's bytes (may be NULL when size is 0) */
+  size_t size;
+  const char* name;    /**< UTF-8 path inside the archive ("photos/a.jpg"); sanitised, made unique */
+} cvt_pack_input;
+
+/**
+ * Packs several files into one archive ("Save all as one archive").
+ *
+ *   inputs, count     the files; names are sanitised (no absolute paths, no
+ *                     ".."), duplicates get " (2)", " (3)" ... before the
+ *                     extension
+ *   target_format_id  an archive format that can hold several files: "zip",
+ *                     "7z", "tar", "tar.gz", "tar.xz", "tar.zst", ... (the
+ *                     targets of role "archive" except single-stream
+ *                     compressors such as "gz")
+ *   options_json      the archive writer's options (see
+ *                     cvt_options_schema_json("zip", "zip")), e.g.
+ *                     {"compression_level":9} or a password for zip/7z
+ *   progress, user    as for cvt_convert()
+ *
+ * Never returns NULL; inspect and free the result as for cvt_convert().
+ */
+CVT_API cvt_result* cvt_pack(const cvt_pack_input* inputs, size_t count, const char* target_format_id,
+                             const char* options_json, cvt_progress_fn progress, void* user);
+
 /** CVT_OK or one of the CVT_ERR_* codes. CVT_ERR_INVALID_ARGUMENT for NULL. */
 CVT_API int cvt_result_status(const cvt_result* result);
 /** Human-readable error description; "" on success. Never NULL. */
@@ -217,6 +268,15 @@ CVT_API const char* cvt_result_format(const cvt_result* result);
 CVT_API const char* cvt_result_extension(const cvt_result* result);
 /** MIME type of the output; "" on failure. Never NULL. */
 CVT_API const char* cvt_result_mime(const cvt_result* result);
+/**
+ * File name the conversion gave its output, without directories, or "" when
+ * it has none of its own (the usual case: name the output after the input
+ * with cvt_result_extension()). Set by the "extract" target, which turns a
+ * compressed file or a one-entry archive back into its content
+ * ("notes.txt.gz" -> "notes.txt"); cvt_result_format(), _extension() and
+ * _mime() then describe that file. Never NULL.
+ */
+CVT_API const char* cvt_result_filename(const cvt_result* result);
 /**
  * Non-fatal notes about the conversion as a JSON array of strings, e.g.
  * ["2 characters could not be represented"]. "[]" when there are none. Never NULL.

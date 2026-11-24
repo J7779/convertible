@@ -44,7 +44,7 @@ TEST_CASE("table/text tables: decode tables written by tabulate") {
       {"md", "tabulate.md", 4},          {"rst", "tabulate.rst", 4},   {"rst", "tabulate.simple.rst", 4},
       {"tex", "tabulate.tex", 4},        {"tex", "tabulate.booktabs.tex", 4}, {"html", "tabulate.html", 4},
       {"text-table", "tabulate.box.txt", 4}, {"text-table", "tabulate.psql.txt", 3}, {"adoc", "tabulate.adoc", 3},
-      {"org", "tabulate.org", 3},        {"jira", "tabulate.jira", 3}, {"mediawiki", "tabulate.wiki", 3},
+      {"org", "tabulate.org", 3},        {"jira", "tabulate.jira", 3}, {"wiki", "tabulate.wiki", 3},
   };
   for (const Case& c : cases) {
     INFO(c.file);
@@ -61,7 +61,7 @@ TEST_CASE("table/text tables: every writer reads back with its own reader") {
   sheet.rows.push_back({S("multi\nline"), N(1000000), E(), S("x & y < z")});
   sheet.rows.push_back({S("wide 世界"), N(-0.5), N(2), S("back\\slash")});
   const ir::Table table = single(sheet);
-  for (const char* format : {"md", "rst", "adoc", "tex", "mediawiki", "jira", "org", "text-table", "html"}) {
+  for (const char* format : {"md", "rst", "adoc", "tex", "wiki", "jira", "org", "text-table", "html"}) {
     INFO(format);
     const auto bytes = test::write_from(format, table);
     REQUIRE_OK(bytes);
@@ -96,7 +96,7 @@ TEST_CASE("table/text tables: writer output looks right") {
   CHECK(text("text-table", R"({"box_style":"double"})").starts_with("╔"));
   CHECK(text("text-table", R"({"box_style":"rounded"})").starts_with("╭"));
   CHECK(text("org").find("\n|-----------------+-----+-------+-------|\n") != std::string::npos);
-  CHECK(text("mediawiki").starts_with("{| class=\"wikitable\"\n! Item !! Qty"));
+  CHECK(text("wiki").starts_with("{| class=\"wikitable\"\n! Item !! Qty"));
   CHECK(text("adoc").starts_with("[cols=\"4\", options=\"header\"]\n|===\n| Item | Qty"));
   CHECK(text("rst").find("+===========+=====+") != std::string::npos);
 }
@@ -134,7 +134,7 @@ TEST_CASE("table/text tables: detection and hostile input") {
   CHECK(detect_format(registry, test::fixture("table/tabulate.box.txt"), "")->format->id == "text-table");
   for (const auto& [format, file] : std::vector<std::pair<const char*, const char*>>{
            {"md", "tabulate.md"}, {"rst", "tabulate.rst"}, {"adoc", "tabulate.adoc"}, {"org", "tabulate.org"},
-           {"tex", "tabulate.tex"}, {"mediawiki", "tabulate.wiki"}, {"jira", "tabulate.jira"},
+           {"tex", "tabulate.tex"}, {"wiki", "tabulate.wiki"}, {"jira", "tabulate.jira"},
            {"text-table", "tabulate.box.txt"}, {"html", "tabulate.html"}}) {
     INFO(file);
     CHECK(test::fuzz_reader<ir::Table>(format, test::fixture(std::string("table/") + file)) > 0);

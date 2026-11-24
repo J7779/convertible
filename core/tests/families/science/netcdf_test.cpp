@@ -40,51 +40,51 @@ void check_grid(const Json& data, bool cdf5) {
 TEST_CASE("science/netcdf: decodes netCDF4-python classic, 64-bit offset and CDF-5 files") {
   for (const char* name : {"classic.nc", "offset64.nc", "cdf5.nc"}) {
     INFO(name);
-    const auto data = test::read_as<ir::Data>("netcdf", test::fixture(std::string("science/arrays/") + name));
+    const auto data = test::read_as<ir::Data>("nc", test::fixture(std::string("science/arrays/") + name));
     REQUIRE_OK(data);
     check_grid(data->value, std::string_view(name) == "cdf5.nc");
-    CHECK(detected(test::fixture(std::string("science/arrays/") + name)) == "netcdf");
+    CHECK(detected(test::fixture(std::string("science/arrays/") + name)) == "nc");
   }
 }
 
 TEST_CASE("science/netcdf: writer round trips and picks the format") {
   for (const char* name : {"classic.nc", "cdf5.nc"}) {
     INFO(name);
-    const auto data = test::read_as<ir::Data>("netcdf", test::fixture(std::string("science/arrays/") + name));
+    const auto data = test::read_as<ir::Data>("nc", test::fixture(std::string("science/arrays/") + name));
     REQUIRE_OK(data);
-    const auto written = test::write_from("netcdf", *data);
+    const auto written = test::write_from("nc", *data);
     REQUIRE_OK(written);
     CHECK(static_cast<int>((*written)[3]) == (std::string_view(name) == "cdf5.nc" ? 5 : 1));
-    const auto back = test::read_as<ir::Data>("netcdf", *written);
+    const auto back = test::read_as<ir::Data>("nc", *written);
     REQUIRE_OK(back);
     check_grid(back->value, std::string_view(name) == "cdf5.nc");
   }
-  const auto data = test::read_as<ir::Data>("netcdf", test::fixture("science/arrays/classic.nc"));
+  const auto data = test::read_as<ir::Data>("nc", test::fixture("science/arrays/classic.nc"));
   REQUIRE_OK(data);
   for (const auto& [option, version] : std::vector<std::pair<std::string, int>>{{"classic", 1}, {"64bit-offset", 2}, {"cdf5", 5}}) {
-    const auto written = test::write_from("netcdf", *data, R"({"netcdf_format":")" + option + "\"}");
+    const auto written = test::write_from("nc", *data, R"({"netcdf_format":")" + option + "\"}");
     REQUIRE_OK(written);
     CHECK(static_cast<int>((*written)[3]) == version);
   }
   // NumPy -> NetCDF and back.
   const auto npz = test::read_as<ir::Data>("npz", test::fixture("science/arrays/arrays.npz"));
   REQUIRE_OK(npz);
-  const auto nc = test::write_from("netcdf", *npz);
+  const auto nc = test::write_from("nc", *npz);
   REQUIRE_OK(nc);
-  const auto back = test::read_as<ir::Data>("netcdf", *nc);
+  const auto back = test::read_as<ir::Data>("nc", *nc);
   REQUIRE_OK(back);
   CHECK((*find_var(back->value, "grid"))["data"] == npz->value["variables"][0]["data"]);
   CHECK((*find_var(back->value, "labels"))["data"] == Json::array({"x", "y"}));
   // Table view.
-  const auto table = test::read_as<ir::Table>("netcdf", test::fixture("science/arrays/classic.nc"));
+  const auto table = test::read_as<ir::Table>("nc", test::fixture("science/arrays/classic.nc"));
   REQUIRE_OK(table);
   CHECK(table->sheets[2].name == "grid");
 }
 
 TEST_CASE("science/netcdf: hostile input") {
-  CHECK(test::fuzz_reader<ir::Data>("netcdf", test::fixture("science/arrays/classic.nc"), 512) > 0);
-  CHECK(test::fuzz_reader<ir::Data>("netcdf", test::fixture("science/arrays/cdf5.nc"), 256) > 0);
+  CHECK(test::fuzz_reader<ir::Data>("nc", test::fixture("science/arrays/classic.nc"), 512) > 0);
+  CHECK(test::fuzz_reader<ir::Data>("nc", test::fixture("science/arrays/cdf5.nc"), 256) > 0);
   Bytes bad = test::fixture("science/arrays/classic.nc");
   bad[3] = std::byte{9};
-  CHECK_STATUS(test::read_as<ir::Data>("netcdf", bad), Status::Decode);
+  CHECK_STATUS(test::read_as<ir::Data>("nc", bad), Status::Decode);
 }

@@ -166,7 +166,15 @@ Result<Bytes> decode_inflate(Method method, ByteView data, const DecodeOptions& 
 Result<Bytes> encode_deflate(Method method, ByteView data, const EncodeOptions& options) {
   DeflateEncoder encoder(method, options);
   Bytes out;
-  CVT_TRY(encoder.encode(data, out));
+  // Fed in pieces (the output does not depend on how the input is cut) so
+  // that progress is reported and a cancellation is seen every 256 KiB.
+  constexpr std::size_t piece = std::size_t{256} << 10;
+  for (std::size_t at = 0; at < data.size(); at += piece) {
+    if (!options.progress.report(static_cast<double>(at) / static_cast<double>(data.size()))) {
+      return fail(Status::Cancelled, "the conversion was cancelled");
+    }
+    CVT_TRY(encoder.encode(data.subspan(at, std::min(piece, data.size() - at)), out));
+  }
   CVT_TRY(encoder.finish(out));
   return out;
 }

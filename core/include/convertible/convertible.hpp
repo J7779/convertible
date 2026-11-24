@@ -95,6 +95,8 @@ class Conversion {
   /// Recommended output extension, without the dot.
   [[nodiscard]] std::string_view extension() const noexcept { return cvt_result_extension(result_.get()); }
   [[nodiscard]] std::string_view mime() const noexcept { return cvt_result_mime(result_.get()); }
+  /// The output's own file name ("extract"), or empty (see cvt_result_filename).
+  [[nodiscard]] std::string_view filename() const noexcept { return cvt_result_filename(result_.get()); }
   /// JSON array of warning strings.
   [[nodiscard]] std::string_view warnings_json() const noexcept { return cvt_result_warnings_json(result_.get()); }
 

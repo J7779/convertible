@@ -657,7 +657,7 @@ void register_kdl(Registry& registry) {
       .mime = "application/kdl",
       .popularity = 8,
       .signatures = {},
-      .sniff = [](ByteView, std::string_view filename) { return has_extension(filename, {"kdl"}) ? 75 : 0; },
+      .sniff = [](ByteView, std::string_view filename) { return has_extension(filename, {"kdl"}) ? 86 : 0; },
   });
   add_codec(registry, {.format_id = "kdl",
                        .read = text_reader(parse_kdl, "KDL"),

@@ -189,6 +189,7 @@ void register_encoding_family(Registry& registry) {
       .extensions = {"bin"}, .mime = "application/octet-stream", .popularity = 30,
       .encode = [](const ir::Blob& blob, const WriteContext&) -> Result<std::string> { return to_string(blob.bytes); },
       .expansion = 1,
+      .chunk = [](const Options&) -> std::size_t { return 1; },
   });
 
   // ---- Base64 ----------------------------------------------------------------
@@ -201,6 +202,12 @@ void register_encoding_family(Registry& registry) {
                          OptionSpec::boolean("padding", "Padding", true, "End the output with '=' padding characters."),
                          line_ending_option()},
       .expansion = 5,  // 4/3, plus up to two line-ending bytes per character at line_width 1
+      // Whole groups of three bytes; with line breaks, whole lines (each
+      // piece then ends with its line break, as the whole text does).
+      .chunk = [](const Options& o) -> std::size_t {
+        const auto width = static_cast<std::size_t>(o.get_int("line_width", 76, 0, 1024));
+        return width == 0 ? 3 : 3 * width;
+      },
   });
   add_binary_encoding(registry, {
       .id = "base64url", .name = "Base64 URL-safe text",
@@ -209,6 +216,7 @@ void register_encoding_family(Registry& registry) {
       .encode = encode_base64, .decode = decode_base64,
       .encode_options = {OptionSpec::boolean("padding", "Padding", false, "End the output with '=' padding characters.")},
       .expansion = 2,
+      .chunk = [](const Options&) -> std::size_t { return 3; },
   });
 
   // ---- hexadecimal -------------------------------------------------------------
@@ -226,6 +234,13 @@ void register_encoding_family(Registry& registry) {
                          OptionSpec::choice("prefix", "Byte prefix", "none", {"none", "0x", "\\x", "%"},
                                             "Written before every byte: 0x41, \\x41 or %41.")},
       .expansion = 8,
+      // Byte by byte unless separators or line breaks join neighbouring bytes.
+      .chunk = [](const Options& o) -> std::size_t {
+        return o.get_int("bytes_per_line", 0, 0, 4096) == 0 &&
+                       o.get_enum("separator", "none", {"none", "space", "colon", "comma", "comma-space", "dash"}) == "none"
+                   ? 1
+                   : 0;
+      },
   });
   add_binary_encoding(registry, {
       .id = "hexdump", .name = "Hex dump",
@@ -276,7 +291,9 @@ void register_encoding_family(Registry& registry) {
       .extensions = {"uue", "uu"}, .mime = "text/x-uuencode", .popularity = 20,
       .encode = [](const ir::Blob& blob, const WriteContext& ctx) -> Result<std::string> {
         std::string name = ctx.options.get_string("filename");
-        return encoding::uuencode(blob.bytes, name.empty() ? blob.filename : name);
+        std::string text = encoding::uuencode(blob.bytes, name.empty() ? blob.filename : name, &ctx.progress);
+        if (ctx.progress.cancelled()) return fail(Status::Cancelled, "the conversion was cancelled");
+        return text;
       },
       .decode_blob = decode_uue,
       .encode_options = {OptionSpec::text("filename", "File name", "",

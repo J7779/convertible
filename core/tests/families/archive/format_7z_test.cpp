@@ -77,9 +77,9 @@ struct RawFile {
 };
 
 struct RawOptions {
-  sz::Folder folder;          // coders for the single folder; default Copy
-  Bytes packed;               // overrides the packed data (default: the files' data joined)
-  std::optional<std::uint64_t> unpack_size;  // overrides the folder's declared size
+  sz::Folder folder{};        // coders for the single folder; default Copy
+  Bytes packed{};             // overrides the packed data (default: the files' data joined)
+  std::optional<std::uint64_t> unpack_size{};  // overrides the folder's declared size
   bool dummy = true;          // add a kDummy record
   bool bad_crc = false;
   bool encode_header = false;  // wrap the header in a Copy-coded kEncodedHeader
@@ -596,7 +596,9 @@ TEST_CASE("archive/7z: writer policy, levels and layout") {
   // Fixed timestamps.
   const auto fixed = test::write_from("7z", source, R"({"timestamps":"fixed"})");
   REQUIRE_OK(fixed);
-  for (const auto& e : test::read_as<ir::Archive>("7z", *fixed)->entries) CHECK_EQ(e.mtime, 315532800);
+  const auto fixed_back = test::read_as<ir::Archive>("7z", *fixed);  // named: the loop must not outlive it
+  REQUIRE_OK(fixed_back);
+  for (const auto& e : fixed_back->entries) CHECK_EQ(e.mtime, 315532800);
   // strip_metadata: permissions normalised (exec.sh keeps 0755, files 0644).
   ir::Archive odd;
   ir::ArchiveEntry f;

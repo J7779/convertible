@@ -11,6 +11,7 @@
 #include <string_view>
 
 #include "engine/errors.hpp"
+#include "engine/progress.hpp"
 #include "util/bytes.hpp"
 
 namespace cvt {
@@ -66,7 +67,9 @@ struct ParsedDataUri {
 
 // -- uuencode -----------------------------------------------------------------------
 
-[[nodiscard]] std::string uuencode(ByteView data, std::string_view filename);
+/// `progress` (optional) is told how far the encoding is every MiB; when it
+/// reports a cancellation the text stops there (the caller checks).
+[[nodiscard]] std::string uuencode(ByteView data, std::string_view filename, const Progress* progress = nullptr);
 struct ParsedUu {
   Bytes bytes;
   std::string filename;

@@ -1,9 +1,12 @@
 // Convertible core - document family: registration of HTML and XHTML.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
 #include <initializer_list>
+#include <string>
+#include <vector>
 
 #include "families/document/doc_common.hpp"
 #include "families/document/formats.hpp"
+#include "util/charsets.hpp"
 #include "util/text.hpp"
 
 namespace cvt::document {
@@ -47,7 +50,10 @@ int sniff_html(ByteView data, std::string_view filename) {
 
 int sniff_xhtml(ByteView data, std::string_view filename) {
   const std::string_view head = sniff_head(data, 2048);
-  if (head.find("http://www.w3.org/1999/xhtml") != std::string_view::npos &&
+  // The namespace alone is not enough: OpenDocument, EPUB parts and other
+  // XML documents declare it for embedded markup; the root must be <html>.
+  const bool html_root = head.find("<html") != std::string_view::npos || head.find(":html ") != std::string_view::npos;
+  if (html_root && head.find("http://www.w3.org/1999/xhtml") != std::string_view::npos &&
       (head.starts_with("<?xml") || has_extension(filename, {"xhtml", "xht"}))) {
     return 93;
   }
@@ -88,9 +94,9 @@ std::vector<OptionSpec> html_write_options() {
 }
 
 std::vector<OptionSpec> html_read_options() {
-  return {OptionSpec::choice("source_encoding", "Source encoding", "auto",
-                             {"auto", "utf-8", "utf-16le", "utf-16be", "windows-1252", "iso-8859-1", "iso-8859-2",
-                              "iso-8859-15", "windows-1250", "windows-1251", "koi8-r", "macintosh"},
+  std::vector<std::string> choices = {"auto", "utf-8", "utf-16le", "utf-16be"};
+  for (const util::CharsetInfo& charset : util::legacy_charsets()) choices.emplace_back(charset.id);
+  return {OptionSpec::choice("source_encoding", "Source encoding", "auto", std::move(choices),
                              "Character encoding of the input; 'auto' honours the byte order mark and <meta charset>.")
               .advanced()};
 }

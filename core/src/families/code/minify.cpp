@@ -1093,9 +1093,11 @@ Result<std::string> pretty_graphql(std::string_view graphql, int indent) {
 namespace {
 
 void add_text_writer(Registry& registry, std::string format_id, std::vector<OptionSpec> options,
-                     std::function<Result<std::string>(std::string_view, const Options&)> fn, bool lossy) {
+                     std::function<Result<std::string>(std::string_view, const Options&)> fn, bool lossy,
+                     std::vector<std::string> only_from = {}) {
   Codec codec;
   codec.format_id = std::move(format_id);
+  codec.only_from = std::move(only_from);
   codec.kind = Kind::PlainText;
   codec.write_options = std::move(options);
   codec.lossy = lossy;
@@ -1118,7 +1120,7 @@ void add_target(Registry& registry, std::string id, std::string name, std::strin
   info.extensions = {std::move(extension)};
   info.mime = std::move(mime);
   info.popularity = popularity;
-  info.sniff = [](ByteView, std::string_view) { return 0; };  // a target, never detected
+  info.output_only = true;  // a target, never detected and never a source
   registry.add_format(std::move(info));
 }
 
@@ -1158,36 +1160,36 @@ void register_minify(Registry& registry) {
                                                      "Letter case of SQL keywords.");
 
   // Same-format conversion of the source formats ("compress").
-  add_text_writer(registry, "css", {style_option("minify"), license_option(), indent_option()}, by_style(css_min, css_pretty, "minify"), false);
+  add_text_writer(registry, "css", {style_option("minify"), license_option(), indent_option()}, by_style(css_min, css_pretty, "minify"), false, {"css"});
   for (const char* id : {"js", "mjs"}) {
-    add_text_writer(registry, id, {style_option("minify"), license_option(), indent_option()}, by_style(js_min, js_pretty, "minify"), false);
+    add_text_writer(registry, id, {style_option("minify"), license_option(), indent_option()}, by_style(js_min, js_pretty, "minify"), false, {id});
   }
-  add_text_writer(registry, "sql", {style_option("pretty"), keyword_case, indent_option()}, by_style(sql_min, sql_pretty, "pretty"), false);
-  add_text_writer(registry, "graphql", {style_option("minify"), indent_option()}, by_style(gql_min, gql_pretty, "minify"), false);
+  add_text_writer(registry, "sql", {style_option("pretty"), keyword_case, indent_option()}, by_style(sql_min, sql_pretty, "pretty"), false, {"sql"});
+  add_text_writer(registry, "graphql", {style_option("minify"), indent_option()}, by_style(gql_min, gql_pretty, "minify"), false, {"graphql"});
 
   // Explicit targets.
   add_target(registry, "css-min", "Minified CSS", "CSS without comments and redundant whitespace.", "min.css", "text/css", 30);
-  add_text_writer(registry, "css-min", {license_option()}, css_min, false);
+  add_text_writer(registry, "css-min", {license_option()}, css_min, false, {"css"});
   add_target(registry, "css-pretty", "Formatted CSS", "CSS re-indented with one declaration per line.", "css", "text/css", 20);
-  add_text_writer(registry, "css-pretty", {indent_option()}, css_pretty, false);
+  add_text_writer(registry, "css-pretty", {indent_option()}, css_pretty, false, {"css"});
   add_target(registry, "js-min", "Minified JavaScript",
              "JavaScript without comments and redundant whitespace (no renaming, safe line breaks kept).", "min.js",
              "text/javascript", 30);
-  add_text_writer(registry, "js-min", {license_option()}, js_min, false);
+  add_text_writer(registry, "js-min", {license_option()}, js_min, false, {"js", "mjs"});
   add_target(registry, "js-pretty", "Formatted JavaScript", "JavaScript re-indented by braces and statements.", "js",
              "text/javascript", 20);
-  add_text_writer(registry, "js-pretty", {indent_option()}, js_pretty, false);
+  add_text_writer(registry, "js-pretty", {indent_option()}, js_pretty, false, {"js", "mjs"});
   add_target(registry, "sql-min", "Minified SQL", "SQL on one line without comments.", "sql", "application/sql", 15);
-  add_text_writer(registry, "sql-min", {}, sql_min, false);
+  add_text_writer(registry, "sql-min", {}, sql_min, false, {"sql"});
   add_target(registry, "sql-pretty", "Formatted SQL", "SQL with one clause per line and upper-case keywords.", "sql",
              "application/sql", 20);
-  add_text_writer(registry, "sql-pretty", {keyword_case, indent_option()}, sql_pretty, false);
+  add_text_writer(registry, "sql-pretty", {keyword_case, indent_option()}, sql_pretty, false, {"sql"});
   add_target(registry, "graphql-min", "Minified GraphQL", "GraphQL without comments, commas and redundant whitespace.",
              "graphql", "application/graphql", 10);
-  add_text_writer(registry, "graphql-min", {}, gql_min, false);
+  add_text_writer(registry, "graphql-min", {}, gql_min, false, {"graphql"});
   add_target(registry, "graphql-pretty", "Formatted GraphQL", "GraphQL with one field per line.", "graphql",
              "application/graphql", 10);
-  add_text_writer(registry, "graphql-pretty", {indent_option()}, gql_pretty, false);
+  add_text_writer(registry, "graphql-pretty", {indent_option()}, gql_pretty, false, {"graphql"});
 
   // HTML: a Blob writer, because HTML is read as a Document by the document family
   // and minifying must see the markup itself.
@@ -1197,6 +1199,7 @@ void register_minify(Registry& registry) {
   Codec html;
   html.format_id = "html-min";
   html.kind = Kind::Blob;
+  html.only_from = {"html", "xhtml"};
   html.write_options = {license_option()};
   html.write = [](const AnyIR& value, WriteContext& ctx) -> Result<Bytes> {
     const ir::Blob& blob = value.get<ir::Blob>();

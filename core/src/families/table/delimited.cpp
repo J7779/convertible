@@ -510,10 +510,32 @@ int sniff_delimited(ByteView data, char delimiter, int confidence) {
 }
 
 // Above the 60 of plain text, so that tabular text is recognised as such.
-int sniff_csv(ByteView data, std::string_view) { return sniff_delimited(data, ',', 72); }
+// CSV also covers the semicolon dialect that Excel writes in locales with a
+// decimal comma (the reader finds the delimiter), and a text file named .csv
+// is taken at its word.
+int sniff_csv(ByteView data, std::string_view filename) {
+  int score = sniff_delimited(data, ',', 72);
+  if (score == 0) {
+    // Statements ending in ';' (SQL, C-like code) are not a semicolon table.
+    const std::string_view head = as_chars(data).substr(0, 4096);
+    std::size_t lines = 0;
+    std::size_t terminated = 0;
+    for (const std::string_view line : util::split_lines(head)) {
+      const std::string_view t = util::trim(line);
+      if (t.empty()) continue;
+      ++lines;
+      if (t.ends_with(';')) ++terminated;
+    }
+    if (terminated * 2 < lines) score = sniff_delimited(data, ';', 68);
+  }
+  if (score == 0 && util::iends_with(filename, ".csv") && !data.empty() &&
+      util::looks_like_text(data.first(std::min<std::size_t>(data.size(), 4096)))) {
+    score = 79;
+  }
+  return score;
+}
 int sniff_tsv(ByteView data, std::string_view) { return sniff_delimited(data, '\t', 72); }
 int sniff_psv(ByteView data, std::string_view) { return sniff_delimited(data, '|', 66); }
-int sniff_semicolon(ByteView data, std::string_view) { return sniff_delimited(data, ';', 68); }
 
 // --------------------------------------------------------------------------- registration
 
@@ -575,7 +597,8 @@ std::vector<OptionSpec> delimited_write_options(std::string_view default_delimit
 
 void add_delimited(Registry& registry, std::string_view id, std::string_view name, std::string_view description,
                    std::vector<std::string> extensions, std::string_view mime, int popularity,
-                   std::function<int(ByteView, std::string_view)> sniff, std::string_view delimiter_name) {
+                   std::function<int(ByteView, std::string_view)> sniff, std::string_view delimiter_name,
+                   bool output_only = false) {
   FormatInfo info;
   info.id = std::string(id);
   info.name = std::string(name);
@@ -585,12 +608,13 @@ void add_delimited(Registry& registry, std::string_view id, std::string_view nam
   info.mime = std::string(mime);
   info.popularity = popularity;
   info.sniff = std::move(sniff);
+  info.output_only = output_only;
   registry.add_format(std::move(info));
 
   Codec codec;
   codec.format_id = std::string(id);
   codec.kind = Kind::Table;
-  codec.read = read_delimited;
+  if (!output_only) codec.read = read_delimited;
   codec.write = write_delimited;
   codec.read_options = delimited_read_options();
   codec.write_options = delimited_write_options(delimiter_name);
@@ -608,7 +632,7 @@ void register_delimited(Registry& registry) {
                 "text/plain", 20, sniff_psv, "|");
   add_delimited(registry, "csv-semicolon", "CSV (semicolon)",
                 "Comma-separated values with ';' between fields, as Excel writes them in locales with a decimal comma.",
-                {"csv"}, "text/csv", 40, sniff_semicolon, ";");
+                {"csv"}, "text/csv", 40, nullptr, ";", /*output_only=*/true);  // read as "csv" (the reader finds ';')
 
   FormatInfo fixed;
   fixed.id = "fwf";

@@ -630,7 +630,7 @@ InlineMarkup adoc_markup(const ir::Document* document) {
   m.soft_break = " ";
   m.code = [](const ir::Code& code) -> std::string {
     if (code.math != ir::MathMode::None) return "stem:[" + util::replace_all(code.text, "]", "\\]") + "]";
-    if (code.raw_format == "asciidoc") return code.text;
+    if (code.raw_format == "adoc") return code.text;
     if (code.raw_format == "html") return "+++" + code.text + "+++";
     if (!code.raw_format.empty()) return {};
     std::string text = code.text;
@@ -676,7 +676,7 @@ InlineMarkup adoc_markup(const ir::Document* document) {
 
 Result<std::string> write_asciidoc(const ir::Document& document, WriteContext& ctx) {
   wiki::WriteSyntax syntax;
-  syntax.raw_format = "asciidoc";
+  syntax.raw_format = "adoc";
   syntax.heading = [](int level, const std::string& text, const ir::Attributes& attr) {
     std::string out;
     if (!attr.id.empty()) out = "[[" + attr.id + "]]\n";
@@ -786,7 +786,7 @@ int sniff_asciidoc(ByteView data, std::string_view filename) {
 
 void register_asciidoc(Registry& registry) {
   MarkupFormat adoc;
-  adoc.id = "asciidoc";
+  adoc.id = "adoc";
   adoc.name = "AsciiDoc";
   adoc.description = "AsciiDoc documentation markup (Asciidoctor syntax).";
   adoc.extensions = {"adoc", "asciidoc"};
