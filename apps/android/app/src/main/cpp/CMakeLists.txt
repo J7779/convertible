@@ -21,6 +21,7 @@ add_compile_options(-ffunction-sections -fdata-sections)
 add_subdirectory("${CVT_REPO_ROOT}/core" "${CMAKE_CURRENT_BINARY_DIR}/core")
 
 add_library(convertible_jni SHARED
+  android_compat.cpp
   jni_bridge.cpp
   utf.cpp
   utf.hpp)

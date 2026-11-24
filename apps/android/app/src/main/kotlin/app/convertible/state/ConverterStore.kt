@@ -192,6 +192,12 @@ class ConverterStore(
                 ConversionOutcome.Failure(CoreError.Bridge(e.message ?: e.javaClass.simpleName))
             }
             when (outcome) {
+                // Cancelled while the core was in a stage without progress callbacks: it still finished, but the
+                // user asked to stop, so the result is discarded rather than shown as done.
+                is ConversionOutcome.Success if flag.get() -> {
+                    workspace.delete(outPath)
+                    finish(id, flag, ItemStatus.Failed(CoreError.Cancelled("")))
+                }
                 is ConversionOutcome.Success -> {
                     // Prefer the core's recommended extension for the produced format.
                     val finalName = if (outcome.extension.isNotEmpty() &&

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Test APK only. Two providers stand in for the outside world in the end-to-end tests:
+  a storage root shown in the system file picker and save dialog, and a plain provider that "shares" files with
+  the app (ACTION_SEND / SEND_MULTIPLE / VIEW). They run in the test package's own process.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <provider
+            android:name="app.convertible.e2e.fixtures.FixtureDocumentsProvider"
+            android:authorities="app.convertible.test.documents"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+        <provider
+            android:name="app.convertible.e2e.fixtures.ShareFixtureProvider"
+            android:authorities="app.convertible.test.share"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>

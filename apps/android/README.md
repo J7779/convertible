@@ -59,6 +59,59 @@ adb shell am start -n app.convertible/.MainActivity
 ./gradlew connectedDebugAndroidTest
 ```
 
+Instrumented tests run through the Android Test Orchestrator with `clearPackageData`: every test gets a fresh app
+process with no preferences or cached files.
+
+## End-to-end tests
+
+`app/src/androidTest/kotlin/app/convertible/e2e/` drives the real app (real ViewModel, real `libconvertible_jni.so`)
+on an emulator with Compose UI Test, and system UI (file picker, save and folder dialogs, share sheet) with
+UI Automator. Every conversion is real and its bytes are checked independently: Base64 / hex decode back to the input,
+checksum reports equal `java.security.MessageDigest` / `CRC32`, UTF-16 output equals `String.toByteArray`, and saved
+documents are read back through the content resolver.
+
+| Class | Covers |
+| --- | --- |
+| `LaunchE2eTest` | splash -> animated intro -> home; skip by tap or key; short static intro when animator scale is 0 |
+| `ImportE2eTest` | system picker (single, multi-select, cancel), Share (`SEND`, `SEND_MULTIPLE`, also while running), Open with (`VIEW`), unsafe URIs refused, format badges |
+| `ConversionE2eTest` | target picker (search, sections, selection), options from the schema changing the output, Compress, progress, before/after sizes, Save dialog (name, extension, bytes), share sheet without Convertible itself, friendly error and "Try again" |
+| `QueueE2eTest` | "Convert all to…", "Convert N files", Save all into a picked folder, cancel and cancel all then convert again, remove |
+| `ScreensE2eTest` | formats browser search and category filter, settings (theme, default quality, strip metadata) applied, written to disk and restored in a new process, back and predictive back |
+| `AdaptiveE2eTest` | rotation and `ActivityScenario.recreate` mid-conversion, phone / foldable / tablet (two-pane) layouts, light and dark, font scale 1.6, roles / labels / 48 dp touch targets, no `INTERNET` in the merged manifest |
+| `CatalogueConditionalE2eTest` | image, audio and archive conversions; skipped (JUnit `Assume`, with the reason) until the core offers them |
+
+Tests query the catalogue the core reports instead of hard-coding format lists. Test files are generated
+deterministically (`e2e/fixtures/Fixtures.java`) and served by two providers that exist only in the test APK: a
+storage root "Convertible E2E" shown in the system picker and save dialogs, and a plain provider that plays the app
+sharing files with Convertible. Waits use Compose `waitUntil` / the virtual clock and UI Automator `wait`, never
+sleeps. On failure a screenshot and a view-hierarchy dump are written to
+`app/build/outputs/connected_android_test_additional_output/` (git-ignored).
+
+One command creates an AVD if needed, boots it headless, runs the suite, collects reports and shuts the emulator down:
+
+```sh
+apps/android/e2e.sh                     # E2E package only
+E2E_SCOPE=all apps/android/e2e.sh       # every instrumented test
+E2E_RUNS=5 apps/android/e2e.sh          # five consecutive runs on one boot
+E2E_CLASS=app.convertible.e2e.QueueE2eTest apps/android/e2e.sh
+```
+
+Reports go to `build/e2e/` (`summary.txt`, `run-N/report/index.html`, `run-N/results/`, `run-N/screenshots/`).
+The emulator is addressed by serial (`emulator-$E2E_PORT`, default 5570); other running emulators are not touched.
+Settings (environment variables, all optional): `E2E_API` (default `37.0`), `E2E_ABI` (default from the host:
+`arm64-v8a` or `x86_64`), `E2E_TAG` (default: first installed of `google_apis`, `google_apis_playstore`, `default`),
+`E2E_AVD` (`convertible_e2e`), `E2E_PORT`, `E2E_RAM_MB` (4096), `E2E_BOOT_TIMEOUT` (600 s), `E2E_SCOPE`, `E2E_CLASS`,
+`E2E_RUNS`, `E2E_KEEP_EMULATOR=1`, `E2E_BOOT_ONLY=1`, `GRADLE_WORKERS` (6). The AVD is written directly (no
+`avdmanager` needed) under `$ANDROID_AVD_HOME` or `~/.android/avd`.
+
+CI on an Ubuntu runner with KVM (`/dev/kvm` accessible to the runner user) needs JDK 17+ and these SDK packages:
+
+```sh
+sdkmanager "platform-tools" "emulator" "platforms;android-37.0" "build-tools;37.0.0" \
+  "ndk;27.1.12297006" "cmake;3.22.1" "system-images;android-37.0;google_apis;x86_64"
+E2E_ABI=x86_64 apps/android/e2e.sh
+```
+
 Headless emulator for CI, e.g.
 `emulator -avd <name> -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot`.
 Key controls carry `testTag`s (`choose_files`, `drop_zone`, `privacy_note`, `queue`, `card_<id>`,

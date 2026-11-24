@@ -288,6 +288,27 @@ class ConverterStoreTest {
     }
 
     @Test
+    fun cancelDuringAStageWithoutProgressDiscardsTheResult() = runTest {
+        val store = newStore()
+        val id = store.addFile("photo.png")
+        advanceUntilIdle()
+        store.setTarget(id, "webp")
+        advanceUntilIdle()
+        // The core gives no progress callback after the tap and finishes anyway.
+        core.progressSteps = 1
+        core.outcome = { call ->
+            store.cancel(id)
+            File(call.output).writeText("late")
+            ConversionOutcome.Success(call.target, "", "image/webp", emptyList())
+        }
+        store.convert(id)
+        advanceUntilIdle()
+        val failed = store.item(id)!!.status as ItemStatus.Failed
+        assertTrue(failed.error is CoreError.Cancelled)
+        assertFalse(File(dir, "out/$id/photo.webp").exists())
+    }
+
+    @Test
     fun cancelAllStopsQueuedWork() = runTest {
         val store = newStore()
         val ids = (1..3).map { store.addFile("f$it.png") }
