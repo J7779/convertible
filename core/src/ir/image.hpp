@@ -90,6 +90,22 @@ struct Image {
   /// Embedded ICC colour profile, verbatim; empty when the image is plain sRGB
   /// or the profile is unknown.
   Bytes icc_profile;
+  /// Raw EXIF block as stored in a JPEG APP1 segment after the "Exif\0\0"
+  /// prefix (a TIFF structure starting with "II*\0" or "MM\0*"); empty when
+  /// absent. Readers apply the EXIF orientation to the pixels and reset the
+  /// orientation tag in this copy to 1 ("upright"), so frames are always
+  /// stored the way they are meant to be seen.
+  Bytes exif;
+  /// Raw XMP packet (UTF-8 XML); empty when absent.
+  std::string xmp;
+  /// Precision of the source samples per channel: 1..16 for integer data,
+  /// 32 for floating point. A hint for writers that can store more than 8
+  /// bits (16-bit PNG/TIFF/PSD, PFM ...), which then prefer `hdr` when it is
+  /// present. 8 when unknown.
+  std::uint8_t source_bit_depth = 8;
+  /// True when the source stored a single grey channel (plus optional alpha).
+  /// A hint only; writers must still look at the pixels.
+  bool source_grayscale = false;
 
   [[nodiscard]] std::uint32_t width() const noexcept { return frames.empty() ? 0 : frames.front().width; }
   [[nodiscard]] std::uint32_t height() const noexcept { return frames.empty() ? 0 : frames.front().height; }
