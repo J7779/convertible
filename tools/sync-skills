@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+# Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+"""Mirror the project skills from .agents/skills/ to .claude/skills/, byte for byte.
+
+Skills are written once, under .agents/skills/<skill-name>/SKILL.md (plus any supporting
+files). Some tools only look in .claude/skills/, so that directory is a generated copy:
+never edit it by hand.
+
+Usage (from anywhere in the repository):
+    tools/sync-skills            # copy new and changed files, delete files that no longer exist
+    tools/sync-skills --check    # exit 1 if the mirror differs (CI)
+
+Every SKILL.md must start with YAML front matter that has `name` (equal to its directory
+name) and `description`; both modes verify that. Python 3.8+ standard library only.
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import shutil
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+SOURCE = REPO / ".agents" / "skills"
+MIRROR = REPO / ".claude" / "skills"
+
+
+def tree(root: Path) -> dict[str, bytes]:
+    if not root.is_dir():
+        return {}
+    return {p.relative_to(root).as_posix(): p.read_bytes()
+            for p in sorted(root.rglob("*")) if p.is_file() and p.name != ".DS_Store"}
+
+
+def validate(files: dict[str, bytes]) -> list[str]:
+    problems = []
+    skills = sorted({path.split("/", 1)[0] for path in files})
+    for skill in skills:
+        text = files.get(f"{skill}/SKILL.md")
+        if text is None:
+            problems.append(f"{skill}: SKILL.md is missing")
+            continue
+        match = re.match(rb"---\r?\n(.*?)\r?\n---\r?\n", text, re.S)
+        if not match:
+            problems.append(f"{skill}/SKILL.md: no YAML front matter")
+            continue
+        front = match.group(1).decode("utf-8")
+        name = re.search(r"^name:\s*(\S+)\s*$", front, re.M)
+        if not name or name.group(1) != skill:
+            problems.append(f"{skill}/SKILL.md: `name` must be `{skill}`")
+        if not re.search(r"^description:\s*\S", front, re.M):
+            problems.append(f"{skill}/SKILL.md: `description` is missing")
+    return problems
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="fail when the mirror is out of date")
+    args = parser.parse_args()
+
+    source = tree(SOURCE)
+    if not source:
+        print("sync-skills: .agents/skills/ is empty or missing", file=sys.stderr)
+        return 1
+    problems = validate(source)
+    if problems:
+        print("sync-skills: invalid skills:\n  " + "\n  ".join(problems), file=sys.stderr)
+        return 1
+
+    mirror = tree(MIRROR)
+    changed = sorted(p for p in source if mirror.get(p) != source[p])
+    removed = sorted(p for p in mirror if p not in source)
+    if args.check:
+        if changed or removed:
+            for p in changed:
+                print(f"  differs or missing: .claude/skills/{p}", file=sys.stderr)
+            for p in removed:
+                print(f"  not in .agents/skills: .claude/skills/{p}", file=sys.stderr)
+            print("sync-skills: .claude/skills is out of date; run tools/sync-skills", file=sys.stderr)
+            return 1
+        print(f"sync-skills: in sync ({len({p.split('/')[0] for p in source})} skills)")
+        return 0
+
+    for p in changed:
+        target = MIRROR / p
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source[p])
+        shutil.copymode(SOURCE / p, target)
+    for p in removed:
+        (MIRROR / p).unlink()
+    for directory in sorted((d for d in MIRROR.rglob("*") if d.is_dir()), reverse=True):
+        if not any(directory.iterdir()):
+            directory.rmdir()
+    print(f"sync-skills: {len(changed)} written, {len(removed)} removed")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

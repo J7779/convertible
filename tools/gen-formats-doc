@@ -1,0 +1,252 @@
+#!/usr/bin/env python3
+# Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+"""Generate docs/FORMATS.md and the format summary in README.md from the real catalogue.
+
+The catalogue is read from the built command-line tool (`convertible formats --json`),
+so the documentation always matches what the core registers. Nothing is hard-coded
+except the display order and titles of the categories.
+
+Usage (from the repository root, after building the CLI, e.g. `cmake --preset dev`
+and `cmake --build --preset dev -j`):
+
+    tools/gen-formats-doc                    # write docs/FORMATS.md and the README block
+    tools/gen-formats-doc --check            # exit 1 if either file is stale (CI)
+    tools/gen-formats-doc --cli build/release/core/convertible
+    tools/gen-formats-doc --json formats.json   # use a saved `formats --json` output
+
+The CLI is looked up in this order: --cli, $CVT_CLI, then build/*/core/convertible[.exe]
+(build/*/core/<Config>/convertible.exe for multi-config generators), newest first.
+
+The README block is the text between the lines
+    <!-- formats:begin -->   and   <!-- formats:end -->
+Python 3.8+ standard library only.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+FORMATS_DOC = Path("docs") / "FORMATS.md"
+README = Path("README.md")
+BEGIN = "<!-- formats:begin -->"
+END = "<!-- formats:end -->"
+
+# Display order and titles. Unknown categories (added later) follow, alphabetically.
+CATEGORIES = [
+    ("image", "Images"),
+    ("vector", "Vector graphics"),
+    ("audio", "Audio"),
+    ("video", "Video"),
+    ("document", "Documents"),
+    ("ebook", "E-books"),
+    ("spreadsheet", "Spreadsheets and tables"),
+    ("presentation", "Presentations"),
+    ("data", "Data and configuration"),
+    ("archive", "Archives and compression"),
+    ("font", "Fonts"),
+    ("subtitle", "Subtitles"),
+    ("model3d", "3D models"),
+    ("geo", "Geospatial"),
+    ("pim", "Calendars and contacts"),
+    ("code", "Source code"),
+    ("encoding", "Encodings and checksums"),
+    ("other", "Other"),
+]
+TITLES = dict(CATEGORIES)
+EXAMPLES_PER_CATEGORY = 8
+
+
+def find_cli(explicit: str | None) -> Path:
+    candidates: list[Path] = []
+    if explicit:
+        candidates.append(Path(explicit))
+    elif os.environ.get("CVT_CLI"):
+        candidates.append(Path(os.environ["CVT_CLI"]))
+    else:
+        found: list[Path] = []
+        for pattern in ("build/*/core/convertible", "build/*/core/convertible.exe",
+                        "build/*/core/*/convertible.exe", "build/*/core/*/convertible"):
+            found.extend(p for p in REPO.glob(pattern) if p.is_file())
+        found.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        candidates.extend(found)
+    for candidate in candidates:
+        path = candidate if candidate.is_absolute() else (Path.cwd() / candidate)
+        if path.is_file():
+            return path
+    sys.exit("gen-formats-doc: the convertible CLI was not found; build it "
+             "(cmake --preset dev && cmake --build --preset dev -j) or pass --cli")
+
+
+def load_catalogue(args: argparse.Namespace) -> list[dict]:
+    if args.json:
+        text = Path(args.json).read_text(encoding="utf-8")
+    else:
+        cli = find_cli(args.cli)
+        result = subprocess.run([str(cli), "formats", "--json"], capture_output=True, check=False)
+        if result.returncode != 0:
+            sys.exit(f"gen-formats-doc: `convertible formats --json` failed ({result.returncode}):\n"
+                     + result.stderr.decode("utf-8", "replace"))
+        text = result.stdout.decode("utf-8")
+    data = json.loads(text)
+    if not isinstance(data, list) or not data:
+        sys.exit("gen-formats-doc: the catalogue is empty or not a JSON array")
+    return data
+
+
+def category_order(formats: list[dict]) -> list[str]:
+    present = {f.get("category", "other") for f in formats}
+    known = [c for c, _ in CATEGORIES if c in present]
+    unknown = sorted(present - set(TITLES))
+    # "other" stays last even after unknown categories.
+    if "other" in known:
+        known.remove("other")
+        return known + unknown + ["other"]
+    return known + unknown
+
+
+def title(category: str) -> str:
+    return TITLES.get(category, category.replace("_", " ").capitalize())
+
+
+def cell(text: str) -> str:
+    return " ".join(str(text).split()).replace("|", "\\|")
+
+
+def anchor(category: str) -> str:
+    return "".join(ch for ch in title(category).lower().replace(" ", "-") if ch.isalnum() or ch == "-")
+
+
+def by_category(formats: list[dict]) -> dict[str, list[dict]]:
+    groups: dict[str, list[dict]] = {}
+    for f in formats:
+        groups.setdefault(f.get("category", "other"), []).append(f)
+    for items in groups.values():
+        items.sort(key=lambda f: f["id"])
+    return groups
+
+
+def render_formats_doc(formats: list[dict]) -> str:
+    groups = by_category(formats)
+    order = category_order(formats)
+    total = len(formats)
+    readable = sum(1 for f in formats if f.get("readable"))
+    writable = sum(1 for f in formats if f.get("writable"))
+    out = [
+        "<!-- Generated by tools/gen-formats-doc from `convertible formats --json`. Do not edit by hand. -->",
+        "",
+        "# Supported formats",
+        "",
+        f"The core knows **{total}** formats: **{readable}** can be read (decoded) and "
+        f"**{writable}** can be written (encoded).",
+        "",
+        "- **Read**: the core has a reader for the format, so it can be the source of a conversion.",
+        "- **Write**: the core has a writer, so it can be a conversion target.",
+        "- A format with neither is still *detected* (the apps name it correctly), and any file,",
+        "  readable or not, can be turned into the universal byte targets of the encodings",
+        "  category (Base64, hexadecimal, checksums and similar).",
+        "- Same-format conversion (for example PNG to PNG at a lower quality) is offered as",
+        "  \"Compress\" wherever a format can be both read and written.",
+        "",
+        "What can be converted into what is decided at run time by the planner; ask the CLI with",
+        "`convertible targets <file-or-format>`.",
+        "",
+        "| Category | Formats | Read | Write |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for category in order:
+        items = groups[category]
+        out.append(f"| [{title(category)}](#{anchor(category)}) | {len(items)} | "
+                   f"{sum(1 for f in items if f.get('readable'))} | "
+                   f"{sum(1 for f in items if f.get('writable'))} |")
+    out.append(f"| **Total** | **{total}** | **{readable}** | **{writable}** |")
+    for category in order:
+        out += ["", f"## {title(category)}", "",
+                "| ID | Name | Extensions | Read | Write | Notes |",
+                "| --- | --- | --- | :---: | :---: | --- |"]
+        for f in groups[category]:
+            extensions = ", ".join(f"`.{e}`" for e in f.get("extensions", []))
+            out.append("| `{}` | {} | {} | {} | {} | {} |".format(
+                f["id"], cell(f.get("name", "")), extensions,
+                "yes" if f.get("readable") else "-",
+                "yes" if f.get("writable") else "-",
+                cell(f.get("description", ""))))
+    out.append("")
+    return "\n".join(out)
+
+
+def render_readme_block(formats: list[dict]) -> str:
+    groups = by_category(formats)
+    order = category_order(formats)
+    total = len(formats)
+    readable = sum(1 for f in formats if f.get("readable"))
+    writable = sum(1 for f in formats if f.get("writable"))
+    lines = [
+        BEGIN,
+        "<!-- Generated by tools/gen-formats-doc; do not edit between the markers. -->",
+        "",
+        "| Category | Known | Read | Write | Most common it converts |",
+        "| --- | ---: | ---: | ---: | --- |",
+    ]
+    for category in order:
+        items = groups[category]
+        usable = [f for f in items if f.get("readable") or f.get("writable")]
+        common = sorted(usable, key=lambda f: (-int(f.get("popularity", 0)), f["id"]))[:EXAMPLES_PER_CATEGORY]
+        lines.append("| {} | {} | {} | {} | {} |".format(
+            title(category), len(items),
+            sum(1 for f in items if f.get("readable")),
+            sum(1 for f in items if f.get("writable")),
+            ", ".join(cell(f["id"]) for f in common) or "detected only, for now"))
+    lines += [f"| **Total** | **{total}** | **{readable}** | **{writable}** | |", "", END]
+    return "\n".join(lines)
+
+
+def splice_readme(readme: str, block: str) -> str:
+    start = readme.find(BEGIN)
+    stop = readme.find(END)
+    if start < 0 or stop < start:
+        sys.exit(f"gen-formats-doc: {README} has no {BEGIN} ... {END} block")
+    return readme[:start] + block + readme[stop + len(END):]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="fail when the committed files are stale")
+    parser.add_argument("--cli", help="path to the convertible executable")
+    parser.add_argument("--json", help="read the catalogue from a saved `formats --json` file")
+    args = parser.parse_args()
+
+    formats = load_catalogue(args)
+    expected = {
+        FORMATS_DOC: render_formats_doc(formats),
+        README: splice_readme((REPO / README).read_text(encoding="utf-8"), render_readme_block(formats)),
+    }
+    stale = []
+    for path, text in expected.items():
+        target = REPO / path
+        current = target.read_text(encoding="utf-8") if target.exists() else None
+        if current == text:
+            continue
+        if args.check:
+            stale.append(str(path))
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with open(target, "w", encoding="utf-8", newline="\n") as handle:
+                handle.write(text)
+            print(f"gen-formats-doc: wrote {path.as_posix()}")
+    if stale:
+        print("gen-formats-doc: out of date: " + ", ".join(stale)
+              + "\n  run tools/gen-formats-doc after building the CLI and commit the result", file=sys.stderr)
+        return 1
+    if args.check:
+        print(f"gen-formats-doc: up to date ({len(formats)} formats)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

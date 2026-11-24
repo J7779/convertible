@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+# Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+"""Scan the repository for personal data, machine details and secrets before anything is pushed.
+
+Checks, on every tracked or untracked-but-not-ignored file (text and binary alike):
+  home-path       home directories and user profiles: /Users/<name>/, /home/<name>/,
+                  C:\\Users\\<name>\\, /var/folders/.., /private/var/folders/..
+  local-host      mDNS host names such as <name>.local
+  private-key     PEM/OpenSSH/PGP private key blocks outside test fixtures
+  secret          common access-token and API-key shapes
+  signing         signing material and machine-local files: keystores, .p12/.pfx, provisioning
+                  profiles, .pem/.key, local.properties, .env, literal store passwords
+  email           e-mail addresses, except in core/src/imported/**, licence files and NOTICES.md
+                  (and example.com/.org/.net and GitHub noreply addresses anywhere)
+  pattern         extra regular expressions supplied at run time (see below)
+
+With --history it also checks every commit reachable from any ref:
+  identity        author and committer e-mails that are not GitHub noreply addresses
+  trailer         co-author and "generated with/by" trailers in commit messages
+  message         the content checks above, applied to commit messages
+  blob            the content checks above, applied to every file version ever committed
+
+Extra forbidden patterns keep sensitive words out of the repository itself: pass them at
+run time, never commit them.
+    --pattern REGEX                      (repeatable, case-insensitive)
+    CVT_PRIVACY_PATTERNS="re1<newline>re2" (one regular expression per line)
+    --local-identity                     also forbid this machine's user name and host name
+
+A line containing the marker  privacy-audit: allow  is skipped (for documented examples).
+
+Usage (from anywhere in the repository; Python 3.8+ standard library and git only):
+    tools/privacy-audit                  # working tree
+    tools/privacy-audit --history        # working tree and all history
+    tools/privacy-audit --history --local-identity --pattern 'my-secret-word'
+Exit status: 0 clean, 1 findings, 2 usage or git error.
+"""
+
+from __future__ import annotations
+
+import argparse
+import fnmatch
+import getpass
+import os
+import re
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+SELF = "tools/privacy-audit"
+MAX_BYTES = 64 * 1024 * 1024
+ALLOW_MARKER = b"privacy-audit: allow"
+
+# Paths (fnmatch, '/' separators) where e-mail addresses are expected.
+EMAIL_ALLOWED_PATHS = [
+    "core/src/imported/*",
+    "NOTICES.md",
+    "LICENSE",
+    "LICENSE.*",
+    "*/LICENSE*",
+    "*/LICENCE*",
+    "*/COPYING*",
+    "*/AUTHORS*",
+    "*/CREDITS*",
+    "*/NOTICE*",
+    "*/PATENTS*",
+    "*-LICENSE.txt",
+]
+# Paths where private keys are deliberate test data.
+FIXTURE_PATHS = ["core/tests/data/*", "*/fixtures/*", "*/testdata/*", "*/test-data/*"]
+
+# Placeholder names that are not anybody's account.
+PLACEHOLDER_NAMES = {
+    "me", "you", "user", "username", "user-name", "your-name", "yourname", "name", "example",
+    "someone", "somebody", "shared", "runner", "builder", "build", "ci", "dev", "developer",
+    "admin", "test", "tester", "jane", "john", "alice", "bob", "foo", "bar", "x", "xxx",
+    "public", "guest", "default", "all users", "default user", "linuxbrew", "vscode", "ubuntu",
+    "nobody", "root",
+}
+
+FILE_EXTENSIONS = {
+    "png", "jpg", "jpeg", "gif", "svg", "webp", "avif", "ico", "icns", "bmp", "tif", "tiff",
+    "json", "js", "mjs", "css", "html", "md", "txt", "xml", "kt", "kts", "swift", "cpp", "hpp",
+    "c", "h", "mm", "m", "py", "sh", "ttf", "otf", "woff", "woff2", "wasm", "zip",
+}
+
+# Case-sensitive on purpose: real profiles are /Users and /home; "/users/0/" is a JSON pointer.
+HOME_PATH = re.compile(
+    rb"(?:(?<![A-Za-z0-9_.~$])/(?:Users|home)/(?P<a>[^/\s<>\"'`*$(){}\[\]\\:;,|]+)/"
+    rb"|[A-Za-z]:[\\/]+(?i:Users|Documents and Settings)[\\/]+(?P<b>[^\\/\s<>\"'`*%$(){}\[\]:;,|]+)[\\/])")
+TEMP_PATH = re.compile(rb"(?:/private)?/var/folders/[A-Za-z0-9_+-]{2}/[A-Za-z0-9_+-]{20,}")
+# "<host>.local", but not member access in code ("out.local = ...", "x.local;") or "~/.local".
+LOCAL_HOST = re.compile(
+    rb"(?<![A-Za-z0-9_./~-])[A-Za-z0-9][A-Za-z0-9-]{0,62}\.local(?![A-Za-z0-9_.(\-])(?!\s*(?:[=;,)\]\[!<>+*&|?]|->))")
+PRIVATE_KEY = re.compile(rb"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----")
+SECRETS = [
+    ("GitHub token", re.compile(rb"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})")),
+    ("cloud access key id", re.compile(rb"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
+    ("API key (AIza...)", re.compile(rb"\bAIza[0-9A-Za-z_\-]{35}\b")),
+    ("chat bot token", re.compile(rb"\bxox[abposr]-[0-9A-Za-z-]{10,}")),
+    ("live payment key", re.compile(rb"\b[rs]k_live_[0-9A-Za-z]{16,}")),
+    ("secret key (sk-...)", re.compile(rb"\bsk-[A-Za-z0-9_\-]{32,}")),
+    ("npm token", re.compile(rb"\bnpm_[A-Za-z0-9]{36}\b")),
+    ("bearer token", re.compile(rb"(?i)authorization:\s*bearer\s+[A-Za-z0-9._\-]{20,}")),
+    ("password assignment", re.compile(
+        rb"(?i)\b(?:store|key)?password\s*[:=]\s*[\"'][^\"'\s$]{4,}[\"']")),
+]
+EMAIL = re.compile(rb"(?<![A-Za-z0-9._%+\-/])[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.([A-Za-z]{2,})\b")
+# Reserved example domains, internationalised (xn--) test domains and GitHub noreply addresses.
+EMAIL_OK = re.compile(rb"(?i)@(?:[a-z0-9-]+\.)*example\.(?:com|org|net)$|@(?:[a-z0-9-]+\.)*[a-z0-9-]+\.(?:test|example|invalid|localhost)$|@xn--|@openssh\.com$|@users\.noreply\.github\.com$|^noreply@github\.com$|^git@")
+
+SIGNING_NAMES = [
+    "*.jks", "*.keystore", "*.p12", "*.pfx", "*.mobileprovision", "*.provisionprofile",
+    "*.pem", "*.key", "*.p8", "*.cer", "*.certSigningRequest", "local.properties", ".env",
+    ".env.*", "*.xcuserstate", "id_rsa", "id_ed25519", "id_ecdsa", "*.kdbx",
+]
+SIGNING_ALLOWED = [".env.example"]
+
+TRAILERS = re.compile(
+    rb"(?im)^\s*(?:co-authored-by:|(?:\W\s*)?generated (?:with|by)\b|assisted-by:)")
+
+
+def git(*args: str, input_bytes: bytes | None = None) -> bytes:
+    result = subprocess.run(["git", "-C", str(REPO), *args], input=input_bytes,
+                            capture_output=True, check=False)
+    if result.returncode != 0:
+        sys.stderr.write(result.stderr.decode("utf-8", "replace"))
+        sys.exit(2)
+    return result.stdout
+
+
+def matches(path: str, patterns: list[str]) -> bool:
+    name = path.rsplit("/", 1)[-1]
+    return any(fnmatch.fnmatchcase(path, p) or fnmatch.fnmatchcase(name, p) for p in patterns)
+
+
+class Audit:
+    def __init__(self, extra: list[re.Pattern[bytes]]):
+        self.extra = extra
+        self.findings: list[tuple[str, str, str]] = []
+
+    def add(self, where: str, rule: str, detail: str) -> None:
+        self.findings.append((where, rule, detail))
+
+    def scan_name(self, where: str, path: str) -> None:
+        if matches(path, SIGNING_NAMES) and not matches(path, SIGNING_ALLOWED) \
+                and not matches(path, FIXTURE_PATHS):
+            self.add(where, "signing", "signing material or machine-local file must not be committed")
+
+    def scan_content(self, where: str, path: str, data: bytes) -> None:
+        if path == SELF:
+            return
+        email_ok_path = matches(path, EMAIL_ALLOWED_PATHS)
+        fixture = matches(path, FIXTURE_PATHS)
+        for number, line in enumerate(data.split(b"\n"), 1):
+            if not line or ALLOW_MARKER in line:
+                continue
+            here = f"{where}:{number}"
+            for m in HOME_PATH.finditer(line):
+                name = (m.group("a") or m.group("b") or b"").decode("utf-8", "replace")
+                if name.lower() in PLACEHOLDER_NAMES or name.startswith(("<", "%", "$", "{")):
+                    continue
+                self.add(here, "home-path", short(m.group(0)))
+            for m in TEMP_PATH.finditer(line):
+                self.add(here, "home-path", short(m.group(0)))
+            for m in LOCAL_HOST.finditer(line):
+                self.add(here, "local-host", short(m.group(0)))
+            if PRIVATE_KEY.search(line) and not fixture:
+                self.add(here, "private-key", "private key block outside a test fixture directory")
+            for label, pattern in SECRETS:
+                m = pattern.search(line)
+                if m:
+                    self.add(here, "secret", f"{label}: {short(m.group(0), 12)}")
+            if not email_ok_path:
+                for m in EMAIL.finditer(line):
+                    address = m.group(0)
+                    if m.group(1).lower().decode() in FILE_EXTENSIONS or EMAIL_OK.search(address):
+                        continue
+                    self.add(here, "email", short(address))
+            # LICENSE names the copyright holder; imported upstream code carries its own authors.
+            for pattern in ([] if path == "LICENSE" or path.startswith("core/src/imported/") else self.extra):
+                m = pattern.search(line)
+                if m:
+                    self.add(here, "pattern", f"matches /{pattern.pattern.decode('utf-8', 'replace')}/")
+
+    def scan_text(self, where: str, data: bytes) -> None:
+        """Content rules for commit messages (no path-based exemptions)."""
+        self.scan_content(where, "", data)
+
+
+def short(value: bytes, keep: int = 80) -> str:
+    text = value.decode("utf-8", "replace")
+    return text if len(text) <= keep else text[:keep] + "..."
+
+
+def working_tree(audit: Audit) -> int:
+    paths = [p for p in git("ls-files", "-z", "--cached", "--others", "--exclude-standard").decode(
+        "utf-8", "surrogateescape").split("\0") if p]
+    count = 0
+    for path in sorted(set(paths)):
+        full = REPO / path
+        audit.scan_name(path, path)
+        if not full.is_file() or full.is_symlink():
+            continue
+        if full.stat().st_size > MAX_BYTES:
+            continue
+        audit.scan_content(path, path, full.read_bytes())
+        count += 1
+    return count
+
+
+def history(audit: Audit) -> tuple[int, int]:
+    log = git("log", "--all", "-z", "--format=%H%x1f%an%x1f%ae%x1f%cn%x1f%ce%x1f%B")
+    commits = 0
+    for record in log.split(b"\0"):
+        record = record.strip(b"\n")
+        if not record:
+            continue
+        sha, _an, ae, _cn, ce, message = record.split(b"\x1f", 5)
+        commits += 1
+        where = f"commit {sha[:10].decode()}"
+        for role, address in (("author", ae), ("committer", ce)):
+            if not re.search(rb"(?i)@users\.noreply\.github\.com$|^noreply@github\.com$", address):
+                audit.add(where, "identity", f"{role} e-mail is not a GitHub noreply address: {short(address)}")
+        for m in TRAILERS.finditer(message):
+            audit.add(where, "trailer", short(m.group(0).strip()))
+        audit.scan_text(where + " message", message)
+
+    # Every blob ever committed, with the first path it was seen under.
+    objects = git("rev-list", "--all", "--objects").decode("utf-8", "surrogateescape")
+    seen: dict[str, str] = {}
+    for line in objects.splitlines():
+        sha, _, path = line.partition(" ")
+        if path and sha not in seen:
+            seen[sha] = path
+    current = set(git("ls-files", "-s").decode("utf-8", "surrogateescape").split())
+    candidates = [(sha, path) for sha, path in seen.items() if sha not in current]
+    if not candidates:
+        return commits, 0
+    batch = git("cat-file", "--batch-check=%(objectname) %(objecttype) %(objectsize)",
+                input_bytes="".join(f"{sha}\n" for sha, _ in candidates).encode())
+    blobs = []
+    for line in batch.decode().splitlines():
+        sha, kind, size = line.split()
+        if kind == "blob" and int(size) <= MAX_BYTES:
+            blobs.append(sha)
+    if not blobs:
+        return commits, 0
+    data = git("cat-file", "--batch", input_bytes="".join(f"{s}\n" for s in blobs).encode())
+    offset = 0
+    scanned = 0
+    while offset < len(data):
+        header_end = data.index(b"\n", offset)
+        sha, _kind, size = data[offset:header_end].decode().split()
+        start = header_end + 1
+        content = data[start:start + int(size)]
+        offset = start + int(size) + 1
+        path = seen[sha]
+        audit.scan_name(f"history:{path}", path)
+        audit.scan_content(f"history:{path}@{sha[:10]}", path, content)
+        scanned += 1
+    return commits, scanned
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0],
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--history", action="store_true", help="also audit every commit and file version")
+    parser.add_argument("--pattern", action="append", default=[], help="extra forbidden regex (repeatable)")
+    parser.add_argument("--local-identity", action="store_true",
+                        help="forbid this machine's user name and host name")
+    parser.add_argument("--quiet", action="store_true", help="print findings only")
+    args = parser.parse_args()
+
+    raw = list(args.pattern)
+    raw += [p for p in os.environ.get("CVT_PRIVACY_PATTERNS", "").splitlines() if p.strip()]
+    if args.local_identity:
+        for value in (getpass.getuser(), socket.gethostname().split(".")[0]):
+            if value and len(value) >= 3:
+                raw.append(r"\b" + re.escape(value) + r"\b")
+    try:
+        extra = [re.compile(p.strip().encode("utf-8"), re.I) for p in raw]
+    except re.error as error:
+        print(f"privacy-audit: bad pattern: {error}", file=sys.stderr)
+        return 2
+
+    audit = Audit(extra)
+    files = working_tree(audit)
+    summary = f"{files} files"
+    if args.history:
+        commits, blobs = history(audit)
+        summary += f", {commits} commits, {blobs} historical file versions"
+
+    if audit.findings:
+        width = max(len(rule) for _, rule, _ in audit.findings)
+        for where, rule, detail in audit.findings:
+            print(f"{rule.ljust(width)}  {where}: {detail}")
+        sys.stdout.flush()
+        print(f"\nprivacy-audit: {len(audit.findings)} finding(s) in {summary}", file=sys.stderr)
+        print("  remove the data (rewrite history only with the owner's agreement), or mark a deliberate "
+              "example line with 'privacy-audit: allow'", file=sys.stderr)
+        return 1
+    if not args.quiet:
+        print(f"privacy-audit: clean ({summary}; {len(extra)} extra pattern(s))")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

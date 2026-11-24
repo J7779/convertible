@@ -67,3 +67,10 @@ npm-debug.log*
 __pycache__/
 *.pyc
 .venv/
+
+# Local agent and editor tooling: only the shared project skills are committed
+.claude/*
+!.claude/skills/
+
+# Release and CI staging (tools/ci/*)
+/release/

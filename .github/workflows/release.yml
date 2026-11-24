@@ -1,0 +1,206 @@
+# Release builds.
+#
+# On a tag v<version> (the version must equal VERSION in the root CMakeLists.txt) this
+# builds every artefact and publishes a GitHub Release with them. Run it by hand
+# (workflow_dispatch) to get the same artefacts as a workflow artifact without publishing.
+#
+# Artefacts (see docs/BUILDING.md, "Releases"):
+#   Linux x86_64   CLI .tar.gz, desktop .tar.gz and .deb
+#   macOS          CLI .tar.gz and desktop .app (.zip), universal arm64 + x86_64, unsigned
+#   Windows x86_64 CLI .zip and desktop .zip
+#   Android        per-ABI and universal APKs: release unsigned, debug signed with a debug key
+#   Web            static site .zip
+#   SHA256SUMS.txt
+# No iOS artefact: an installable iOS build needs the owner's signing certificate.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CVT_JOBS: "4"
+
+jobs:
+  version:
+    name: version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: version
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="$(tools/ci/version.sh --check-tag "${GITHUB_REF_NAME}")"
+          else
+            version="$(tools/ci/version.sh)"
+          fi
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+  desktop:
+    name: desktop + cli / ${{ matrix.label }}
+    needs: version
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            label: linux-x64
+            cli: build/desktop/core/convertible
+            cmake_args: ""
+          - os: macos-latest
+            label: macos-universal
+            cli: build/desktop/core/convertible
+            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64;x86_64
+          - os: windows-latest
+            label: windows-x64
+            cli: build/desktop/core/Release/convertible.exe
+            cmake_args: ""
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Configure git
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git config --global core.longpaths true
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install toolchain and X11 headers
+        if: runner.os == 'Linux'
+        run: |
+          tools/ci/install-linux-deps.sh desktop
+          {
+            echo "CC=gcc-14"
+            echo "CXX=g++-14"
+          } >> "${GITHUB_ENV}"
+      - name: Build and package the desktop app (Release)
+        env:
+          CVT_DESKTOP_TESTS: "0"
+          CVT_CMAKE_ARGS: ${{ matrix.cmake_args }}
+        run: tools/ci/desktop.sh
+      - name: Check the macOS binaries are universal
+        if: runner.os == 'macOS'
+        run: |
+          lipo -archs "${{ matrix.cli }}" | grep -q 'x86_64 arm64\|arm64 x86_64'
+          lipo -archs "${{ matrix.cli }}"
+      - name: Smoke test the CLI
+        run: |
+          "${{ matrix.cli }}" --version
+          "${{ matrix.cli }}" formats --category encoding > /dev/null
+      - name: Stage artefacts
+        run: |
+          mkdir -p release
+          tools/ci/package-cli.sh "${{ matrix.cli }}" "${{ matrix.label }}" release
+          cp build/desktop/packages/*.zip build/desktop/packages/*.tar.gz build/desktop/packages/*.deb release/ 2>/dev/null || true
+          ls -l release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ matrix.label }}
+          path: release/
+          if-no-files-found: error
+
+  android:
+    name: android
+    needs: version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-android
+      - name: Build APKs
+        working-directory: apps/android
+        run: ./gradlew --no-daemon --max-workers=4 -Pconvertible.nativeJobs=4 assembleDebug assembleRelease
+      - name: Stage artefacts
+        run: tools/ci/package-android.sh release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-android
+          path: release/
+          if-no-files-found: error
+
+  web:
+    name: web
+    needs: version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CVT_DOCKER_MEMORY: 12g
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Build (pinned Emscripten container)
+        run: apps/web/build.sh --docker
+      - name: Unit tests
+        run: apps/web/test.sh
+      - name: Stage artefacts
+        run: tools/ci/package-web.sh release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-web
+          path: release/
+          if-no-files-found: error
+
+  publish:
+    name: publish
+    needs: [version, desktop, android, web]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write # create the GitHub Release (tags only)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          tools/ci/checksums.sh release
+          cat release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: convertible-${{ needs.version.outputs.version }}
+          path: release/
+      - name: Create the GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          cat > "${RUNNER_TEMP}/notes.md" <<EOF
+          Convertible ${VERSION}: offline, private file conversion on every platform.
+
+          | Platform | Files |
+          | --- | --- |
+          | Linux x86_64 | \`convertible-desktop-*.tar.gz\`, \`convertible-desktop_*.deb\`, \`convertible-cli-*-linux-x64.tar.gz\` |
+          | macOS (Apple silicon and Intel) | \`Convertible-*-macos-*.zip\`, \`convertible-cli-*-macos-universal.tar.gz\` |
+          | Windows x86_64 | \`Convertible-*-windows-*.zip\`, \`convertible-cli-*-windows-x64.zip\` |
+          | Android | \`convertible-android-*-universal-debug.apk\` installs directly; release APKs are unsigned |
+          | Web | \`convertible-web-*.zip\`: a static site for any HTTPS host |
+
+          - macOS builds are not signed or notarised. Gatekeeper blocks them on first launch:
+            right-click the app and choose Open, or run \`xattr -dr com.apple.quarantine Convertible.app\`.
+          - Windows builds are not code-signed; SmartScreen may ask for confirmation.
+          - Verify downloads with \`sha256sum -c SHA256SUMS.txt\` (macOS: \`shasum -a 256 -c SHA256SUMS.txt\`).
+          - No iOS build is attached; build it from source (apps/ios/README.md).
+          EOF
+          gh release create "${GITHUB_REF_NAME}" release/* \
+            --verify-tag --title "Convertible ${VERSION}" --notes-file "${RUNNER_TEMP}/notes.md"

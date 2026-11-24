@@ -1,2 +1,120 @@
-# Auto detect text files and perform LF normalization
+# Line endings and diff handling.
+#
+# Sources are normalised to LF in the repository and checked out with the platform's
+# native endings, except where a tool needs a fixed ending (below). Test data and every
+# binary asset are bytes: git must never rewrite them, on any platform, because the tests
+# compare them byte for byte. Later, more specific rules override earlier ones.
+
 * text=auto
+
+# --- Fixed line endings -------------------------------------------------------------
+*.sh            text eol=lf
+gradlew         text eol=lf
+tools/*         text eol=lf
+*.py            text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.ps1           text eol=crlf
+*.pbxproj       text eol=lf
+
+# --- Test data: bytes, never converted (also covered by core/tests/data/.gitattributes)
+core/tests/data/**              -text
+apps/**/fixtures/**             -text
+apps/**/tests/data/**           -text
+
+# --- Binary assets ------------------------------------------------------------------
+# Images
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.bmp   binary
+*.ico   binary
+*.icns  binary
+*.cur   binary
+*.tif   binary
+*.tiff  binary
+*.webp  binary
+*.avif  binary
+*.heic  binary
+*.psd   binary
+*.psb   binary
+*.dds   binary
+*.tga   binary
+*.exr   binary
+*.hdr   binary
+*.qoi   binary
+# Fonts
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+# Archives and packages
+*.zip   binary
+*.gz    binary
+*.tgz   binary
+*.bz2   binary
+*.xz    binary
+*.zst   binary
+*.7z    binary
+*.rar   binary
+*.jar   binary
+*.apk   binary
+*.aab   binary
+*.deb   binary
+*.kmz   binary
+# Audio and video
+*.wav   binary
+*.flac  binary
+*.mp3   binary
+*.m4a   binary
+*.aac   binary
+*.ogg   binary
+*.oga   binary
+*.opus  binary
+*.aiff  binary
+*.aifc  binary
+*.caf   binary
+*.wv    binary
+*.tta   binary
+*.wma   binary
+*.mp4   binary
+*.m4v   binary
+*.mov   binary
+*.mkv   binary
+*.mka   binary
+*.webm  binary
+*.avi   binary
+*.flv   binary
+*.wmv   binary
+*.ivf   binary
+*.h264  binary
+*.h265  binary
+*.obu   binary
+*.y4m   binary
+# Documents, data and other binary formats
+*.pdf     binary
+*.xlsx    binary
+*.xls     binary
+*.docx    binary
+*.pptx    binary
+*.ods     binary
+*.odt     binary
+*.odp     binary
+*.epub    binary
+*.sqlite  binary
+*.parquet binary
+*.feather binary
+*.wasm    binary
+*.bin     binary
+
+# --- Repository statistics (linguist) -------------------------------------------------
+core/src/imported/**            linguist-vendored
+NOTICES.md                      linguist-generated
+docs/FORMATS.md                 linguist-generated
+.claude/skills/**               linguist-generated
+apps/ios/Convertible.xcodeproj/** linguist-generated
+core/tests/data/**              linguist-vendored
+apps/**/fixtures/**             linguist-vendored

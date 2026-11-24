@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+# Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+"""Generate NOTICES.md: the third-party notices that ship with every Convertible build.
+
+Collected from the repository, never typed by hand:
+  - every imported component under core/src/imported/<name>/: its VENDOR.json
+    (name, version, licence, upstream URL, whether files were modified) and the full
+    text of its licence, NOTICE, PATENTS, AUTHORS and CREDITS files;
+  - the bundled fonts in assets/fonts/ (SIL Open Font License texts, *-LICENSE.txt);
+  - the libraries the Android app links at run time, read from
+    apps/android/gradle/libs.versions.toml and apps/android/app/build.gradle.kts.
+
+Usage (from anywhere in the repository):
+
+    tools/gen-notices            # write NOTICES.md
+    tools/gen-notices --check    # exit 1 if NOTICES.md is stale (CI)
+
+Python 3.8+ standard library only. Output is deterministic (sorted, LF line endings).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+OUTPUT = REPO / "NOTICES.md"
+IMPORTED = REPO / "core" / "src" / "imported"
+FONTS = REPO / "assets" / "fonts"
+ANDROID_TOML = REPO / "apps" / "android" / "gradle" / "libs.versions.toml"
+ANDROID_BUILD = REPO / "apps" / "android" / "app" / "build.gradle.kts"
+
+NOTICE_FILES = re.compile(r"^(LICEN[CS]E|COPYING|UNLICENSE|NOTICE|PATENTS|AUTHORS|CREDITS)([._-].*)?$", re.I)
+# Licences of the Android libraries by Maven group prefix (all published by their projects under these terms).
+ANDROID_LICENCES = [
+    ("androidx.", "Apache-2.0", "https://developer.android.com/jetpack/androidx"),
+    ("org.jetbrains.kotlinx", "Apache-2.0", "https://github.com/Kotlin/kotlinx.coroutines"),
+    ("org.jetbrains.kotlin", "Apache-2.0", "https://kotlinlang.org"),
+]
+
+
+def read_text(path: Path) -> str:
+    text = path.read_bytes().decode("utf-8", "replace").replace("\r\n", "\n").replace("\r", "\n")
+    return text.strip("\n")
+
+
+def fence(text: str) -> str:
+    longest = max((len(m) for m in re.findall(r"`+", text)), default=0)
+    ticks = "`" * max(3, longest + 1)
+    return f"{ticks}text\n{text}\n{ticks}"
+
+
+def imported_sections() -> list[str]:
+    out: list[str] = []
+    if not IMPORTED.is_dir():
+        return out
+    for root in sorted(p for p in IMPORTED.iterdir() if p.is_dir()):
+        vendor_path = root / "VENDOR.json"
+        if not vendor_path.is_file():
+            sys.exit(f"gen-notices: {root.relative_to(REPO).as_posix()} has no VENDOR.json")
+        vendor = json.loads(vendor_path.read_text(encoding="utf-8"))
+        rel = root.relative_to(REPO).as_posix()
+        out += [f"### {vendor.get('name', root.name)}", ""]
+        out.append(f"- Version: {vendor.get('version', 'unknown')}")
+        if vendor.get("commit"):
+            out.append(f"- Commit: `{vendor['commit']}`")
+        out.append(f"- Licence: {vendor.get('license', 'unknown')}")
+        if vendor.get("url"):
+            out.append(f"- Upstream: <{vendor['url'].split(' ')[0]}>")
+        modified = vendor.get("files_modified")
+        changes = root / "CONVERTIBLE_CHANGES.md"
+        if modified:
+            note = f" (see `{rel}/CONVERTIBLE_CHANGES.md`)" if changes.is_file() else ""
+            out.append(f"- Modified for Convertible: yes{note}")
+        else:
+            out.append("- Modified for Convertible: no")
+        out.append(f"- Location: `{rel}/`")
+        # Top-level notice files first, then those of bundled sub-components (third_party/...).
+        files = sorted((p for p in root.rglob("*") if p.is_file() and NOTICE_FILES.match(p.name)),
+                       key=lambda p: (len(p.relative_to(root).parts), p.relative_to(root).as_posix().lower()))
+        if not any(re.match(r"^(LICEN[CS]E|COPYING|UNLICENSE)", p.name, re.I) for p in files if p.parent == root):
+            sys.exit(f"gen-notices: {rel} has no licence file")
+        for path in files:
+            out += ["", f"`{path.relative_to(root).as_posix()}`", "", fence(read_text(path))]
+        out.append("")
+    return out
+
+
+def font_sections() -> list[str]:
+    out: list[str] = []
+    if not FONTS.is_dir():
+        return out
+    for licence in sorted(FONTS.glob("*-LICENSE.txt")):
+        family = licence.name[: -len("-LICENSE.txt")]
+        files = sorted(p.name for p in FONTS.iterdir() if p.suffix.lower() in (".ttf", ".otf", ".woff2")
+                       and p.name.startswith(family))
+        out += [f"### {family}", "",
+                "- Licence: SIL Open Font License 1.1",
+                "- Files: " + ", ".join(f"`assets/fonts/{name}`" for name in files),
+                "", fence(read_text(licence)), ""]
+    return out
+
+
+def android_sections() -> list[str]:
+    if not (ANDROID_TOML.is_file() and ANDROID_BUILD.is_file()):
+        return []
+    toml = ANDROID_TOML.read_text(encoding="utf-8")
+    versions = dict(re.findall(r'^\s*([A-Za-z0-9_-]+)\s*=\s*"([^"]+)"', toml.split("[libraries]")[0], re.M))
+    libraries: dict[str, tuple[str, str]] = {}
+    section = toml.split("[libraries]", 1)[1].split("[plugins]", 1)[0] if "[libraries]" in toml else ""
+    for alias, body in re.findall(r"^\s*([A-Za-z0-9_-]+)\s*=\s*\{([^}]*)\}", section, re.M):
+        module = re.search(r'module\s*=\s*"([^"]+)"', body)
+        ref = re.search(r'version\.ref\s*=\s*"([^"]+)"', body)
+        if module:
+            libraries[alias.replace("-", ".")] = (module.group(1), versions.get(ref.group(1), "") if ref else "")
+    build = ANDROID_BUILD.read_text(encoding="utf-8")
+    runtime = re.findall(r"^\s*implementation\((?:platform\()?libs\.([A-Za-z0-9_.]+)\)?\)", build, re.M)
+    bom = next((v for a, (m, v) in libraries.items() if m.endswith("compose-bom")), "")
+    rows = []
+    for alias in sorted(set(runtime)):
+        if alias not in libraries:
+            continue
+        module, version = libraries[alias]
+        if module.endswith("-bom"):
+            continue
+        if not version and bom and module.startswith("androidx.compose"):
+            version = f"from Compose BOM {bom}"
+        licence, url = next(((lic, u) for prefix, lic, u in ANDROID_LICENCES if module.startswith(prefix)),
+                            ("see upstream", ""))
+        rows.append(f"| `{module}` | {version or '-'} | {licence} | {url} |")
+    if not rows:
+        return []
+    rows.sort()
+    return [
+        "The Android app is the only part of Convertible that links libraries written elsewhere: the",
+        "platform's own Jetpack libraries and Kotlin coroutines. Gradle resolves them at build time;",
+        "their transitive dependencies (including the Kotlin standard library) are under the same",
+        "licence. Test-only and debug-only libraries are not shipped and are not listed.",
+        "",
+        "| Module | Version | Licence | Project |",
+        "| --- | --- | --- | --- |",
+        *rows,
+        "",
+        "The Apache License 2.0 text: <https://www.apache.org/licenses/LICENSE-2.0>.",
+        "",
+    ]
+
+
+def render() -> str:
+    out = [
+        "<!-- Generated by tools/gen-notices. Do not edit by hand. -->",
+        "",
+        "# Third-party notices",
+        "",
+        "Convertible itself is released under the MIT licence (see `LICENSE`). It is written in-house;",
+        "the few components below were written elsewhere and are distributed with it under their own",
+        "permissive licences. Every app shows these notices on its licences screen.",
+        "",
+        "## Imported source code (compiled into the core)",
+        "",
+        "Kept in-tree under `core/src/imported/`, compiled from source with the core, never downloaded",
+        "at build time. Each directory carries a `VENDOR.json` and the upstream licence files.",
+        "",
+        *imported_sections(),
+        "## Fonts (bundled with the apps)",
+        "",
+        *font_sections(),
+    ]
+    android = android_sections()
+    if android:
+        out += ["## Android app libraries", "", *android]
+    return "\n".join(out).rstrip("\n") + "\n"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="fail when NOTICES.md is stale")
+    args = parser.parse_args()
+    text = render()
+    current = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else None
+    if current == text:
+        if args.check:
+            print("gen-notices: NOTICES.md is up to date")
+        return 0
+    if args.check:
+        print("gen-notices: NOTICES.md is out of date; run tools/gen-notices and commit the result",
+              file=sys.stderr)
+        return 1
+    with open(OUTPUT, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
+    print("gen-notices: wrote NOTICES.md")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

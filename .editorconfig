@@ -1,0 +1,31 @@
+# Editor defaults for every contributor. https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.{kt,kts,swift,py}]
+indent_size = 4
+
+[{Makefile,*.mk,*.pbxproj}]
+indent_style = tab
+
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
+[*.md]
+trim_trailing_whitespace = false
+
+# Bytes, not text: never touch test data or imported code.
+[{core/tests/data/**,apps/**/fixtures/**,core/src/imported/**}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset
