@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:georss="http://www.georss.org/georss">
+  <channel>
+    <title>title</title>
+    <description>channel_description</description>
+    <link>channel_link</link>
+    <item>
+      <title>Alpha Beacon</title>
+      <description>Ünïcødé ✓ 東京</description>
+      <georss:point>40.1234567 -29.4812345</georss:point>
+    </item>
+    <item>
+      <title>Bravo Buoy</title>
+      <description>plain text</description>
+      <georss:point>40.15 -29.45</georss:point>
+    </item>
+    <item>
+      <title>Delta Field</title>
+      <description>Ωmega field</description>
+      <georss:polygon>
+40.0 -29.5 40.0 -29.4 40.08 -29.4 40.08 -29.5 40.0 -29.5 </georss:polygon>
+    </item>
+    <item>
+      <title>Charlie Path</title>
+      <description>a, &quot;quoted&quot; label</description>
+      <georss:line>
+40.1 -29.49 40.11 -29.48 40.105 -29.47 40.12 -29.46 </georss:line>
+    </item>
+  </channel>
+</rss>

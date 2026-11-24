@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="GDAL 3.8.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogr="http://osgeo.org/gdal" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<bounds minlat="40.123456699999998" minlon="-29.481234499999999" maxlat="40.149999999999999" maxlon="-29.449999999999999"/>                                     
+</metadata>
+<wpt lat="40.1234567" lon="-29.4812345">
+  <name>Alpha Beacon</name>
+  <extensions>
+    <ogr:kind>beacon</ogr:kind>
+    <ogr:rank>3</ogr:rank>
+    <ogr:height>12.5</ogr:height>
+    <ogr:active>1</ogr:active>
+    <ogr:label>Ünïcødé ✓ 東京</ogr:label>
+  </extensions>
+</wpt>
+<wpt lat="40.15" lon="-29.45">
+  <name>Bravo Buoy</name>
+  <extensions>
+    <ogr:kind>buoy</ogr:kind>
+    <ogr:rank>7</ogr:rank>
+    <ogr:height>0.25</ogr:height>
+    <ogr:active>0</ogr:active>
+    <ogr:label>plain text</ogr:label>
+  </extensions>
+</wpt>
+</gpx>

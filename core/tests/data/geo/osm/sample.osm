@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="osmium/1.16.0">
+  <node id="1" version="1" lat="40" lon="-29.4"/>
+  <node id="2" version="1" lat="40" lon="-29.39"/>
+  <node id="3" version="1" lat="40.01" lon="-29.39"/>
+  <node id="4" version="1" lat="40.01" lon="-29.4"/>
+  <node id="5" version="1" lat="40.002" lon="-29.378"/>
+  <node id="6" version="1" lat="40.002" lon="-29.372"/>
+  <node id="7" version="1" lat="40.008" lon="-29.372"/>
+  <node id="8" version="1" lat="40.008" lon="-29.378"/>
+  <node id="10" version="1" lat="40.02" lon="-29.41">
+    <tag k="amenity" v="bench"/>
+    <tag k="name" v="Lima Bench"/>
+  </node>
+  <node id="11" version="1" lat="40.03" lon="-29.42"/>
+  <node id="12" version="1" lat="40.035" lon="-29.43"/>
+  <node id="13" version="1" lat="40" lon="-29.38"/>
+  <node id="14" version="1" lat="40" lon="-29.37"/>
+  <node id="15" version="1" lat="40.01" lon="-29.37"/>
+  <node id="16" version="1" lat="40.01" lon="-29.38"/>
+  <way id="20" version="1">
+    <nd ref="10"/>
+    <nd ref="11"/>
+    <nd ref="12"/>
+    <tag k="highway" v="path"/>
+    <tag k="name" v="Mike Trail"/>
+  </way>
+  <way id="21" version="1">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <nd ref="3"/>
+    <nd ref="4"/>
+    <nd ref="1"/>
+    <tag k="building" v="yes"/>
+    <tag k="name" v="November Hall"/>
+    <tag k="levels" v="3"/>
+  </way>
+  <way id="22" version="1">
+    <nd ref="5"/>
+    <nd ref="6"/>
+    <nd ref="7"/>
+    <nd ref="8"/>
+    <nd ref="5"/>
+  </way>
+  <way id="23" version="1">
+    <nd ref="13"/>
+    <nd ref="14"/>
+    <nd ref="15"/>
+  </way>
+  <way id="24" version="1">
+    <nd ref="15"/>
+    <nd ref="16"/>
+    <nd ref="13"/>
+  </way>
+  <relation id="30" version="1">
+    <member type="way" ref="23" role="outer"/>
+    <member type="way" ref="24" role="outer"/>
+    <member type="way" ref="22" role="inner"/>
+    <tag k="type" v="multipolygon"/>
+    <tag k="landuse" v="grass"/>
+    <tag k="name" v="Oscar Park"/>
+  </relation>
+</osm>

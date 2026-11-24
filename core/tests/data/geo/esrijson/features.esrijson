@@ -1,0 +1,172 @@
+{
+ "displayFieldName": "name",
+ "geometryType": "esriGeometryPolygon",
+ "spatialReference": {
+  "wkid": 4326,
+  "latestWkid": 4326
+ },
+ "fields": [
+  {
+   "name": "name",
+   "type": "esriFieldTypeString",
+   "alias": "name",
+   "length": 64
+  },
+  {
+   "name": "kind",
+   "type": "esriFieldTypeString",
+   "alias": "kind",
+   "length": 16
+  },
+  {
+   "name": "rank",
+   "type": "esriFieldTypeInteger",
+   "alias": "rank"
+  },
+  {
+   "name": "height",
+   "type": "esriFieldTypeDouble",
+   "alias": "height"
+  },
+  {
+   "name": "label",
+   "type": "esriFieldTypeString",
+   "alias": "label",
+   "length": 64
+  }
+ ],
+ "features": [
+  {
+   "attributes": {
+    "name": "Delta Field",
+    "kind": "field",
+    "rank": 2,
+    "height": 100.75,
+    "label": "Ωmega field"
+   },
+   "geometry": {
+    "rings": [
+     [
+      [
+       -29.5,
+       40.0
+      ],
+      [
+       -29.5,
+       40.08
+      ],
+      [
+       -29.4,
+       40.08
+      ],
+      [
+       -29.4,
+       40.0
+      ],
+      [
+       -29.5,
+       40.0
+      ]
+     ],
+     [
+      [
+       -29.47,
+       40.02
+      ],
+      [
+       -29.43,
+       40.02
+      ],
+      [
+       -29.43,
+       40.05
+      ],
+      [
+       -29.47,
+       40.05
+      ],
+      [
+       -29.47,
+       40.02
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "attributes": {
+    "name": "Echo Islands",
+    "kind": "islands",
+    "rank": 5,
+    "height": 3.5,
+    "label": "two islands"
+   },
+   "geometry": {
+    "rings": [
+     [
+      [
+       -29.3,
+       40.0
+      ],
+      [
+       -29.3,
+       40.04
+      ],
+      [
+       -29.25,
+       40.04
+      ],
+      [
+       -29.25,
+       40.0
+      ],
+      [
+       -29.3,
+       40.0
+      ]
+     ],
+     [
+      [
+       -29.29,
+       40.01
+      ],
+      [
+       -29.28,
+       40.01
+      ],
+      [
+       -29.28,
+       40.02
+      ],
+      [
+       -29.29,
+       40.02
+      ],
+      [
+       -29.29,
+       40.01
+      ]
+     ],
+     [
+      [
+       -29.2,
+       40.0
+      ],
+      [
+       -29.175,
+       40.05
+      ],
+      [
+       -29.15,
+       40.0
+      ],
+      [
+       -29.2,
+       40.0
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

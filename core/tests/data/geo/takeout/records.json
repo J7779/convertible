@@ -1,0 +1,81 @@
+{
+ "locations": [
+  {
+   "latitudeE7": 402000000,
+   "longitudeE7": -294500000,
+   "accuracy": 5,
+   "altitude": 100,
+   "timestamp": "2024-03-10T08:00:00.000Z"
+  },
+  {
+   "latitudeE7": 402002000,
+   "longitudeE7": -294495000,
+   "accuracy": 5,
+   "altitude": 101,
+   "timestampMs": "1710057610000"
+  },
+  {
+   "latitudeE7": 402004000,
+   "longitudeE7": -294490000,
+   "accuracy": 5,
+   "altitude": 103,
+   "timestamp": "2024-03-10T08:00:20.000Z"
+  },
+  {
+   "latitudeE7": 402006000,
+   "longitudeE7": -294485000,
+   "accuracy": 5,
+   "altitude": 104,
+   "timestampMs": "1710057630000"
+  },
+  {
+   "latitudeE7": 402008000,
+   "longitudeE7": -294480000,
+   "accuracy": 5,
+   "altitude": 106,
+   "timestamp": "2024-03-10T08:00:40.000Z"
+  },
+  {
+   "latitudeE7": 402010000,
+   "longitudeE7": -294475000,
+   "accuracy": 5,
+   "altitude": 107,
+   "timestampMs": "1710057650000"
+  },
+  {
+   "latitudeE7": 402100000,
+   "longitudeE7": -294400000,
+   "accuracy": 5,
+   "altitude": 110,
+   "timestamp": "2024-03-10T08:05:00.000Z"
+  },
+  {
+   "latitudeE7": 402099000,
+   "longitudeE7": -294396000,
+   "accuracy": 5,
+   "altitude": 108,
+   "timestampMs": "1710057910000"
+  },
+  {
+   "latitudeE7": 402098000,
+   "longitudeE7": -294392000,
+   "accuracy": 5,
+   "altitude": 106,
+   "timestamp": "2024-03-10T08:05:20.000Z"
+  },
+  {
+   "latitudeE7": 402097000,
+   "longitudeE7": -294388000,
+   "accuracy": 5,
+   "altitude": 104,
+   "timestampMs": "1710057930000"
+  },
+  {
+   "latitudeE7": 402096000,
+   "longitudeE7": -294384000,
+   "accuracy": 5,
+   "altitude": 102,
+   "timestamp": "2024-03-10T08:05:40.000Z"
+  }
+ ]
+}

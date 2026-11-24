@@ -1,0 +1,691 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document>
+    <name>GPS device</name>
+    <LookAt>
+      <gx:TimeSpan>
+        <begin>2024-03-10T07:55:00Z</begin>
+        <end>2024-03-10T08:05:40Z</end>
+      </gx:TimeSpan>
+      <longitude>-29.446700</longitude>
+      <latitude>40.205000</latitude>
+      <range>2336.754755</range>
+    </LookAt>
+    <!-- Normal route style -->
+    <Style id="route_n">
+      <IconStyle>
+        <Icon>
+          <href>https://earth.google.com/images/kml-icons/track-directional/track-none.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <!-- Highlighted route style -->
+    <Style id="route_h">
+      <IconStyle>
+        <scale>1.2</scale>
+        <Icon>
+          <href>https://earth.google.com/images/kml-icons/track-directional/track-none.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <StyleMap id="route">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#route_n</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#route_h</styleUrl>
+      </Pair>
+    </StyleMap>
+    <!-- Normal track style -->
+    <Style id="track_n">
+      <IconStyle>
+        <scale>.5</scale>
+        <Icon>
+          <href>https://earth.google.com/images/kml-icons/track-directional/track-none.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+    </Style>
+    <!-- Highlighted track style -->
+    <Style id="track_h">
+      <IconStyle>
+        <scale>1.2</scale>
+        <Icon>
+          <href>https://earth.google.com/images/kml-icons/track-directional/track-none.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <StyleMap id="track">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#track_n</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#track_h</styleUrl>
+      </Pair>
+    </StyleMap>
+    <!-- Normal multiTrack style -->
+    <Style id="multiTrack_n">
+      <IconStyle>
+        <Icon>
+          <href>https://earth.google.com/images/kml-icons/track-directional/track-0.png</href>
+        </Icon>
+      </IconStyle>
+      <LineStyle>
+        <color>99ffac59</color>
+        <width>6</width>
+      </LineStyle>
+    </Style>
+    <!-- Highlighted multiTrack style -->
+    <Style id="multiTrack_h">
+      <IconStyle>
+        <scale>1.2</scale>
+        <Icon>
+          <href>https://earth.google.com/images/kml-icons/track-directional/track-0.png</href>
+        </Icon>
+      </IconStyle>
+      <LineStyle>
+        <color>99ffac59</color>
+        <width>8</width>
+      </LineStyle>
+    </Style>
+    <StyleMap id="multiTrack">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#multiTrack_n</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#multiTrack_h</styleUrl>
+      </Pair>
+    </StyleMap>
+    <!-- Normal waypoint style -->
+    <Style id="waypoint_n">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/kml/pal4/icon61.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <!-- Highlighted waypoint style -->
+    <Style id="waypoint_h">
+      <IconStyle>
+        <scale>1.2</scale>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/kml/pal4/icon61.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <StyleMap id="waypoint">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#waypoint_n</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#waypoint_h</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="lineStyle">
+      <LineStyle>
+        <color>99ffac59</color>
+        <width>6</width>
+      </LineStyle>
+    </Style>
+    <Schema id="schema">
+      <gx:SimpleArrayField name="cadence" type="int">
+        <displayName>Cadence</displayName>
+      </gx:SimpleArrayField>
+      <gx:SimpleArrayField name="heartrate" type="int">
+        <displayName>Heart Rate</displayName>
+      </gx:SimpleArrayField>
+      <gx:SimpleArrayField name="temperature" type="float">
+        <displayName>Temperature</displayName>
+      </gx:SimpleArrayField>
+    </Schema>
+    <Folder>
+      <name>Waypoints</name>
+      <Placemark>
+        <name>India Camp</name>
+        <description>base camp</description>
+        <TimeStamp>
+          <when>2024-03-10T07:55:00Z</when>
+        </TimeStamp>
+        <styleUrl>#waypoint</styleUrl>
+        <Point>
+          <coordinates>-29.455000,40.205000,105.00</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Tracks</name>
+      <Placemark>
+        <name>Hotel Run</name>
+        <styleUrl>#multiTrack</styleUrl>
+        <gx:Track>
+          <when>2024-03-10T08:00:00Z</when>
+          <when>2024-03-10T08:00:10Z</when>
+          <when>2024-03-10T08:00:20Z</when>
+          <when>2024-03-10T08:00:30Z</when>
+          <when>2024-03-10T08:00:40Z</when>
+          <when>2024-03-10T08:00:50Z</when>
+          <when>2024-03-10T08:05:00Z</when>
+          <when>2024-03-10T08:05:10Z</when>
+          <when>2024-03-10T08:05:20Z</when>
+          <when>2024-03-10T08:05:30Z</when>
+          <when>2024-03-10T08:05:40Z</when>
+          <gx:coord>-29.450000 40.200000 100.00</gx:coord>
+          <gx:coord>-29.449500 40.200200 101.50</gx:coord>
+          <gx:coord>-29.449000 40.200400 103.00</gx:coord>
+          <gx:coord>-29.448500 40.200600 104.50</gx:coord>
+          <gx:coord>-29.448000 40.200800 106.00</gx:coord>
+          <gx:coord>-29.447500 40.201000 107.50</gx:coord>
+          <gx:coord>-29.440000 40.210000 110.00</gx:coord>
+          <gx:coord>-29.439600 40.209900 108.00</gx:coord>
+          <gx:coord>-29.439200 40.209800 106.00</gx:coord>
+          <gx:coord>-29.438800 40.209700 104.00</gx:coord>
+          <gx:coord>-29.438400 40.209600 102.00</gx:coord>
+          <ExtendedData>
+            <SchemaData schemaUrl="#schema">
+              <gx:SimpleArrayData name="cadence">
+                <gx:value>80</gx:value>
+                <gx:value>81</gx:value>
+                <gx:value>82</gx:value>
+                <gx:value>83</gx:value>
+                <gx:value>84</gx:value>
+                <gx:value>85</gx:value>
+                <gx:value>85</gx:value>
+                <gx:value>85</gx:value>
+                <gx:value>85</gx:value>
+                <gx:value>85</gx:value>
+                <gx:value>85</gx:value>
+              </gx:SimpleArrayData>
+              <gx:SimpleArrayData name="heartrate">
+                <gx:value>120</gx:value>
+                <gx:value>121</gx:value>
+                <gx:value>122</gx:value>
+                <gx:value>123</gx:value>
+                <gx:value>124</gx:value>
+                <gx:value>125</gx:value>
+                <gx:value>130</gx:value>
+                <gx:value>131</gx:value>
+                <gx:value>132</gx:value>
+                <gx:value>133</gx:value>
+                <gx:value>134</gx:value>
+              </gx:SimpleArrayData>
+              <gx:SimpleArrayData name="temperature">
+                <gx:value>18.0</gx:value>
+                <gx:value>18.0</gx:value>
+                <gx:value>18.0</gx:value>
+                <gx:value>18.0</gx:value>
+                <gx:value>18.0</gx:value>
+                <gx:value>18.0</gx:value>
+                <gx:value>17.0</gx:value>
+                <gx:value>17.0</gx:value>
+                <gx:value>17.0</gx:value>
+                <gx:value>17.0</gx:value>
+                <gx:value>17.0</gx:value>
+              </gx:SimpleArrayData>
+            </SchemaData>
+          </ExtendedData>
+        </gx:Track>
+      </Placemark>
+      <Folder>
+        <name>Hotel Run</name>
+        <snippet/>
+        <description>
+<![CDATA[<table>
+<tr><td><b>Distance</b> 5153.0 ft</td></tr>
+<tr><td><b>Min Alt</b> 328.084 ft</td></tr>
+<tr><td><b>Max Alt</b> 360.892 ft</td></tr>
+<tr><td><b>Min Speed</b> 8.0 mph</td></tr>
+<tr><td><b>Max Speed</b> 10.7 mph</td></tr>
+<tr><td><b>Avg Speed</b> 10.3 mph</td></tr>
+<tr><td><b>Avg Cadence</b> 83.6 rpm</td></tr>
+<tr><td><b>Max Cadence</b> 85 rpm</td></tr>
+<tr><td><b>Avg Heart Rate</b> 126.8 bpm</td></tr>
+<tr><td><b>Min Heart Rate</b> 120 bpm</td></tr>
+<tr><td><b>Max Heart Rate</b> 134 bpm</td></tr>
+<tr><td><b>Start Time</b> 2024-03-10T08:00:00Z</td></tr>
+<tr><td><b>End Time</b> 2024-03-10T08:05:40Z</td></tr>
+</table>
+]]>
+</description>
+        <TimeSpan>
+          <begin>2024-03-10T08:00:00Z</begin>
+          <end>2024-03-10T08:05:40Z</end>
+        </TimeSpan>
+        <Folder>
+          <name>Points</name>
+          <Placemark>
+            <name>Hotel Run-0</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.450000</td></tr>
+<tr><td>Latitude: 40.200000</td></tr>
+<tr><td>Altitude: 328.084 ft</td></tr>
+<tr><td>Cadence: 80</td></tr>
+<tr><td>Heart rate: 120</td></tr>
+<tr><td>Temperature: 18.0</td></tr>
+<tr><td>Time: 2024-03-10T08:00:00Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.450000</longitude>
+              <latitude>40.200000</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:00:00Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.450000,40.200000,100.00</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-1</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.449500</td></tr>
+<tr><td>Latitude: 40.200200</td></tr>
+<tr><td>Altitude: 333.005 ft</td></tr>
+<tr><td>Cadence: 81</td></tr>
+<tr><td>Heart rate: 121</td></tr>
+<tr><td>Temperature: 18.0</td></tr>
+<tr><td>Speed: 10.7 mph</td></tr>
+<tr><td>Heading: 62.4</td></tr>
+<tr><td>Time: 2024-03-10T08:00:10Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.449500</longitude>
+              <latitude>40.200200</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:00:10Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.449500,40.200200,101.50</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-2</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.449000</td></tr>
+<tr><td>Latitude: 40.200400</td></tr>
+<tr><td>Altitude: 337.927 ft</td></tr>
+<tr><td>Cadence: 82</td></tr>
+<tr><td>Heart rate: 122</td></tr>
+<tr><td>Temperature: 18.0</td></tr>
+<tr><td>Speed: 10.7 mph</td></tr>
+<tr><td>Heading: 62.4</td></tr>
+<tr><td>Time: 2024-03-10T08:00:20Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.449000</longitude>
+              <latitude>40.200400</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:00:20Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.449000,40.200400,103.00</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-3</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.448500</td></tr>
+<tr><td>Latitude: 40.200600</td></tr>
+<tr><td>Altitude: 342.848 ft</td></tr>
+<tr><td>Cadence: 83</td></tr>
+<tr><td>Heart rate: 123</td></tr>
+<tr><td>Temperature: 18.0</td></tr>
+<tr><td>Speed: 10.7 mph</td></tr>
+<tr><td>Heading: 62.4</td></tr>
+<tr><td>Time: 2024-03-10T08:00:30Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.448500</longitude>
+              <latitude>40.200600</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:00:30Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.448500,40.200600,104.50</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-4</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.448000</td></tr>
+<tr><td>Latitude: 40.200800</td></tr>
+<tr><td>Altitude: 347.769 ft</td></tr>
+<tr><td>Cadence: 84</td></tr>
+<tr><td>Heart rate: 124</td></tr>
+<tr><td>Temperature: 18.0</td></tr>
+<tr><td>Speed: 10.7 mph</td></tr>
+<tr><td>Heading: 62.4</td></tr>
+<tr><td>Time: 2024-03-10T08:00:40Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.448000</longitude>
+              <latitude>40.200800</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:00:40Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.448000,40.200800,106.00</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-5</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.447500</td></tr>
+<tr><td>Latitude: 40.201000</td></tr>
+<tr><td>Altitude: 352.690 ft</td></tr>
+<tr><td>Cadence: 85</td></tr>
+<tr><td>Heart rate: 125</td></tr>
+<tr><td>Temperature: 18.0</td></tr>
+<tr><td>Speed: 10.7 mph</td></tr>
+<tr><td>Heading: 62.4</td></tr>
+<tr><td>Time: 2024-03-10T08:00:50Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.447500</longitude>
+              <latitude>40.201000</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:00:50Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.447500,40.201000,107.50</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-6</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.440000</td></tr>
+<tr><td>Latitude: 40.210000</td></tr>
+<tr><td>Altitude: 360.892 ft</td></tr>
+<tr><td>Cadence: 85</td></tr>
+<tr><td>Heart rate: 130</td></tr>
+<tr><td>Temperature: 17.0</td></tr>
+<tr><td>Speed: 10.6 mph</td></tr>
+<tr><td>Heading: 32.5</td></tr>
+<tr><td>Time: 2024-03-10T08:05:00Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.440000</longitude>
+              <latitude>40.210000</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:05:00Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.440000,40.210000,110.00</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-7</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.439600</td></tr>
+<tr><td>Latitude: 40.209900</td></tr>
+<tr><td>Altitude: 354.331 ft</td></tr>
+<tr><td>Cadence: 85</td></tr>
+<tr><td>Heart rate: 131</td></tr>
+<tr><td>Temperature: 17.0</td></tr>
+<tr><td>Speed: 8.0 mph</td></tr>
+<tr><td>Heading: 108.1</td></tr>
+<tr><td>Time: 2024-03-10T08:05:10Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.439600</longitude>
+              <latitude>40.209900</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:05:10Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.439600,40.209900,108.00</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-8</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.439200</td></tr>
+<tr><td>Latitude: 40.209800</td></tr>
+<tr><td>Altitude: 347.769 ft</td></tr>
+<tr><td>Cadence: 85</td></tr>
+<tr><td>Heart rate: 132</td></tr>
+<tr><td>Temperature: 17.0</td></tr>
+<tr><td>Speed: 8.0 mph</td></tr>
+<tr><td>Heading: 108.1</td></tr>
+<tr><td>Time: 2024-03-10T08:05:20Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.439200</longitude>
+              <latitude>40.209800</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:05:20Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.439200,40.209800,106.00</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-9</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.438800</td></tr>
+<tr><td>Latitude: 40.209700</td></tr>
+<tr><td>Altitude: 341.207 ft</td></tr>
+<tr><td>Cadence: 85</td></tr>
+<tr><td>Heart rate: 133</td></tr>
+<tr><td>Temperature: 17.0</td></tr>
+<tr><td>Speed: 8.0 mph</td></tr>
+<tr><td>Heading: 108.1</td></tr>
+<tr><td>Time: 2024-03-10T08:05:30Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.438800</longitude>
+              <latitude>40.209700</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:05:30Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.438800,40.209700,104.00</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>Hotel Run-10</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.438400</td></tr>
+<tr><td>Latitude: 40.209600</td></tr>
+<tr><td>Altitude: 334.646 ft</td></tr>
+<tr><td>Cadence: 85</td></tr>
+<tr><td>Heart rate: 134</td></tr>
+<tr><td>Temperature: 17.0</td></tr>
+<tr><td>Speed: 8.0 mph</td></tr>
+<tr><td>Heading: 108.1</td></tr>
+<tr><td>Time: 2024-03-10T08:05:40Z</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.438400</longitude>
+              <latitude>40.209600</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <TimeStamp>
+              <when>2024-03-10T08:05:40Z</when>
+            </TimeStamp>
+            <styleUrl>#track</styleUrl>
+            <Point>
+              <coordinates>-29.438400,40.209600,102.00</coordinates>
+            </Point>
+          </Placemark>
+        </Folder>
+        <Placemark>
+          <name>Path</name>
+          <styleUrl>#lineStyle</styleUrl>
+          <MultiGeometry>
+            <LineString>
+              <tessellate>1</tessellate>
+              <coordinates>
+-29.450000,40.200000,100.00
+-29.449500,40.200200,101.50
+-29.449000,40.200400,103.00
+-29.448500,40.200600,104.50
+-29.448000,40.200800,106.00
+-29.447500,40.201000,107.50
+</coordinates>
+            </LineString>
+            <LineString>
+              <tessellate>1</tessellate>
+              <coordinates>
+-29.440000,40.210000,110.00
+-29.439600,40.209900,108.00
+-29.439200,40.209800,106.00
+-29.438800,40.209700,104.00
+-29.438400,40.209600,102.00
+</coordinates>
+            </LineString>
+          </MultiGeometry>
+        </Placemark>
+      </Folder>
+    </Folder>
+    <Folder>
+      <name>Routes</name>
+      <Folder>
+        <name>Juliet Route</name>
+        <Folder>
+          <name>Points</name>
+          <Placemark>
+            <name>RPT001</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.450000</td></tr>
+<tr><td>Latitude: 40.200000</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.450000</longitude>
+              <latitude>40.200000</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <styleUrl>#route</styleUrl>
+            <Point>
+              <coordinates>-29.450000,40.200000</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>RPT002</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.445000</td></tr>
+<tr><td>Latitude: 40.202000</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.445000</longitude>
+              <latitude>40.202000</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <styleUrl>#route</styleUrl>
+            <Point>
+              <coordinates>-29.445000,40.202000</coordinates>
+            </Point>
+          </Placemark>
+          <Placemark>
+            <name>RPT003</name>
+            <snippet/>
+            <description><![CDATA[
+<table>
+<tr><td>Longitude: -29.440000</td></tr>
+<tr><td>Latitude: 40.210000</td></tr>
+</table>
+]]></description>
+            <LookAt>
+              <longitude>-29.440000</longitude>
+              <latitude>40.210000</latitude>
+              <tilt>66</tilt>
+            </LookAt>
+            <styleUrl>#route</styleUrl>
+            <Point>
+              <coordinates>-29.440000,40.210000</coordinates>
+            </Point>
+          </Placemark>
+        </Folder>
+        <Placemark>
+          <name>Path</name>
+          <styleUrl>#lineStyle</styleUrl>
+          <LineString>
+            <tessellate>1</tessellate>
+            <coordinates>
+-29.450000,40.200000
+-29.445000,40.202000
+-29.440000,40.210000
+</coordinates>
+          </LineString>
+        </Placemark>
+      </Folder>
+    </Folder>
+  </Document>
+</kml>

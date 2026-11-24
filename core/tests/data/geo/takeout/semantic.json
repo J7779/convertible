@@ -1,0 +1,69 @@
+{
+ "timelineObjects": [
+  {
+   "placeVisit": {
+    "location": {
+     "latitudeE7": 402050000,
+     "longitudeE7": -294550000,
+     "name": "India Camp",
+     "address": "Nowhere 1"
+    },
+    "duration": {
+     "startTimestamp": "2024-03-10T07:50:00Z",
+     "endTimestamp": "2024-03-10T07:59:00Z"
+    }
+   }
+  },
+  {
+   "activitySegment": {
+    "startLocation": {
+     "latitudeE7": 402000000,
+     "longitudeE7": -294500000
+    },
+    "endLocation": {
+     "latitudeE7": 402010000,
+     "longitudeE7": -294475000
+    },
+    "duration": {
+     "startTimestamp": "2024-03-10T08:00:00Z",
+     "endTimestamp": "2024-03-10T08:00:50Z"
+    },
+    "activityType": "RUNNING",
+    "simplifiedRawPath": {
+     "points": [
+      {
+       "latE7": 402000000,
+       "lngE7": -294500000,
+       "timestamp": "2024-03-10T08:00:00Z"
+      },
+      {
+       "latE7": 402002000,
+       "lngE7": -294495000,
+       "timestamp": "2024-03-10T08:00:10Z"
+      },
+      {
+       "latE7": 402004000,
+       "lngE7": -294490000,
+       "timestamp": "2024-03-10T08:00:20Z"
+      },
+      {
+       "latE7": 402006000,
+       "lngE7": -294485000,
+       "timestamp": "2024-03-10T08:00:30Z"
+      },
+      {
+       "latE7": 402008000,
+       "lngE7": -294480000,
+       "timestamp": "2024-03-10T08:00:40Z"
+      },
+      {
+       "latE7": 402010000,
+       "lngE7": -294475000,
+       "timestamp": "2024-03-10T08:00:50Z"
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

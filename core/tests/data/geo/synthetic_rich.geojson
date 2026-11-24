@@ -1,0 +1,123 @@
+{
+  "type": "FeatureCollection",
+  "name": "rich sample",
+  "bbox": [
+    -29.5,
+    40.0,
+    -29.1,
+    40.31
+  ],
+  "x-producer-note": {
+    "purpose": "foreign member test",
+    "level": 2
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "alpha",
+      "properties": {
+        "name": "Alpha Beacon",
+        "kind": "beacon",
+        "rank": 3,
+        "height": 12.5,
+        "active": true,
+        "label": "Ünïcødé ✓ 東京"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -29.4812345,
+          40.1234567
+        ]
+      },
+      "x-extra": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": 42,
+      "bbox": [
+        -29.49,
+        40.1,
+        -29.46,
+        40.12
+      ],
+      "properties": {
+        "name": "Charlie Path",
+        "kind": "path",
+        "rank": 1,
+        "height": 2.0,
+        "active": true,
+        "label": "a, \"quoted\" label"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -29.49,
+            40.1
+          ],
+          [
+            -29.48,
+            40.11
+          ],
+          [
+            -29.47,
+            40.105
+          ],
+          [
+            -29.46,
+            40.12
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kilo Group",
+        "nested": {
+          "a": [
+            1,
+            2
+          ],
+          "b": null
+        }
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [
+              -29.0,
+              40.4,
+              15.5
+            ]
+          },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -29.0,
+                40.4
+              ],
+              [
+                -28.99,
+                40.41
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": null,
+      "geometry": null
+    }
+  ]
+}

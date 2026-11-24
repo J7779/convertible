@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">
+  <Courses>
+    <Course>
+      <Name>Hotel Run</Name>
+      <Lap>
+        <TotalTimeSeconds>340</TotalTimeSeconds>
+        <DistanceMeters>1570.65</DistanceMeters>
+        <BeginPosition>
+          <LatitudeDegrees>40.200000</LatitudeDegrees>
+          <LongitudeDegrees>-29.450000</LongitudeDegrees>
+        </BeginPosition>
+        <EndPosition>
+          <LatitudeDegrees>40.209600</LatitudeDegrees>
+          <LongitudeDegrees>-29.438400</LongitudeDegrees>
+        </EndPosition>
+        <AverageHeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+          <Value>127</Value>
+        </AverageHeartRateBpm>
+        <MaximumHeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+          <Value>134</Value>
+        </MaximumHeartRateBpm>
+        <Intensity>Active</Intensity>
+        <Cadence>84</Cadence>
+      </Lap>
+      <Track>
+        <Trackpoint>
+          <Time>2024-03-10T08:00:00Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2000000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4500000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>100.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>120</Value>
+          </HeartRateBpm>
+          <Cadence>80</Cadence>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:00:10Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2002000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4495000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>101.5</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>121</Value>
+          </HeartRateBpm>
+          <Cadence>81</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>4.799</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:00:20Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2004000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4490000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>103.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>122</Value>
+          </HeartRateBpm>
+          <Cadence>82</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>4.799</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:00:30Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2006000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4485000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>104.5</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>123</Value>
+          </HeartRateBpm>
+          <Cadence>83</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>4.799</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:00:40Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2008000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4480000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>106.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>124</Value>
+          </HeartRateBpm>
+          <Cadence>84</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>4.799</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:00:50Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2010000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4475000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>107.5</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>125</Value>
+          </HeartRateBpm>
+          <Cadence>85</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>4.799</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:05:00Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2100000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4400000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>110.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>130</Value>
+          </HeartRateBpm>
+          <Cadence>85</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>4.750</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:05:10Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2099000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4396000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>108.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>131</Value>
+          </HeartRateBpm>
+          <Cadence>85</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>3.578</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:05:20Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2098000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4392000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>106.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>132</Value>
+          </HeartRateBpm>
+          <Cadence>85</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>3.578</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:05:30Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2097000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4388000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>104.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>133</Value>
+          </HeartRateBpm>
+          <Cadence>85</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>3.578</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+        <Trackpoint>
+          <Time>2024-03-10T08:05:40Z</Time>
+          <Position>
+            <LatitudeDegrees>40.2096000</LatitudeDegrees>
+            <LongitudeDegrees>-29.4384000</LongitudeDegrees>
+          </Position>
+          <AltitudeMeters>102.0</AltitudeMeters>
+          <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
+            <Value>134</Value>
+          </HeartRateBpm>
+          <Cadence>85</Cadence>
+          <Extensions>
+            <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+              <Speed>3.578</Speed>
+            </TPX>
+          </Extensions>
+        </Trackpoint>
+      </Track>
+    </Course>
+  </Courses>
+</TrainingCenterDatabase>

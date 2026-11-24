@@ -1,0 +1,21 @@
+n1 v1 x-29.4 y40
+n2 v1 x-29.39 y40
+n3 v1 x-29.39 y40.01
+n4 v1 x-29.4 y40.01
+n5 v1 x-29.378 y40.002
+n6 v1 x-29.372 y40.002
+n7 v1 x-29.372 y40.008
+n8 v1 x-29.378 y40.008
+n10 v1 Tamenity=bench,name=Lima%20%Bench x-29.41 y40.02
+n11 v1 x-29.42 y40.03
+n12 v1 x-29.43 y40.035
+n13 v1 x-29.38 y40
+n14 v1 x-29.37 y40
+n15 v1 x-29.37 y40.01
+n16 v1 x-29.38 y40.01
+w20 v1 Thighway=path,name=Mike%20%Trail Nn10,n11,n12
+w21 v1 Tbuilding=yes,name=November%20%Hall,levels=3 Nn1,n2,n3,n4,n1
+w22 v1 Nn5,n6,n7,n8,n5
+w23 v1 Nn13,n14,n15
+w24 v1 Nn15,n16,n13
+r30 v1 Ttype=multipolygon,landuse=grass,name=Oscar%20%Park Mw23@outer,w24@outer,w22@inner

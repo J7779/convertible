@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.0" creator="GPSBabel - https://www.gpsbabel.org" xmlns="http://www.topografix.com/GPX/1/0" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:pwr="http://www.garmin.com/xmlschemas/PowerExtension/v1">
+  <name>Hotel Outing</name>
+  <time>1970-01-01T00:00:00Z</time>
+  <bounds minlat="40.200000000" minlon="-29.455000000" maxlat="40.210000000" maxlon="-29.438400000"/>
+  <wpt lat="40.205000000" lon="-29.455000000">
+    <ele>105.000</ele>
+    <time>2024-03-10T07:55:00Z</time>
+    <name>India Camp</name>
+    <cmt>base camp</cmt>
+    <desc>base camp</desc>
+  </wpt>
+  <rte>
+    <name>Juliet Route</name>
+    <rtept lat="40.200000000" lon="-29.450000000">
+      <name>RPT001</name>
+    </rtept>
+    <rtept lat="40.202000000" lon="-29.445000000">
+      <name>RPT002</name>
+    </rtept>
+    <rtept lat="40.210000000" lon="-29.440000000">
+      <name>RPT003</name>
+    </rtept>
+  </rte>
+  <trk>
+    <name>Hotel Run</name>
+    <trkseg>
+      <trkpt lat="40.200000000" lon="-29.450000000">
+        <ele>100.000</ele>
+        <time>2024-03-10T08:00:00Z</time>
+        <extensions>
+          <pwr:PowerInWatts>200</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>18</gpxtpx:atemp>
+            <gpxtpx:hr>120</gpxtpx:hr>
+            <gpxtpx:cad>80</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.200200000" lon="-29.449500000">
+        <ele>101.500</ele>
+        <time>2024-03-10T08:00:10Z</time>
+        <extensions>
+          <pwr:PowerInWatts>205</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>18</gpxtpx:atemp>
+            <gpxtpx:hr>121</gpxtpx:hr>
+            <gpxtpx:cad>81</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.200400000" lon="-29.449000000">
+        <ele>103.000</ele>
+        <time>2024-03-10T08:00:20Z</time>
+        <extensions>
+          <pwr:PowerInWatts>210</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>18</gpxtpx:atemp>
+            <gpxtpx:hr>122</gpxtpx:hr>
+            <gpxtpx:cad>82</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.200600000" lon="-29.448500000">
+        <ele>104.500</ele>
+        <time>2024-03-10T08:00:30Z</time>
+        <extensions>
+          <pwr:PowerInWatts>215</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>18</gpxtpx:atemp>
+            <gpxtpx:hr>123</gpxtpx:hr>
+            <gpxtpx:cad>83</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.200800000" lon="-29.448000000">
+        <ele>106.000</ele>
+        <time>2024-03-10T08:00:40Z</time>
+        <extensions>
+          <pwr:PowerInWatts>220</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>18</gpxtpx:atemp>
+            <gpxtpx:hr>124</gpxtpx:hr>
+            <gpxtpx:cad>84</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.201000000" lon="-29.447500000">
+        <ele>107.500</ele>
+        <time>2024-03-10T08:00:50Z</time>
+        <extensions>
+          <pwr:PowerInWatts>225</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>18</gpxtpx:atemp>
+            <gpxtpx:hr>125</gpxtpx:hr>
+            <gpxtpx:cad>85</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+    </trkseg>
+    <trkseg>
+      <trkpt lat="40.210000000" lon="-29.440000000">
+        <ele>110.000</ele>
+        <time>2024-03-10T08:05:00Z</time>
+        <extensions>
+          <pwr:PowerInWatts>210</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>17</gpxtpx:atemp>
+            <gpxtpx:hr>130</gpxtpx:hr>
+            <gpxtpx:cad>85</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.209900000" lon="-29.439600000">
+        <ele>108.000</ele>
+        <time>2024-03-10T08:05:10Z</time>
+        <extensions>
+          <pwr:PowerInWatts>210</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>17</gpxtpx:atemp>
+            <gpxtpx:hr>131</gpxtpx:hr>
+            <gpxtpx:cad>85</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.209800000" lon="-29.439200000">
+        <ele>106.000</ele>
+        <time>2024-03-10T08:05:20Z</time>
+        <extensions>
+          <pwr:PowerInWatts>210</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>17</gpxtpx:atemp>
+            <gpxtpx:hr>132</gpxtpx:hr>
+            <gpxtpx:cad>85</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.209700000" lon="-29.438800000">
+        <ele>104.000</ele>
+        <time>2024-03-10T08:05:30Z</time>
+        <extensions>
+          <pwr:PowerInWatts>210</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>17</gpxtpx:atemp>
+            <gpxtpx:hr>133</gpxtpx:hr>
+            <gpxtpx:cad>85</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="40.209600000" lon="-29.438400000">
+        <ele>102.000</ele>
+        <time>2024-03-10T08:05:40Z</time>
+        <extensions>
+          <pwr:PowerInWatts>210</pwr:PowerInWatts>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:atemp>17</gpxtpx:atemp>
+            <gpxtpx:hr>134</gpxtpx:hr>
+            <gpxtpx:cad>85</gpxtpx:cad>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

@@ -1,0 +1,123 @@
+[
+{
+"timestamp": "2024-03-10T08:00:00",
+"position_lat": 479604681,
+"position_long": -351352186,
+"enhanced_altitude": 100.0,
+"altitude": 100.0,
+"heart_rate": 120,
+"cadence": 80,
+"power": 200,
+"temperature": 18
+},
+{
+"timestamp": "2024-03-10T08:00:10",
+"position_lat": 479607067,
+"position_long": -351346221,
+"enhanced_altitude": 101.60000000000002,
+"altitude": 101.60000000000002,
+"heart_rate": 121,
+"cadence": 81,
+"power": 205,
+"temperature": 18
+},
+{
+"timestamp": "2024-03-10T08:00:20",
+"position_lat": 479609454,
+"position_long": -351340255,
+"enhanced_altitude": 103.0,
+"altitude": 103.0,
+"heart_rate": 122,
+"cadence": 82,
+"power": 210,
+"temperature": 18
+},
+{
+"timestamp": "2024-03-10T08:00:30",
+"position_lat": 479611840,
+"position_long": -351334290,
+"enhanced_altitude": 104.39999999999998,
+"altitude": 104.39999999999998,
+"heart_rate": 123,
+"cadence": 83,
+"power": 215,
+"temperature": 18
+},
+{
+"timestamp": "2024-03-10T08:00:40",
+"position_lat": 479614226,
+"position_long": -351328325,
+"enhanced_altitude": 106.0,
+"altitude": 106.0,
+"heart_rate": 124,
+"cadence": 84,
+"power": 220,
+"temperature": 18
+},
+{
+"timestamp": "2024-03-10T08:00:50",
+"position_lat": 479616612,
+"position_long": -351322360,
+"enhanced_altitude": 107.60000000000002,
+"altitude": 107.60000000000002,
+"heart_rate": 125,
+"cadence": 85,
+"power": 225,
+"temperature": 18
+},
+{
+"timestamp": "2024-03-10T08:05:00",
+"position_lat": 479723986,
+"position_long": -351232881,
+"enhanced_altitude": 110.0,
+"altitude": 110.0,
+"heart_rate": 130,
+"cadence": 85,
+"power": 210,
+"temperature": 17
+},
+{
+"timestamp": "2024-03-10T08:05:10",
+"position_lat": 479722793,
+"position_long": -351228109,
+"enhanced_altitude": 108.0,
+"altitude": 108.0,
+"heart_rate": 131,
+"cadence": 85,
+"power": 210,
+"temperature": 17
+},
+{
+"timestamp": "2024-03-10T08:05:20",
+"position_lat": 479721600,
+"position_long": -351223337,
+"enhanced_altitude": 106.0,
+"altitude": 106.0,
+"heart_rate": 132,
+"cadence": 85,
+"power": 210,
+"temperature": 17
+},
+{
+"timestamp": "2024-03-10T08:05:30",
+"position_lat": 479720407,
+"position_long": -351218565,
+"enhanced_altitude": 104.0,
+"altitude": 104.0,
+"heart_rate": 133,
+"cadence": 85,
+"power": 210,
+"temperature": 17
+},
+{
+"timestamp": "2024-03-10T08:05:40",
+"position_lat": 479719214,
+"position_long": -351213792,
+"enhanced_altitude": 102.0,
+"altitude": 102.0,
+"heart_rate": 134,
+"cadence": 85,
+"power": 210,
+"temperature": 17
+}
+]

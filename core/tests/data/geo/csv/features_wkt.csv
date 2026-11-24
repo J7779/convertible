@@ -1,0 +1,8 @@
+WKT,name,kind,rank,height,active,label
+"POINT (-29.4812345 40.1234567)",Alpha Beacon,beacon,3,12.5,1,Ünïcødé ✓ 東京
+"POINT (-29.45 40.15)",Bravo Buoy,buoy,7,0.25,0,plain text
+"LINESTRING (-29.49 40.1,-29.48 40.11,-29.47 40.105,-29.46 40.12)",Charlie Path,path,1,2,1,"a, ""quoted"" label"
+"POLYGON ((-29.5 40.0,-29.4 40.0,-29.4 40.08,-29.5 40.08,-29.5 40.0),(-29.47 40.02,-29.47 40.05,-29.43 40.05,-29.43 40.02,-29.47 40.02))",Delta Field,field,2,100.75,0,Ωmega field
+"MULTIPOLYGON (((-29.3 40.0,-29.25 40.0,-29.25 40.04,-29.3 40.04,-29.3 40.0),(-29.29 40.01,-29.29 40.02,-29.28 40.02,-29.28 40.01,-29.29 40.01)),((-29.2 40.0,-29.15 40.0,-29.175 40.05,-29.2 40.0)))",Echo Islands,islands,5,3.5,1,two islands
+"MULTILINESTRING ((-29.35 40.2,-29.34 40.21),(-29.33 40.22,-29.32 40.23,-29.31 40.22))",Foxtrot Lines,lines,4,7,0,zwei Linien
+"MULTIPOINT ((-29.1 40.3),(-29.11 40.31))",Golf Points,points,6,1.125,1,deux points

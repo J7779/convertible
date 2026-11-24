@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document id="root_doc">
+    <Schema id="synthetic_features.schema">
+      <SimpleField name="kind" type="string"/>
+      <SimpleField name="rank" type="int"/>
+      <SimpleField name="height" type="float"/>
+      <SimpleField name="active" type="int"/>
+      <SimpleField name="label" type="string"/>
+    </Schema>
+    <Document id="synthetic_features">
+      <name>synthetic_features</name>
+      <Placemark id="synthetic_features.1">
+        <name>Alpha Beacon</name>
+        <ExtendedData>
+          <SchemaData schemaUrl="#synthetic_features.schema">
+            <SimpleData name="kind">beacon</SimpleData>
+            <SimpleData name="rank">3</SimpleData>
+            <SimpleData name="height">12.5</SimpleData>
+            <SimpleData name="active">1</SimpleData>
+            <SimpleData name="label">Ünïcødé ✓ 東京</SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -29.4812345,40.1234567,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="synthetic_features.2">
+        <name>Bravo Buoy</name>
+        <ExtendedData>
+          <SchemaData schemaUrl="#synthetic_features.schema">
+            <SimpleData name="kind">buoy</SimpleData>
+            <SimpleData name="rank">7</SimpleData>
+            <SimpleData name="height">0.25</SimpleData>
+            <SimpleData name="active">0</SimpleData>
+            <SimpleData name="label">plain text</SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -29.45,40.15,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="synthetic_features.3">
+        <name>Charlie Path</name>
+        <ExtendedData>
+          <SchemaData schemaUrl="#synthetic_features.schema">
+            <SimpleData name="kind">path</SimpleData>
+            <SimpleData name="rank">1</SimpleData>
+            <SimpleData name="height">2</SimpleData>
+            <SimpleData name="active">1</SimpleData>
+            <SimpleData name="label"><![CDATA[a, "quoted" label]]></SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <LineString>
+          <coordinates>
+            -29.49,40.1,0
+            -29.48,40.11,0
+            -29.47,40.105,0
+            -29.46,40.12,0
+          </coordinates>
+        </LineString>
+      </Placemark>
+      <Placemark id="synthetic_features.4">
+        <name>Delta Field</name>
+        <ExtendedData>
+          <SchemaData schemaUrl="#synthetic_features.schema">
+            <SimpleData name="kind">field</SimpleData>
+            <SimpleData name="rank">2</SimpleData>
+            <SimpleData name="height">100.75</SimpleData>
+            <SimpleData name="active">0</SimpleData>
+            <SimpleData name="label">Ωmega field</SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -29.5,40,0
+                -29.4,40,0
+                -29.4,40.08,0
+                -29.5,40.08,0
+                -29.5,40,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+          <innerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -29.47,40.02,0
+                -29.47,40.05,0
+                -29.43,40.05,0
+                -29.43,40.02,0
+                -29.47,40.02,0
+              </coordinates>
+            </LinearRing>
+          </innerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark id="synthetic_features.5">
+        <name>Echo Islands</name>
+        <ExtendedData>
+          <SchemaData schemaUrl="#synthetic_features.schema">
+            <SimpleData name="kind">islands</SimpleData>
+            <SimpleData name="rank">5</SimpleData>
+            <SimpleData name="height">3.5</SimpleData>
+            <SimpleData name="active">1</SimpleData>
+            <SimpleData name="label">two islands</SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <MultiGeometry>
+          <Polygon>
+            <outerBoundaryIs>
+              <LinearRing>
+                <coordinates>
+                  -29.3,40,0
+                  -29.25,40,0
+                  -29.25,40.04,0
+                  -29.3,40.04,0
+                  -29.3,40,0
+                </coordinates>
+              </LinearRing>
+            </outerBoundaryIs>
+            <innerBoundaryIs>
+              <LinearRing>
+                <coordinates>
+                  -29.29,40.01,0
+                  -29.29,40.02,0
+                  -29.28,40.02,0
+                  -29.28,40.01,0
+                  -29.29,40.01,0
+                </coordinates>
+              </LinearRing>
+            </innerBoundaryIs>
+          </Polygon>
+          <Polygon>
+            <outerBoundaryIs>
+              <LinearRing>
+                <coordinates>
+                  -29.2,40,0
+                  -29.15,40,0
+                  -29.175,40.05,0
+                  -29.2,40,0
+                </coordinates>
+              </LinearRing>
+            </outerBoundaryIs>
+          </Polygon>
+        </MultiGeometry>
+      </Placemark>
+      <Placemark id="synthetic_features.6">
+        <name>Foxtrot Lines</name>
+        <ExtendedData>
+          <SchemaData schemaUrl="#synthetic_features.schema">
+            <SimpleData name="kind">lines</SimpleData>
+            <SimpleData name="rank">4</SimpleData>
+            <SimpleData name="height">7</SimpleData>
+            <SimpleData name="active">0</SimpleData>
+            <SimpleData name="label">zwei Linien</SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <MultiGeometry>
+          <LineString>
+            <coordinates>
+              -29.35,40.2,0
+              -29.34,40.21,0
+            </coordinates>
+          </LineString>
+          <LineString>
+            <coordinates>
+              -29.33,40.22,0
+              -29.32,40.23,0
+              -29.31,40.22,0
+            </coordinates>
+          </LineString>
+        </MultiGeometry>
+      </Placemark>
+      <Placemark id="synthetic_features.7">
+        <name>Golf Points</name>
+        <ExtendedData>
+          <SchemaData schemaUrl="#synthetic_features.schema">
+            <SimpleData name="kind">points</SimpleData>
+            <SimpleData name="rank">6</SimpleData>
+            <SimpleData name="height">1.125</SimpleData>
+            <SimpleData name="active">1</SimpleData>
+            <SimpleData name="label">deux points</SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <MultiGeometry>
+          <Point>
+            <coordinates>
+              -29.1,40.3,0
+            </coordinates>
+          </Point>
+          <Point>
+            <coordinates>
+              -29.11,40.31,0
+            </coordinates>
+          </Point>
+        </MultiGeometry>
+      </Placemark>
+    </Document>
+  </Document>
+</kml>
