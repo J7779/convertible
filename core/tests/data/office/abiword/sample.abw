@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE abiword PUBLIC "-//ABISOURCE//DTD AWML 1.0 Strict//EN" "http://www.abisource.com/awml.dtd">
+<abiword template="false" xmlns:ct="http://www.abisource.com/changetracking.dtd" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:math="http://www.w3.org/1998/Math/MathML" xid-max="72" xmlns:dc="http://purl.org/dc/elements/1.1/" fileformat="1.1" xmlns:svg="http://www.w3.org/2000/svg" xmlns:awml="http://www.abisource.com/awml.dtd" xmlns="http://www.abisource.com/awml.dtd" xmlns:xlink="http://www.w3.org/1999/xlink" version="3.0.6" xml:space="preserve" props="dom-dir:ltr; document-footnote-restart-section:0; document-endnote-type:numeric; document-endnote-place-enddoc:1; document-endnote-initial:1; lang:C-US; document-endnote-restart-section:0; document-footnote-restart-page:0; document-footnote-type:numeric; document-footnote-initial:1; document-endnote-place-endsection:0">
+<!-- ======================================================================== -->
+<!-- This file is an AbiWord document.                                        -->
+<!-- AbiWord is a free, Open Source word processor.                           -->
+<!-- More information about AbiWord is available at http://www.abisource.com/ -->
+<!-- You should not edit this file by hand.                                   -->
+<!-- ======================================================================== -->
+
+<metadata>
+<m key="abiword.generator">AbiWord</m>
+<m key="dc.format">application/x-abiword</m>
+<m key="dc.title">Office Sample</m>
+</metadata>
+<rdf>
+<t  s=""  p="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"  objecttype="1"  xsdtype=""  >http://docs.oasis-open.org/ns/office/1.2/meta/pkg#Document</t>
+<t  s="a"  p="http://docs.oasis-open.org/ns/office/1.2/meta/pkg#hasPart"  objecttype="1"  xsdtype=""  >styles.xml</t>
+<t  s="b"  p="http://docs.oasis-open.org/ns/office/1.2/meta/pkg#hasPart"  objecttype="1"  xsdtype=""  >content.xml</t>
+</rdf>
+<history version="1" edit-time="0" last-saved="1795520408" uid="ccc32924-e7fb-11f1-9a76-95290ba9ca5f">
+<version id="1" started="1795520408" uid="ccc3e24c-e7fb-11f1-9a76-95290ba9ca5f" auto="0" top-xid="72"/>
+</history>
+<styles>
+<s type="P" name="Heading 1" basedon="Heading" followedby="Text body" props="margin-top:0.1665in; font-size:24pt; margin-bottom:0.0835in; font-family:Liberation Serif; font-weight:bold"/>
+<s type="P" name="Heading" basedon="Normal" followedby="Text body" props="margin-top:0.1665in; keep-with-next:yes; margin-bottom:0.0835in; font-family:Liberation Sans; font-size:14pt"/>
+<s type="P" name="Normal" props="lang:en-US; default-tab-interval:0.4925in; font-size:12pt; font-family:Liberation Serif; dom-dir:ltr"/>
+<s type="P" name="Text body" basedon="Normal" followedby="Text body" props="margin-top:0in; line-height:1.150000; margin-bottom:0.0972in"/>
+<s type="P" name="Heading 2" basedon="Heading" followedby="Text body" props="margin-top:0.139in; font-size:18pt; margin-bottom:0.0835in; font-family:Liberation Serif; font-weight:bold"/>
+<s type="P" name="Table Heading" basedon="Table Contents" followedby="Table Heading" props="text-align:center; font-weight:bold"/>
+<s type="P" name="Table Contents" basedon="Normal" followedby="Table Contents" props="orphans:0; widows:0"/>
+<s type="P" name="Heading 3" basedon="Heading" followedby="Text body" props="margin-top:0.0972in; font-size:14pt; margin-bottom:0.0835in; font-family:Liberation Serif; font-weight:bold"/>
+<s type="C" name="Bullet Symbols_text" followedby="Bullet Symbols_text" props="font-family:OpenSymbol"/>
+<s type="P" name="Caption" basedon="Normal" followedby="Caption" props="margin-top:0.0835in; font-size:12pt; margin-bottom:0.0835in; font-style:italic"/>
+<s type="C" name="Internet link_text" followedby="Internet link_text" props="text-decoration:underline; color:#000080"/>
+</styles>
+<pagesize pagetype="A4" orientation="portrait" width="8.267717" height="11.692913" units="in" page-scale="1.000000"/>
+<section xid="2" props="page-margin-right:0.3937in; page-width:8.2681in; page-margin-left:0.7874in; page-orientation:portrait; page-margin-bottom:0.3937in; page-margin-top:0.3937in; page-height:11.6929in">
+<p style="Heading 1" props="" xid="3">Quarterly Widget Report</p>
+<p style="Text body" xid="4">Lorem ipsum dolor sit amet, <c props="font-style:italic">consectetur</c> adipiscing elit, sed do <c props="font-weight:bold">eiusmod</c> tempor incididunt ut <c props="text-decoration:underline">labore</c> et dolore magna aliqua. Visit the <a xlink:href="https://example.com/widgets" xid="5">widget catalogue</a> for details.</p>
+<p style="Heading 2" xid="7">Lists and Steps</p>
+<p level="3" listid="1002" parentid="1001" style="" xid="8" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:3.752088cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="9"></field>	Alpha bullet </p>
+<p level="3" listid="1002" parentid="1001" style="" xid="10" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:3.752088cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="11"></field>	Beta bullet </p>
+<p level="4" listid="1003" parentid="1002" style="" xid="12" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:5.002022cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="13"></field>	Nested gamma </p>
+<p level="4" listid="1003" parentid="1002" style="" xid="14" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:5.002022cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="15"></field>	Nested delta </p>
+<p level="3" listid="1002" parentid="1001" style="" xid="16" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:3.752088cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0.0972in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="17"></field>	Epsilon bullet </p>
+<p level="3" listid="1002" parentid="1001" style="" xid="18" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:3.752088cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="19"></field>	Prepare the frame </p>
+<p level="3" listid="1002" parentid="1001" style="" xid="20" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:3.752088cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="21"></field>	Attach the gears </p>
+<p level="3" listid="1002" parentid="1001" style="" xid="22" props="font-family:Liberation Serif; dom-dir:ltr; default-tab-interval:0.4925in; margin-left:3.752088cm; text-indent:-0.499110cm; lang:en-US; margin-top:0in; margin-bottom:0.0972in; list-style:Bullet List; line-height:1.150000; font-size:12pt; field-font:NULL"><field type="list_label" xid="23"></field>	Test the widget </p>
+<p style="Heading 2" xid="24">Inventory Table</p>
+<table xid="25" props="table-column-props:0.9299in/0.7125in/0.4743in/; table-row-heights://///; table-width:2.1167in">
+<cell xid="26" props="right-color:#808080; left-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:1; top-thickness:0.75pt; right-thickness:0.75pt; top-color:#808080; bot-color:#808080; left-attach:0; top-style:solid; right-style:solid; left-style:solid; left-thickness:0.75pt; bot-attach:1; top-attach:0; vert-align:50">
+<p style="Table Heading" xid="27">Part</p>
+</cell>
+<cell xid="28" props="right-color:#808080; left-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:2; top-thickness:0.75pt; right-thickness:0.75pt; top-color:#808080; bot-color:#808080; left-attach:1; top-style:solid; right-style:solid; left-style:solid; left-thickness:0.05pt; bot-attach:1; top-attach:0; vert-align:50">
+<p style="Table Heading" xid="29">Count</p>
+</cell>
+<cell xid="30" props="right-color:#808080; left-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:3; top-thickness:0.75pt; right-thickness:0.75pt; top-color:#808080; bot-color:#808080; left-attach:2; top-style:solid; right-style:solid; left-style:solid; left-thickness:0.05pt; bot-attach:1; top-attach:0; vert-align:50">
+<p style="Table Heading" xid="31">Price</p>
+</cell>
+<cell xid="32" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:1; left-thickness:0.75pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:0; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:2; top-attach:1; vert-align:50">
+<p style="Table Contents" xid="33">Sprocket</p>
+</cell>
+<cell xid="34" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:2; left-thickness:0.05pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:1; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:2; top-attach:1; vert-align:50">
+<p style="Table Contents" xid="35">4</p>
+</cell>
+<cell xid="36" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:3; left-thickness:0.05pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:2; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:2; top-attach:1; vert-align:50">
+<p style="Table Contents" xid="37">2.50</p>
+</cell>
+<cell xid="38" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:2; left-thickness:0.75pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:0; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:3; top-attach:2; vert-align:50">
+<p style="Table Contents" xid="39">Gear and spring bundle</p>
+</cell>
+<cell xid="40" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:3; left-thickness:0.05pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:2; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:3; top-attach:2; vert-align:50">
+<p style="Table Contents" xid="41">0.80</p>
+</cell>
+<cell xid="42" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:1; left-thickness:0.75pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:0; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:5; top-attach:3; vert-align:50">
+<p style="Table Contents" xid="43">Spring</p>
+</cell>
+<cell xid="44" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:2; left-thickness:0.05pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:1; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:4; top-attach:3; vert-align:50">
+<p style="Table Contents" xid="45">120</p>
+</cell>
+<cell xid="46" props="right-color:#808080; bot-style:solid; bot-thickness:0.05pt; right-attach:3; left-thickness:0.05pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:2; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:4; top-attach:3; vert-align:50">
+<p style="Table Contents" xid="47">0.05</p>
+</cell>
+<cell xid="48" props="right-color:#808080; bot-style:solid; bot-thickness:0.75pt; right-attach:2; left-thickness:0.05pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:1; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:5; top-attach:4; vert-align:50">
+<p style="Table Contents" xid="49">60</p>
+</cell>
+<cell xid="50" props="right-color:#808080; bot-style:solid; bot-thickness:0.75pt; right-attach:3; left-thickness:0.05pt; right-thickness:0.75pt; left-color:#808080; top-style:none; left-attach:2; left-style:solid; right-style:solid; bot-color:#808080; bot-attach:5; top-attach:4; vert-align:50">
+<p style="Table Contents" xid="51">0.04</p>
+</cell>
+</table>
+<p style="Heading 2" xid="52">Nested Table</p>
+<table xid="53" props="table-column-props:1.5354in/0.1069in/; table-row-heights:/; table-width:1.6424in">
+<cell xid="54" props="right-color:#808080; left-color:#808080; bot-style:solid; bot-thickness:0.75pt; right-attach:1; top-thickness:0.75pt; right-thickness:0.75pt; top-color:#808080; bot-color:#808080; left-attach:0; top-style:solid; right-style:solid; left-style:solid; left-thickness:0.75pt; bot-attach:1; top-attach:0; vert-align:50">
+<p style="Table Contents" xid="55">Outer cell</p>
+<table xid="56" props="table-column-props:0.7174in/0.7479in/; table-row-heights:/; table-width:1.4653in">
+<cell xid="57" props="right-color:#808080; left-color:#808080; bot-style:solid; bot-thickness:0.75pt; right-attach:1; top-thickness:0.75pt; right-thickness:0.75pt; top-color:#808080; bot-color:#808080; left-attach:0; top-style:solid; right-style:solid; left-style:solid; left-thickness:0.75pt; bot-attach:1; top-attach:0; vert-align:50">
+<p style="Table Contents" xid="58">Inner one</p>
+</cell>
+<cell xid="59" props="right-color:#808080; left-color:#808080; bot-style:solid; bot-thickness:0.75pt; right-attach:2; top-thickness:0.75pt; right-thickness:0.75pt; top-color:#808080; bot-color:#808080; left-attach:1; top-style:solid; right-style:solid; left-style:solid; left-thickness:0.05pt; bot-attach:1; top-attach:0; vert-align:50">
+<p style="Table Contents" xid="60">Inner two</p>
+</cell>
+</table>
+<p style="Table Contents" xid="61"><c></c></p>
+</cell>
+<cell xid="62" props="right-color:#808080; left-color:#808080; bot-style:solid; bot-thickness:0.75pt; right-attach:2; top-thickness:0.75pt; right-thickness:0.75pt; top-color:#808080; bot-color:#808080; left-attach:1; top-style:solid; right-style:solid; left-style:solid; left-thickness:0.05pt; bot-attach:1; top-attach:0; vert-align:50">
+<p style="Table Contents" xid="63" props="font-size:2pt"><c></c></p>
+</cell>
+</table>
+<p style="Heading 3" xid="64">Unicode Corner</p>
+<p style="Text body" xid="65">Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese: 汉字测试.</p>
+<p style="Text body" xid="66" props="text-indent:0in; dom-dir:rtl; margin-left:0in; margin-right:0in">שלום עולם مرحبا بالعالم</p>
+<p style="Text body" xid="67">Emoji: 🙂🚀. Superscript x<c props="text-position:superscript">2</c> and subscript H<c props="text-position:subscript">2</c>O.</p>
+<p style="Text body" xid="68"><image dataid="0" title="Gradient swatch" xid="69" props="height:0.1252in; width:0.1665in"/></p>
+<p style="Text body" xid="70">Final paragraph with a <a xlink:href="https://example.org/page" xid="71">second link</a>.</p>
+</section>
+<data>
+<d name="0" mime-type="image/png" base64="yes">
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAIAAADkharWAAAAI0lEQVQoz2M0TjvDQApgEeZ8
+S5oGIa53tLaBk+Y2jPqBMAAAX5kM+cq+HyMAAAAASUVORK5CYII=
+</d>
+</data>
+</abiword>
