@@ -6,6 +6,7 @@ struct ConvertibleApp: App {
     @StateObject private var queue = QueueModel()
 
     init() {
+        UITestHooks.prepare()
         // Nothing survives a session: clear copies and results left from the last run.
         FileStore.shared.resetAll()
     }
@@ -66,6 +67,7 @@ enum LaunchOptions {
         }
         if arguments.contains("-ConvertibleLargeSample"),
            let url = try? store.newInboxURL(named: "Camera dump.bin") {
+            let mebibytes = UITestHooks.largeSampleMiB
             let written = await Task.detached(priority: .userInitiated) { () -> Bool in
                 FileManager.default.createFile(atPath: url.path, contents: nil)
                 guard let handle = try? FileHandle(forWritingTo: url) else { return false }
@@ -73,12 +75,13 @@ enum LaunchOptions {
                 chunk.withUnsafeMutableBytes { raw in
                     for i in 0..<raw.count { raw[i] = UInt8(truncatingIfNeeded: i &* 2654435761 >> 13) }
                 }
-                for _ in 0..<96 { handle.write(chunk) }
+                for _ in 0..<mebibytes { handle.write(chunk) }
                 try? handle.close()
                 return true
             }.value
             if written { urls.append(url) }
         }
+        urls += UITestHooks.importFiles(into: store)
         guard !urls.isEmpty else { return }
         await queue.add(urls: urls, owned: true)
         if arguments.contains("-ConvertibleAutoConvert") { queue.convertAll() }

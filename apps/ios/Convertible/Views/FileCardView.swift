@@ -24,6 +24,12 @@ struct FileCardView: View {
                 progressRow
             case .finished(let summary):
                 ResultSection(item: item, summary: summary, actions: actions)
+                if UITestHooks.isEnabled {
+                    UITestProbe(identifier: "uitest.output", text: UITestHooks.outputDescription(summary))
+                }
+            }
+            if UITestHooks.isEnabled {
+                UITestProbe(identifier: "uitest.item", text: UITestHooks.itemDescription(item))
             }
         }
         .card()
@@ -53,6 +59,7 @@ struct FileCardView: View {
                     if item.phase != .detecting {
                         FormatBadge(label: item.sourceLabel, category: item.sourceCategory, shape: .source)
                             .accessibilityLabel("Detected format \(item.source?.name ?? item.sourceLabel)")
+                            .accessibilityIdentifier("sourceBadge")
                     } else {
                         Text("Detecting…").textStyle(.caption).foregroundStyle(Palette.textSecondary)
                     }

@@ -75,9 +75,10 @@ struct StoryboardRenderer {
 struct IntroAnimationView: View {
     var onFinished: () -> Void
     @Environment(\.colorScheme) private var scheme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var start = Date()
     @State private var done = false
+    private var reduceMotion: Bool { systemReduceMotion || UITestHooks.reduceMotion }
 
     var body: some View {
         Group {

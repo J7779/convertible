@@ -26,7 +26,11 @@ xcodebuild build -project apps/ios/Convertible.xcodeproj -scheme Convertible \
 
 # Unit tests (real conversions through the real core, plus view-model tests)
 xcodebuild test -project apps/ios/Convertible.xcodeproj -scheme Convertible \
-  -destination 'platform=iOS Simulator,name=iPhone 18 Pro' CODE_SIGNING_ALLOWED=NO
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro' CODE_SIGNING_ALLOWED=NO \
+  -only-testing:ConvertibleTests
+
+# End-to-end UI tests (see "End-to-end tests" below)
+apps/ios/e2e.sh
 
 # Device slice, unsigned (proves arm64 iphoneos compiles and links)
 xcodebuild build -project apps/ios/Convertible.xcodeproj -scheme Convertible \
@@ -49,6 +53,63 @@ Key controls carry accessibility identifiers for XCUITest (`chooseFilesButton`,
 `cancelButton`, `cancelAllButton`, `resultSaveButton`, `resultShareButton`,
 `resultPreviewButton`, `convertAgainButton`, `errorBanner`, `formatsButton`,
 `settingsButton`, `sidebar.<section>`, `themePicker`, …).
+
+## End-to-end tests
+
+`ConvertibleUITests` is an XCUITest suite (XCTest only: no packages, no third-party
+libraries) that drives the real app on a simulator and performs real conversions
+through the real core. One command builds once and runs it:
+
+```sh
+apps/ios/e2e.sh                                    # iPhone 18 Pro, whole suite
+apps/ios/e2e.sh --device "iPad Pro 11-inch (M5)"   # iPad split view
+apps/ios/e2e.sh --repeat 5 --clone                 # five runs on a private copy of the device
+apps/ios/e2e.sh --only ConversionTests             # one class, or Class/testMethod
+```
+
+It runs `xcodebuild test-without-building -only-testing:ConvertibleUITests
+CODE_SIGNING_ALLOWED=NO` on the named simulator and writes one result bundle per run
+to `apps/ios/build/e2e/` (git-ignored; open it in Xcode to see the screenshots that
+are attached to every failure). `--clone` runs on a throw-away copy of the device so
+that another run on the same simulator cannot collide; the script shuts down what it
+booted and deletes what it cloned. **These tests are local only**: the repository has
+no iOS job in CI, because running on a device or archiving needs the owner's signing
+certificate.
+
+**How results are verified.** Under the Debug-only launch argument
+`-ConvertibleUITestHooks` (see `Convertible/App/UITestHooks.swift`; Release builds
+compile it out) the app
+
+- queues files given by the test in the environment variable `CONVERTIBLE_UITEST_FILES`
+  (JSON `[{"name", "base64"}]`), so every input byte is known to the test;
+- puts an invisible accessibility element on each queue card: `uitest.item` (JSON with
+  the detected format, the offered targets with their categories, the chosen target,
+  the option values and the phase) and, once finished, `uitest.output` with the
+  result's file name, size and bytes (Base64, up to 256 KiB);
+- clears the stored settings first with `-ConvertibleUITestResetSettings`, and can
+  shorten the intro as with Reduce Motion (`-ConvertibleUITestReduceMotion`) or resize
+  the large sample (`CONVERTIBLE_UITEST_LARGE_MIB`).
+
+The test reads the result bytes back through the accessibility tree and checks them
+with Foundation and CryptoKit: Base64 and hex decode to the input, checksum reports
+contain the CryptoKit SHA-256/SHA-1/MD5, UTF-16LE re-encoding has the BOM and the
+right text. Going through accessibility rather than the pasteboard or the simulator's
+file system needs no paste-permission prompt and no host access, reads the exact file
+the app produced, and works the same on iPhone, iPad and a device.
+
+The suite covers: cold launch with the intro, skipping it, Reduce Motion, launch time
+(`XCTApplicationLaunchMetric`); the queue with format badges, groups and "set all files
+of this format"; the target picker (grouping, search, selection) and the formats
+browser; options rendered from the schema changing the output; Compress; convert →
+progress → result with before/after sizes; the Save and Share sheets; cancel, cancel
+all and convert again on a large file; background/foreground during a conversion; a
+friendly error and recovery; settings persisted across relaunch; iPhone and iPad
+layouts, light and dark, an accessibility text size, rotation; Xcode's accessibility
+audit on the main screens; and the system document picker with a file `e2e.sh` puts
+into the simulator's Files storage (skipped when run without the script). Tests that
+need image, audio or archive converters ask the app what it offers and skip with the
+reason until the core has them. Everything is written against the catalogue the app
+reports, never a fixed list of formats.
 
 ## Signing and archiving
 
@@ -114,6 +175,8 @@ Convertible/
                options form, target picker, formats browser, settings, privacy, licences
   Resources/   Info.plist, asset catalogue, privacy manifest
 ConvertibleTests/  XCTest unit tests (run hosted in the app on the simulator)
+ConvertibleUITests/  XCUITest end-to-end suite (drives the real app; see below)
+e2e.sh         one command for the end-to-end suite
 scripts/       build-core.sh, generate-assets.py
 project.yml    XcodeGen spec of the committed Convertible.xcodeproj
 ```

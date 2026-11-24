@@ -35,6 +35,20 @@
                ReferencedContainer = "container:Convertible.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1A49A7D36C6F1BA5999BC82F"
+               BuildableName = "ConvertibleUITests.xctest"
+               BlueprintName = "ConvertibleUITests"
+               ReferencedContainer = "container:Convertible.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -61,6 +75,17 @@
                BlueprintIdentifier = "B335AC0D2EEE0393537EE111"
                BuildableName = "ConvertibleTests.xctest"
                BlueprintName = "ConvertibleTests"
+               ReferencedContainer = "container:Convertible.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1A49A7D36C6F1BA5999BC82F"
+               BuildableName = "ConvertibleUITests.xctest"
+               BlueprintName = "ConvertibleUITests"
                ReferencedContainer = "container:Convertible.xcodeproj">
             </BuildableReference>
          </TestableReference>

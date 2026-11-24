@@ -105,12 +105,29 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         GENERATE_INFOPLIST_FILE: YES
 
+  # End-to-end tests: drive the real app on the simulator (XCUITest). Run with ./e2e.sh.
+  ConvertibleUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: ConvertibleUITests
+    dependencies:
+      - target: Convertible
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.convertible.ios.uitests
+        # performAccessibilityAudit and XCUIDevice.appearance need iOS 17.
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Convertible
+
 schemes:
   Convertible:
     build:
       targets:
         Convertible: all
         ConvertibleTests: [test]
+        ConvertibleUITests: [test]
     run:
       config: Debug
       commandLineArguments:
@@ -121,6 +138,8 @@ schemes:
       gatherCoverageData: false
       targets:
         - name: ConvertibleTests
+          parallelizable: false
+        - name: ConvertibleUITests
           parallelizable: false
     archive:
       config: Release
