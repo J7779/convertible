@@ -1,0 +1,31 @@
+Quarterly Report
+This report summarises the made-up results of a fictional quarter. The numbers are invented for testing
+purposes only.
+
+Highlights
+• Revenue grew in every region.
+• Costs stayed flat.
+• Two new products launched.
+
+Regional figures
+Region Q1 Q2
+North
+
+120 135
+
+South
+
+98
+
+East
+
+143 151
+
+110
+
+Next steps
+1. Review pricing.
+2. Hire two engineers.
+More information is on the project page. Special characters: café, naïve, Zürich, €, “quotes” – dash.
+
+

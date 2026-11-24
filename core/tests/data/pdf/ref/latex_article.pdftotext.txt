@@ -1,0 +1,49 @@
+1
+
+Introduction
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat. The bold words and
+the emphasised words keep their style.
+
+1.1
+
+Details
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
+dolore eu fugiat nulla pariatur.1 Excepteur sint occaecat cupidatat
+non proident, sunt in culpa qui officia deserunt mollit anim id est
+laborum. Visit the example site for more.
+• First bullet item
+• Second bullet item with more words
+1. Alpha step
+2. Beta step
+Name
+Apples
+Pears
+
+2
+
+Count
+12
+7
+
+Price
+3.50
+2.25
+
+Conclusion
+
+Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit,
+nec luctus magna felis sollicitudin mauris. Integer in mauris eu
+nibh euismod gravida.
+
+1
+
+A small footnote.
+
+1
+
+

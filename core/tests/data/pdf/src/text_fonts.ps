@@ -1,0 +1,36 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 0 0 360 200
+%%Pages: 1
+%%EndComments
+<< /PageSize [360 200] >> setpagedevice
+% A Type 3 font with three geometric glyphs mapped to A, B, C.
+8 dict begin
+/FontType 3 def
+/FontMatrix [0.001 0 0 0.001 0 0] def
+/FontBBox [0 0 1000 1000] def
+/Encoding 256 array def
+0 1 255 { Encoding exch /.notdef put } for
+Encoding 65 /square put
+Encoding 66 /triangle put
+Encoding 67 /bar put
+/CharProcs 4 dict def
+CharProcs begin
+/.notdef { } def
+/square { 100 0 moveto 900 0 lineto 900 800 lineto 100 800 lineto closepath fill } def
+/triangle { 100 0 moveto 900 0 lineto 500 800 lineto closepath fill } def
+/bar { 400 0 moveto 600 0 lineto 600 800 lineto 400 800 lineto closepath fill } def
+end
+/BuildGlyph { 1000 0 0 0 1000 1000 setcachedevice exch /CharProcs get exch 2 copy known not { pop /.notdef } if get exec } bind def
+/BuildChar { 1 index /Encoding get exch get 1 index /BuildGlyph get exec } bind def
+currentdict end
+/Shapes exch definefont pop
+/Shapes findfont 40 scalefont setfont
+20 140 moveto (ABCAB) show
+/Helvetica findfont 18 scalefont setfont
+20 100 moveto (Helvetica text: Hello World 123) show
+/Times-Bold findfont 18 scalefont setfont
+20 70 moveto (Times bold line) show
+/Courier findfont 14 scalefont setfont
+20 40 moveto (mono = code;) show
+showpage
+%%EOF
