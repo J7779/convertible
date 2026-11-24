@@ -30,6 +30,15 @@ struct ArchiveEntry {
   /// POSIX permission bits (e.g. 0644, 0755); 0 = unknown, writers then use
   /// 0644 for files and 0755 for directories.
   std::uint32_t unix_mode = 0;
+  /// Target of a symbolic link, exactly as stored (UTF-8). Non-empty marks
+  /// the entry as a symlink; `bytes` is then empty and `is_directory` false.
+  /// Readers drop links whose target is absolute or climbs above the archive
+  /// root, and entries whose path runs through a link, so extracting an
+  /// Archive can never write outside the extraction root.
+  std::string symlink_target;
+
+  [[nodiscard]] bool is_symlink() const noexcept { return !symlink_target.empty(); }
+  [[nodiscard]] bool is_file() const noexcept { return !is_directory && symlink_target.empty(); }
 };
 
 /// The logical content of a container format.
@@ -37,6 +46,9 @@ struct Archive {
   /// Entries in stored order. Paths are unique in a well-formed archive, but
   /// consumers must tolerate duplicates (last one wins on extraction).
   std::vector<ArchiveEntry> entries;
+  /// Archive-level comment (ZIP, RAR, 7z ...), UTF-8; may be empty. Writers
+  /// drop it when `strip_metadata` is on.
+  std::string comment;
 };
 
 /// Turn a stored entry name into a safe relative path, or nullopt when
