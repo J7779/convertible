@@ -555,19 +555,4 @@ void register_ebook_wrappers(Registry& registry) {
   }
 }
 
-void register_chm(Registry& registry) {
-  {
-    FormatInfo info = format("chm", "Compiled HTML Help", "Microsoft compiled HTML help file.", Category::Ebook, {"chm"},
-                             "application/vnd.ms-htmlhelp", 20);
-    info.signatures = {Signature::at(0, "'ITSF' 03 00 00 00")};
-    registry.add_format(std::move(info));
-  }
-  {
-    FormatInfo info = format("lit", "Microsoft Reader e-book", "Microsoft LIT e-book.", Category::Ebook, {"lit"},
-                             "application/x-ms-reader", 5);
-    info.signatures = {Signature::at(0, "'ITOLITLS'")};
-    registry.add_format(std::move(info));
-  }
-}
-
 }  // namespace cvt::office

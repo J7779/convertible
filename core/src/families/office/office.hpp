@@ -39,7 +39,8 @@ void register_ppt(Registry& registry);
 // E-books.
 void register_epub(Registry& registry);
 void register_mobi(Registry& registry);
-void register_chm(Registry& registry);
+void register_chm_reader(Registry& registry);  // Document reader; the archive family owns "chm"
+void register_lit(Registry& registry);
 void register_comics(Registry& registry);
 void register_ebook_wrappers(Registry& registry);  // fb2.zip / fbz, Palm text, TCR
 

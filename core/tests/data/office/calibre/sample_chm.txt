@@ -1,0 +1,58 @@
+Introduction
+
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. This help file describes the widget catalogue.
+
+
+
+See the price list and the gear notes.
+
+
+
+
+
+Widgets
+
+
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem.
+
+Alpha widget
+
+Beta widget
+
+
+
+
+
+Pricing
+
+
+PartCountPrice
+
+Sprocket 4 2.50
+
+Gear 16 0.75
+
+Back to the introduction.
+
+
+
+
+
+Gears mesh with sprockets; ut enim ad minima veniam, quis nostrum exercitationem.
+
+Café prices are listed in the appendix.
+
+
+
+
+
+Appendix
+
+
+Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.
+
+
+
+
+

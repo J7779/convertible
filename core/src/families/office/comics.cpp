@@ -1,10 +1,13 @@
 // Convertible core - office family: comic book archives.
 //
-// CBZ (ZIP) and CBT (tar) are read in-house; CBR (RAR) and CB7 (7-Zip) go
-// through the archive family's readers at run time and fail with a clear
-// message when those are not available. Pages are the pictures of the
-// archive in natural name order ("page2" before "page10"); ComicInfo.xml
-// gives the title. Comics read as a Document (one picture per page, page
+// CBZ (ZIP) is read in-house; CBR (RAR), CB7 (7-Zip) and CBT (tar) go
+// through the archive family's readers at run time (CBT falls back to a small
+// built-in tar reader, the others fail with a clear message when the readers
+// are not available). Pages are the pictures of the archive in natural path
+// order ("page2" before "page10"), a picture named "cover" first;
+// ComicInfo.xml gives the title. CBR/CB7/CBT also read as an Archive, so they
+// repack to CBZ or ZIP untouched. The "cbz" format itself is described by
+// the archive family; the codecs here are added to it. Comics read as a Document (one picture per page, page
 // breaks between - so comics convert to PDF and EPUB) or as an Image of
 // frames (pages fitted onto the first page's canvas). CBZ is also written,
 // from a Document's pictures or an Image's frames.
@@ -43,6 +46,14 @@ bool picture_name(std::string_view name) {
     if (lower.ends_with(ext)) return true;
   }
   return false;
+}
+
+// "cover.jpg", "Cover-front.png", "00_cover.png" (the file name, not its folder).
+bool is_cover(std::string_view path) {
+  const std::size_t slash = path.rfind('/');
+  std::string name = util::to_lower(slash == std::string_view::npos ? path : path.substr(slash + 1));
+  name = name.substr(0, name.rfind('.'));
+  return name.starts_with("cover") || name.ends_with("cover");
 }
 
 // "page2" < "page10": digits compare as numbers.
@@ -123,10 +134,42 @@ Result<std::vector<Page>> tar_pages(ByteView data, const Limits& limits, std::st
   return pages;
 }
 
+/// The Archive reader the archive family registers for `format`, or null.
+const Codec* peer_reader(const ReadContext& ctx, std::string_view format) {
+  const Registry& registry = ctx.registry ? *ctx.registry : Registry::instance();
+  for (const Codec* codec : registry.codecs_for(format)) {
+    if (codec->kind == Kind::Archive && codec->read) return codec;
+  }
+  return nullptr;
+}
+
+/// Read the input with the archive family's reader for `format`.
+Result<ir::Archive> peer_archive(const ReadContext& ctx, const Codec& reader, std::string_view format) {
+  ReadContext inner;
+  inner.limits = ctx.limits;
+  inner.progress = ctx.progress;
+  inner.warnings = ctx.warnings;
+  inner.registry = ctx.registry ? ctx.registry : &Registry::instance();
+  inner.input = ctx.input;
+  inner.format_id = std::string(format);
+  CVT_TRY_ASSIGN(AnyIR value, reader.read(inner));
+  if (!value.is<ir::Archive>()) return fail(Status::Internal, "the {} reader did not return an archive", format);
+  return std::move(value).get<ir::Archive>();
+}
+
+/// The container a comic is stored in, from its leading bytes.
+std::string_view container_of(ByteView data) {
+  const std::string_view head = as_chars(data).substr(0, 8);
+  if (head.starts_with("PK")) return "zip";
+  if (head.starts_with("Rar!")) return "rar";
+  if (head.starts_with("7z\xBC\xAF\x27\x1C")) return "7z";
+  return "tar";
+}
+
 Result<std::vector<Page>> comic_pages(const ReadContext& ctx, std::string* comic_info) {
-  const std::string_view head = as_chars(ctx.input).substr(0, 8);
   std::vector<Page> pages;
-  if (head.starts_with("PK")) {
+  const std::string_view container = container_of(ctx.input);
+  if (container == "zip") {
     CVT_TRY_ASSIGN(util::ZipReader zip, util::ZipReader::open(ctx.input, ctx.limits));
     for (std::size_t i = 0; i < zip.size(); ++i) {
       const util::ZipEntry& e = zip.entries()[i];
@@ -140,53 +183,47 @@ Result<std::vector<Page>> comic_pages(const ReadContext& ctx, std::string* comic
       CVT_TRY_ASSIGN(Bytes bytes, zip.read(i));
       pages.push_back(Page{e.name, std::move(bytes)});
     }
-  } else if (as_chars(ctx.input).size() > 262 && as_chars(ctx.input).substr(257, 5) == "ustar") {
-    CVT_TRY_ASSIGN(pages, tar_pages(ctx.input, ctx.limits, comic_info));
-  } else {
-    // RAR and 7-Zip: the archive family's readers, when present.
-    const bool rar = head.starts_with("Rar!");
-    const bool seven = head.starts_with("7z\xBC\xAF\x27\x1C");
-    if (!rar && !seven) {
-      // Some CBT files are old (pre-ustar) tar archives.
-      auto tar = tar_pages(ctx.input, ctx.limits, comic_info);
-      if (tar) {
-        pages = std::move(*tar);
-      } else {
-        return fail(Status::Decode, "unknown comic archive type");
+  } else if (const Codec* reader = peer_reader(ctx, container)) {
+    // RAR, 7-Zip and tar: the archive family's readers.
+    CVT_TRY_ASSIGN(ir::Archive archive, peer_archive(ctx, *reader, container));
+    for (ir::ArchiveEntry& e : archive.entries) {
+      if (e.is_directory) continue;
+      std::string path = e.path;
+      std::ranges::replace(path, '\\', '/');
+      if (util::iends_with(path, "comicinfo.xml") && comic_info) {
+        *comic_info = std::string(as_chars(e.bytes));
+        continue;
       }
-    } else {
-      const Registry& registry = ctx.registry ? *ctx.registry : Registry::instance();
-      const std::string format = rar ? "rar" : "7z";
-      const Codec* reader = nullptr;
-      for (const Codec* codec : registry.codecs_for(format)) {
-        if (codec->kind == Kind::Archive && codec->read) reader = codec;
-      }
-      if (!reader) {
-        return fail(Status::UnsupportedConversion, "{} comic archives need the {} reader, which is not available in this build",
-                    rar ? "CBR" : "CB7", rar ? "RAR" : "7-Zip");
-      }
-      ReadContext inner;
-      inner.limits = ctx.limits;
-      inner.progress = ctx.progress;
-      inner.warnings = ctx.warnings;
-      inner.registry = &registry;
-      inner.input = ctx.input;
-      inner.format_id = format;
-      CVT_TRY_ASSIGN(AnyIR value, reader->read(inner));
-      ir::Archive archive = std::move(value).get<ir::Archive>();
-      for (ir::ArchiveEntry& e : archive.entries) {
-        if (e.is_directory) continue;
-        if (util::iends_with(e.path, "comicinfo.xml") && comic_info) {
-          *comic_info = std::string(as_chars(e.bytes));
-          continue;
-        }
-        if (picture_name(e.path)) pages.push_back(Page{e.path, std::move(e.bytes)});
-      }
+      if (picture_name(path)) pages.push_back(Page{std::move(path), std::move(e.bytes)});
     }
+  } else if (container == "tar") {
+    // Without the archive family: the small built-in tar reader.
+    auto tar = tar_pages(ctx.input, ctx.limits, comic_info);
+    if (!tar) return fail(Status::Decode, "unknown comic archive type");
+    pages = std::move(*tar);
+  } else {
+    return fail(Status::UnsupportedConversion, "{} comic archives need the {} reader, which is not available in this build",
+                container == "rar" ? "CBR" : "CB7", container == "rar" ? "RAR" : "7-Zip");
   }
   std::ranges::stable_sort(pages, [](const Page& a, const Page& b) { return natural_less(a.name, b.name); });
+  // A picture called "cover" opens the book wherever it is stored.
+  std::ranges::stable_partition(pages, [](const Page& p) { return is_cover(p.name); });
   if (pages.empty()) return fail(Status::Decode, "the comic archive contains no pictures");
   return pages;
+}
+
+/// The Archive reader of cbr / cb7 / cbt: every member, through the archive
+/// family's reader of the underlying container (so a comic repacks to CBZ or
+/// ZIP without touching its pictures).
+Result<AnyIR> read_comic_archive(ReadContext& ctx) {
+  const std::string_view container = container_of(ctx.input);
+  const Codec* reader = peer_reader(ctx, container);
+  if (!reader) {
+    return fail(Status::UnsupportedConversion, "reading this comic as an archive needs the {} reader, which is not available",
+                container);
+  }
+  CVT_TRY_ASSIGN(ir::Archive archive, peer_archive(ctx, *reader, container));
+  return AnyIR(std::move(archive));
 }
 
 std::string comic_title(const std::string& info) {
@@ -332,13 +369,6 @@ Result<Bytes> write_cbz_from_document(const AnyIR& value, WriteContext& ctx) {
   return finish_cbz(files, ctx);
 }
 
-int sniff_cbz(ByteView data, std::string_view filename) {
-  const bool ext = util::iends_with(filename, ".cbz");
-  if (!as_chars(data).starts_with("PK\x03\x04")) return 0;
-  if (zip_mentions(data, "ComicInfo.xml")) return 92;
-  return ext ? 85 : 0;
-}
-
 }  // namespace
 
 void register_comics(Registry& registry) {
@@ -350,31 +380,41 @@ void register_comics(Registry& registry) {
     std::function<int(ByteView, std::string_view)> sniff;
   };
   const std::vector<Kind_> kinds = {
-      {"cbz", "Comic book (ZIP)", "application/vnd.comicbook+zip", 35, sniff_cbz},
+      {"cbz", "Comic book (ZIP)", "application/vnd.comicbook+zip", 35, nullptr},
       {"cbt", "Comic book (tar)", "application/x-cbt", 8,
        [](ByteView data, std::string_view filename) {
-         return util::iends_with(filename, ".cbt") && as_chars(data).size() > 262 && as_chars(data).substr(257, 5) == "ustar" ? 90 : 0;
+         return util::iends_with(filename, ".cbt") && as_chars(data).size() > 262 && as_chars(data).substr(257, 5) == "ustar" ? 96 : 0;
        }},
       {"cbr", "Comic book (RAR)", "application/vnd.comicbook-rar", 30,
        [](ByteView data, std::string_view filename) {
-         return util::iends_with(filename, ".cbr") && as_chars(data).starts_with("Rar!") ? 90 : 0;
+         return util::iends_with(filename, ".cbr") && as_chars(data).starts_with("Rar!") ? 96 : 0;
        }},
       {"cb7", "Comic book (7-Zip)", "application/x-cb7", 8,
        [](ByteView data, std::string_view filename) {
-         return util::iends_with(filename, ".cb7") && as_chars(data).starts_with("7z\xBC\xAF\x27\x1C") ? 90 : 0;
+         return util::iends_with(filename, ".cb7") && as_chars(data).starts_with("7z\xBC\xAF\x27\x1C") ? 96 : 0;
        }},
   };
   for (const Kind_& k : kinds) {
-    FormatInfo info;
-    info.id = k.id;
-    info.name = k.name;
-    info.description = "Pages of a comic as pictures in an archive.";
-    info.category = Category::Ebook;
-    info.extensions = {k.id};
-    info.mime = k.mime;
-    info.popularity = k.popularity;
-    info.sniff = k.sniff;
-    registry.add_format(std::move(info));
+    const bool zip = std::string_view(k.id) == "cbz";
+    if (!zip) {
+      // "cbz" is described (and read as an Archive) by the archive family's ZIP
+      // packages; the other comic containers are ours.
+      FormatInfo info;
+      info.id = k.id;
+      info.name = k.name;
+      info.description = "Pages of a comic as pictures in an archive.";
+      info.category = Category::Ebook;
+      info.extensions = {k.id};
+      info.mime = k.mime;
+      info.popularity = k.popularity;
+      info.sniff = k.sniff;
+      registry.add_format(std::move(info));
+      Codec archive_reader;
+      archive_reader.format_id = k.id;
+      archive_reader.kind = Kind::Archive;
+      archive_reader.read = read_comic_archive;
+      registry.add_codec(std::move(archive_reader));
+    }
     Codec doc_reader;
     doc_reader.format_id = k.id;
     doc_reader.kind = Kind::Document;

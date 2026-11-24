@@ -18,7 +18,8 @@ void register_office_family(Registry& registry) {
   office::register_ppt(registry);
   office::register_epub(registry);
   office::register_mobi(registry);
-  office::register_chm(registry);
+  office::register_chm_reader(registry);
+  office::register_lit(registry);
   office::register_comics(registry);
   office::register_ebook_wrappers(registry);
   office::register_xps(registry);

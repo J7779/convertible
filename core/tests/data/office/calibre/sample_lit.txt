@@ -1,0 +1,87 @@
+Quarterly Widget Report
+
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Visit the widget catalogue for details.
+
+
+
+
+
+Lists and Steps
+
+
+Alpha bullet
+
+Beta bullet Nested gamma
+
+Nested delta
+
+
+
+
+
+Epsilon bullet
+
+
+
+Prepare the frame
+
+Attach the gears
+
+Test the widget
+
+
+
+
+
+Inventory Table
+
+
+PartCountPrice
+
+Sprocket 4 2.50
+
+Gear and spring bundle 0.80
+
+Spring 120 0.05
+
+60 0.04
+
+
+
+
+
+Continue with the appendix.
+
+
+
+
+
+Appendix
+
+
+Unicode Corner
+
+
+Accents: café, naïve, Ærøskøbing. Greek: αβγδ. Chinese: 汉字测试. Hebrew: שלום עולם.
+
+Emoji: 🙂🚀. Superscript x2 and subscript H2O, widget_count and struck text.
+
+for part in parts: check(part)
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse.
+
+
+
+Sprocket
+
+A toothed wheel.
+
+
+
+Back to the inventory table; 3 < 4 & 5 > 2.
+
+
+
+
+
