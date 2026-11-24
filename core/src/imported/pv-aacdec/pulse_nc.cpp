@@ -237,6 +237,13 @@ void pulse_nc(
 
     /*--- Find the scalefactor band where pulse-encoded data starts ---*/
 
+    /* Convertible: a damaged stream may name a start band beyond the frame's
+       bands; pulses there would be read and written outside the tables. */
+    if (pPulseInfo->pulse_start_sfb > pLongFrameInfo->sfb_per_win[0])
+    {
+        return;
+    }
+
     if (pPulseInfo->pulse_start_sfb > 0)
     {
         index = pLongFrameInfo->win_sfb_top[0][pPulseInfo->pulse_start_sfb - 1];
@@ -265,6 +272,29 @@ void pulse_nc(
     pPulseOffset = &(pPulseInfo->pulse_offset[0]);
 
     pPulseAmp    = &(pPulseInfo->pulse_amp[0]);
+
+    {
+        /* Convertible: the pulse offsets add up; stop at the frame's last
+           coefficient instead of writing past the spectrum. */
+        const Int limit = (pLongFrameInfo->sfb_per_win[0] > 0) ?
+                          pLongFrameInfo->win_sfb_top[0][pLongFrameInfo->sfb_per_win[0] - 1] : 0;
+        Int position = (Int)(pCoef - coef);
+        Int count = 0;
+        const Int *pOffset = pPulseOffset;
+        for (index = pPulseInfo->number_pulse; index > 0; index--)
+        {
+            position += *pOffset++;
+            if (position >= limit)
+            {
+                break;
+            }
+            count++;
+        }
+        if (count < pPulseInfo->number_pulse)
+        {
+            return;
+        }
+    }
 
     for (index = pPulseInfo->number_pulse; index > 0; index--)
     {

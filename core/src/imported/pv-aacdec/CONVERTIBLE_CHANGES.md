@@ -16,3 +16,7 @@
   the start-band length is subtracted. A damaged stream made it negative, the
   unsigned `tempInt` then held a huge value and `SCALE_FACTOR_BAND_OFFSET`
   read far outside the band table (a crash with GCC builds on Linux).
+- `pulse_nc.cpp`: pulse data whose start band lies beyond the frame's bands,
+  or whose accumulated offsets run past the last spectral coefficient, is
+  ignored (a damaged stream otherwise read outside the band table and wrote
+  outside the spectrum; found by AddressSanitizer on hostile input).
