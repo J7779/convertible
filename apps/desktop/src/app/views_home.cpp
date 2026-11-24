@@ -151,9 +151,18 @@ void App::build_empty_state(Rect r) {
   ui_.draw([zone, radius = t.radius_xxl, dash](gfx::Canvas& c) { dashed_rrect(c, zone.inset(1.0f), radius, 1.5f, 7.0f, 7.0f, dash); });
   ui_.focus_ring(zid, zone, t.radius_xxl);
 
-  // Mark, headline, button.
+  // Mark, headline, button and hint, centred in the zone. Small windows (and
+  // larger text) get a smaller mark and drop the hint rather than letting the
+  // button cross the zone's edge.
+  const text::Style& headline = zone.w < 520.0f ? t.type.title2 : t.type.title1;
+  const float mark = zone.h >= 330.0f ? 84.0f : 56.0f;
+  const float hint_h = 26.0f;
+  const float body_h = mark + 22.0f + headline.line_height + 46.0f + 48.0f;
+  const bool show_hint = body_h + hint_h + 32.0f <= zone.h;
+  const float content_h = body_h + (show_hint ? hint_h : 0.0f);
   const float lift = -4.0f * hover;
-  const Rect logo_r = centered({zone.x, zone.y + zone.h * 0.16f + lift, zone.w, 84.0f}, 84.0f, 84.0f);
+  const float mark_y = zone.y + std::max(16.0f, (zone.h - content_h) * 0.45f);
+  const Rect logo_r = centered({zone.x, mark_y + lift, zone.w, mark}, mark, mark);
   const bool light = !t.dark;
   ui_.draw([logo_r, light, enter](gfx::Canvas& c) {
     c.save();
@@ -162,10 +171,11 @@ void App::build_empty_state(Rect r) {
     c.restore();
   });
   const float base_y = logo_r.bottom() + 22.0f;
-  const text::Style& headline = zone.w < 520.0f ? t.type.title2 : t.type.title1;
   ui_.text_in("Drop files to convert", headline, {zone.x, base_y, zone.w, headline.line_height}, t.color.text_primary, 0.5f);
-  ui_.text_in("Images, documents, audio, archives and more \xE2\x80\x94 as many as you like.", t.type.body,
-              {zone.x + 16.0f, base_y + headline.line_height + 6.0f, zone.w - 32.0f, 22.0f}, t.color.text_secondary, 0.5f);
+  ui_.text_in(text::ellipsize_end("Images, documents, audio, archives and more \xE2\x80\x94 as many as you like.", t.type.body,
+                                  zone.w - 32.0f),
+              t.type.body, {zone.x + 16.0f, base_y + headline.line_height + 6.0f, zone.w - 32.0f, 22.0f},
+              t.color.text_secondary, 0.5f);
   ButtonOptions bo;
   bo.kind = ButtonKind::Primary;
   bo.icon = Icon::Plus;
@@ -177,7 +187,7 @@ void App::build_empty_state(Rect r) {
 #else
   const char* hint = "or press Ctrl+O";
 #endif
-  ui_.text_in(hint, t.type.caption, {zone.x, btn.bottom() + 8.0f, zone.w, 18.0f}, t.color.text_secondary, 0.5f);
+  if (show_hint) ui_.text_in(hint, t.type.caption, {zone.x, btn.bottom() + 8.0f, zone.w, 18.0f}, t.color.text_secondary, 0.5f);
   if (clicked_button || in.clicked) choose_files();
 
   // Privacy statement.
@@ -333,6 +343,8 @@ void App::build_group_bar(Rect r, const std::string& source) {
   bo.style = &t.type.label;
   bo.tooltip = "Set the target format for every file of this type";
   const std::string tl = common.empty() ? "Mixed" : target_label(ti);
+  bo.access_label = label;
+  bo.access_value = tl;
   const float bw = std::min(220.0f, button_width(ui_, tl, bo));
   const Rect br = cut_left(inner, bw);
   if (button(ui_, ui_.id("group-target"), br, tl, bo)) {
@@ -418,6 +430,9 @@ float App::build_card(QueueItem& item, Rect r, int index, bool measure_only) {
     const std::string tip = target ? target->name : std::string("Choose a format");
     bo.tooltip = tip;
     const std::string tl = target_label(target);
+    const std::string access = "Target format for " + item.name;
+    bo.access_label = access;
+    bo.access_value = tl;
     const float bw = std::min(c.w - 30.0f, std::max(110.0f, button_width(ui_, tl, bo) + 10.0f));
     const Rect br = centered(cut_right(c, bw), bw, 40.0f);
     if (target) {
@@ -702,6 +717,8 @@ void App::build_card_options(QueueItem& item, Rect b) {
           bo.trailing = Icon::ChevronDown;
           bo.style = &t.type.label;
           const std::string current = choice_label(value.str());
+          bo.access_label = spec.label;
+          bo.access_value = current;
           const WidgetId mid = ui_.id("menu");
           const Rect br{ctl.x, ctl.y, std::min(ctl.w, 220.0f), ctl.h};
           if (button(ui_, mid, br, current, bo)) {

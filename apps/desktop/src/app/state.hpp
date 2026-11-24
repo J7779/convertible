@@ -142,6 +142,35 @@ struct JobProgress {
   ConvertOutcome outcome;
 };
 
+/// Test seam (automation only): parks workers inside the core's progress
+/// callback so tests decide when a conversion advances, instead of racing it.
+/// While held, every progress report waits for a permit (one report each),
+/// for the job to be cancelled, or for the gate to open.
+class ProgressGate {
+ public:
+  void hold();
+  void open();
+  /// Lets one parked (or the next) progress report through.
+  void permit();
+  /// Called by workers on every progress report.
+  void pass(const std::atomic<bool>& cancel);
+  /// Wakes parked workers so they re-check their cancel flag.
+  void notify();
+  /// Waits (up to `timeout_ms` of real time) until `pred()` holds; the
+  /// predicate is re-checked whenever a worker parks, passes or finishes.
+  bool wait(const std::function<bool()>& pred, int timeout_ms);
+  [[nodiscard]] int parked() const;
+  [[nodiscard]] bool held() const;
+  [[nodiscard]] int permits() const;
+
+ private:
+  mutable std::mutex mutex_;
+  std::condition_variable cv_;
+  bool hold_ = false;
+  int permits_ = 0;
+  int parked_ = 0;
+};
+
 /// A small pool of worker threads running conversions through the core.
 class JobRunner {
  public:
@@ -154,12 +183,17 @@ class JobRunner {
   /// Blocks until all submitted jobs have finished (tests and automation).
   void wait_idle();
   [[nodiscard]] int worker_count() const { return static_cast<int>(threads_.size()); }
+  /// Jobs queued or running.
+  [[nodiscard]] int pending() const;
+  /// Installs the automation gate (before any job is submitted).
+  void set_gate(std::shared_ptr<ProgressGate> gate);
 
  private:
   void worker_loop(std::stop_token stop);
 
+  std::shared_ptr<ProgressGate> gate_;
   std::function<void()> wake_;
-  std::mutex mutex_;
+  mutable std::mutex mutex_;
   std::condition_variable_any cv_;
   std::condition_variable_any idle_cv_;
   std::deque<std::pair<Job, std::shared_ptr<JobProgress>>> queue_;
@@ -218,6 +252,11 @@ class AppState {
 
   [[nodiscard]] const std::string& temp_dir() const { return temp_dir_; }
 
+  /// Automation seam: see ProgressGate.
+  void set_progress_gate(std::shared_ptr<ProgressGate> gate);
+  [[nodiscard]] const std::shared_ptr<ProgressGate>& progress_gate() const { return gate_; }
+  [[nodiscard]] int pending_jobs() const { return runner_.pending(); }
+
  private:
   void apply_target(QueueItem& item, const std::string& target);
 
@@ -225,6 +264,7 @@ class AppState {
   std::vector<QueueItem> items_;
   std::vector<std::pair<std::uint64_t, std::shared_ptr<JobProgress>>> running_;
   std::uint64_t next_id_ = 1;
+  std::shared_ptr<ProgressGate> gate_;
   JobRunner runner_;
 };
 

@@ -34,7 +34,9 @@ class HeadlessPlatform final : public Platform {
                      static_cast<int>(std::lround(static_cast<float>(height_) * scale_)));
       handler.on_frame(bitmap_, scale_, time_);
       if (!handler.keep_running()) break;
-      time_ += 1.0 / 60.0;
+      // Frame n is at exactly n/60 s (no accumulated rounding), so timed
+      // automation steps land on the same frame on every machine.
+      time_ = static_cast<double>(frame + 1) / 60.0;
     }
     return 0;
   }

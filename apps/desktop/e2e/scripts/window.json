@@ -1,0 +1,23 @@
+[
+  {"op": "log", "message": "the real OS window: intro, drop, convert, save, shell seam"},
+  {"op": "frames", "count": 5},
+  {"op": "dump", "path": "w-start.json"},
+  {"op": "key", "key": "Space"},
+  {"op": "waitFor", "path": "intro", "equals": "done", "timeoutMs": 10000},
+  {"op": "dialogs", "mode": "seam"},
+  {"op": "open", "files": ["${IN}/hello.txt", "${IN}/data.bin"]},
+  {"op": "setTarget", "index": 0, "target": "base64"},
+  {"op": "setTarget", "index": 1, "target": "hex"},
+  {"op": "frames", "count": 30},
+  {"op": "click", "label": "Convert all", "exact": true},
+  {"op": "waitIdle"},
+  {"op": "waitFor", "path": "items.1.status", "equals": "done", "timeoutMs": 20000},
+  {"op": "frames", "count": 10},
+  {"op": "dialogReply", "paths": ["${OUT}/saved"]},
+  {"op": "click", "label": "Save all", "exact": true},
+  {"op": "frames", "count": 3},
+  {"op": "click", "label": "Open with the default app", "nth": 0},
+  {"op": "frames", "count": 3},
+  {"op": "screenshot", "path": "w-done.bmp"},
+  {"op": "dump", "path": "w-done.json"}
+]

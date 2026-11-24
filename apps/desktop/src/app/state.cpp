@@ -2,6 +2,7 @@
 #include "app/state.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
 #include "base/text_util.hpp"
@@ -200,6 +201,79 @@ std::string output_file_name(const std::string& source_name, const std::string& 
 }
 
 // ---------------------------------------------------------------------------
+// Progress gate (automation seam)
+// ---------------------------------------------------------------------------
+
+void ProgressGate::hold() {
+  std::lock_guard lock(mutex_);
+  hold_ = true;
+  permits_ = 0;
+}
+
+void ProgressGate::open() {
+  {
+    std::lock_guard lock(mutex_);
+    hold_ = false;
+    permits_ = 0;
+  }
+  cv_.notify_all();
+}
+
+void ProgressGate::permit() {
+  {
+    std::lock_guard lock(mutex_);
+    ++permits_;
+  }
+  cv_.notify_all();
+}
+
+void ProgressGate::pass(const std::atomic<bool>& cancel) {
+  std::unique_lock lock(mutex_);
+  if (!hold_) return;
+  ++parked_;
+  cv_.notify_all();
+  cv_.wait(lock, [&] { return !hold_ || permits_ > 0 || cancel.load(); });
+  if (hold_ && permits_ > 0 && !cancel.load()) --permits_;
+  --parked_;
+  lock.unlock();
+  cv_.notify_all();
+}
+
+void ProgressGate::notify() {
+  { std::lock_guard lock(mutex_); }
+  cv_.notify_all();
+}
+
+bool ProgressGate::wait(const std::function<bool()>& pred, int timeout_ms) {
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+  std::unique_lock lock(mutex_);
+  while (true) {
+    lock.unlock();
+    const bool ok = pred();
+    lock.lock();
+    if (ok) return true;
+    if (std::chrono::steady_clock::now() >= deadline) return false;
+    // Woken by park/pass/finish; the short bound covers state the gate does not see.
+    cv_.wait_for(lock, std::chrono::milliseconds(2));
+  }
+}
+
+int ProgressGate::parked() const {
+  std::lock_guard lock(mutex_);
+  return parked_;
+}
+
+bool ProgressGate::held() const {
+  std::lock_guard lock(mutex_);
+  return hold_;
+}
+
+int ProgressGate::permits() const {
+  std::lock_guard lock(mutex_);
+  return permits_;
+}
+
+// ---------------------------------------------------------------------------
 // Job runner
 // ---------------------------------------------------------------------------
 
@@ -218,6 +292,10 @@ JobRunner::~JobRunner() {
     std::lock_guard lock(mutex_);
     for (auto& [job, progress] : queue_) progress->cancel = true;
   }
+  {
+    std::lock_guard lock(mutex_);
+    if (gate_) gate_->open();
+  }
   for (auto& t : threads_) t.request_stop();
   cv_.notify_all();
   threads_.clear();  // joins
@@ -233,6 +311,16 @@ std::shared_ptr<JobProgress> JobRunner::submit(Job job) {
   return progress;
 }
 
+void JobRunner::set_gate(std::shared_ptr<ProgressGate> gate) {
+  std::lock_guard lock(mutex_);
+  gate_ = std::move(gate);
+}
+
+int JobRunner::pending() const {
+  std::lock_guard lock(mutex_);
+  return static_cast<int>(queue_.size()) + running_;
+}
+
 void JobRunner::wait_idle() {
   std::unique_lock lock(mutex_);
   idle_cv_.wait(lock, [&] { return queue_.empty() && running_ == 0; });
@@ -241,12 +329,14 @@ void JobRunner::wait_idle() {
 void JobRunner::worker_loop(std::stop_token stop) {
   while (!stop.stop_requested()) {
     std::pair<Job, std::shared_ptr<JobProgress>> work;
+    std::shared_ptr<ProgressGate> gate;
     {
       std::unique_lock lock(mutex_);
       if (!cv_.wait(lock, stop, [&] { return !queue_.empty(); })) return;
       work = std::move(queue_.front());
       queue_.pop_front();
       ++running_;
+      gate = gate_;
     }
     auto& [job, progress] = work;
     progress->started = true;
@@ -267,6 +357,7 @@ void JobRunner::worker_loop(std::stop_token stop) {
           last_wake = fraction;
           wake_();
         }
+        if (gate) gate->pass(progress->cancel);
         return progress->cancel.load() || stop.stop_requested();
       });
     }
@@ -280,6 +371,7 @@ void JobRunner::worker_loop(std::stop_token stop) {
       --running_;
     }
     idle_cv_.notify_all();
+    if (gate) gate->notify();
     if (wake_) wake_();
   }
 }
@@ -473,10 +565,17 @@ void AppState::cancel(std::uint64_t id) {
   for (auto& [item_id, progress] : running_) {
     if (item_id == id) progress->cancel = true;
   }
+  if (gate_) gate_->notify();
 }
 
 void AppState::cancel_all() {
   for (auto& [item_id, progress] : running_) progress->cancel = true;
+  if (gate_) gate_->notify();
+}
+
+void AppState::set_progress_gate(std::shared_ptr<ProgressGate> gate) {
+  gate_ = gate;
+  runner_.set_gate(std::move(gate));
 }
 
 void AppState::convert_again(std::uint64_t id) {

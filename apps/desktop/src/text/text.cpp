@@ -2,6 +2,7 @@
 #include "text/text.hpp"
 
 #include <cmath>
+#include <mutex>
 
 #include "base/text_util.hpp"
 
@@ -20,6 +21,21 @@ bool FontSet::install(const std::array<std::span<const std::uint8_t>, kFaceCount
 }
 
 namespace {
+
+std::mutex g_stats_mutex;
+GlyphStats g_stats;
+
+void note_glyph(std::uint32_t cp, std::uint16_t glyph) {
+  std::lock_guard lock(g_stats_mutex);
+  ++g_stats.shaped;
+  // Spaces and controls legitimately have no outline.
+  const bool printable = cp > 0x20 && cp != 0x7F && !(cp >= 0x80 && cp < 0xA0) && cp != 0xA0 && cp != 0x200B &&
+                         cp != 0xFEFF && !(cp >= 0x2000 && cp <= 0x200A);
+  if (glyph == 0 && printable) {
+    ++g_stats.missing;
+    if (g_stats.missing_codepoints.size() < 16) g_stats.missing_codepoints.push_back(cp);
+  }
+}
 
 constexpr std::string_view kEllipsis = "\xE2\x80\xA6";  // U+2026
 
@@ -66,6 +82,7 @@ ShapedRun shape(std::string_view text, const Style& style) {
         g = g2;
       }
     }
+    note_glyph(cp, g);
     if (style.tabular) g = font->substitute(g, "tnum");
     const float scale = style.size / static_cast<float>(font->units_per_em());
     if (prev != 0 && prev_face == face) pen += static_cast<float>(font->kerning(prev, g)) * scale;
@@ -83,6 +100,16 @@ ShapedRun shape(std::string_view text, const Style& style) {
   if (!run.glyphs.empty()) pen -= tracking_px;  // no trailing tracking
   run.width = std::max(0.0f, pen);
   return run;
+}
+
+GlyphStats glyph_stats() {
+  std::lock_guard lock(g_stats_mutex);
+  return g_stats;
+}
+
+void reset_glyph_stats() {
+  std::lock_guard lock(g_stats_mutex);
+  g_stats = {};
 }
 
 float measure(std::string_view text, const Style& style) { return shape(text, style).width; }

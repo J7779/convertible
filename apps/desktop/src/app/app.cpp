@@ -189,6 +189,7 @@ void App::on_frame(gfx::Bitmap& target, float scale, double now) {
   const float z = zoom();
   const float s = scale * z;
   logical_size_ = {static_cast<float>(target.width) / s, static_cast<float>(target.height) / s};
+  text::reset_glyph_stats();
   ui_.begin_frame(logical_size_, now, &theme_);
   build();
   ui_.end_frame();
@@ -197,6 +198,7 @@ void App::on_frame(gfx::Bitmap& target, float scale, double now) {
   canvas.clear(theme_.color.background);
   canvas.scale(s, s);
   ui_.render(canvas);
+  glyphs_last_frame_ = text::glyph_stats();
 
   if (automation_) automation_->after_frame(target);
 }
@@ -219,7 +221,9 @@ void App::choose_files() {
   const auto done = [this](std::vector<std::string> paths) {
     if (!paths.empty()) add_files(paths);
   };
-  if (platform_.has_native_dialogs()) {
+  if (seams.dialog) {
+    seams.dialog("open", "Choose files to convert", last_save_dir_, {}, done);
+  } else if (platform_.has_native_dialogs()) {
     platform_.open_files_dialog("Choose files to convert", done);
   } else {
     browser_ = std::make_unique<FileBrowser>(FileBrowser::Mode::OpenFiles, "Choose files to convert",
@@ -266,7 +270,9 @@ void App::save_item(std::uint64_t id) {
   QueueItem* item = state_->find(id);
   if (!item || item->status != ItemStatus::Done) return;
   const std::string dir = last_save_dir_.empty() ? path_parent(item->path) : last_save_dir_;
-  const std::string name = item->output_name;
+  // Never suggest an existing file (e.g. the source itself when a text file is
+  // re-encoded to .txt): accepting the suggestion must not overwrite anything.
+  const std::string name = path_filename(fileio::unique_path(dir, item->output_name));
   const auto done = [this, id](std::optional<std::string> path) {
     if (!path) return;
     if (state_->save_to(id, *path)) {
@@ -276,7 +282,12 @@ void App::save_item(std::uint64_t id) {
       toast("Couldn\xE2\x80\x99t save to " + path_filename(*path) + ". Check the folder is writable.", {}, {}, true);
     }
   };
-  if (platform_.has_native_dialogs()) {
+  if (seams.dialog) {
+    seams.dialog("save", "Save converted file", dir, name, [done](std::vector<std::string> r) {
+      if (r.empty()) done(std::nullopt);
+      else done(r.front());
+    });
+  } else if (platform_.has_native_dialogs()) {
     platform_.save_file_dialog("Save converted file", dir, name, done);
   } else {
     browser_ = std::make_unique<FileBrowser>(FileBrowser::Mode::SaveFile, "Save converted file", dir, name,
@@ -309,7 +320,12 @@ void App::save_all() {
       toast("Nothing was saved. Check the folder is writable.", {}, {}, true);
     }
   };
-  if (platform_.has_native_dialogs()) {
+  if (seams.dialog) {
+    seams.dialog("folder", "Save all converted files", dir, {}, [done](std::vector<std::string> r) {
+      if (r.empty()) done(std::nullopt);
+      else done(r.front());
+    });
+  } else if (platform_.has_native_dialogs()) {
     platform_.choose_folder_dialog("Save all converted files", dir, done);
   } else {
     browser_ = std::make_unique<FileBrowser>(FileBrowser::Mode::ChooseFolder, "Save all converted files to\xE2\x80\xA6",
@@ -324,14 +340,22 @@ void App::reveal_item(std::uint64_t id) {
   const QueueItem* item = state_->find(id);
   if (!item) return;
   const std::string path = !item->saved_path.empty() ? item->saved_path : item->path;
-  if (!platform_.reveal_in_file_manager(path)) toast("Couldn\xE2\x80\x99t open the file manager.", {}, {}, true);
+  if (!reveal_path(path)) toast("Couldn\xE2\x80\x99t open the file manager.", {}, {}, true);
+}
+
+bool App::reveal_path(const std::string& path) {
+  return seams.shell ? seams.shell("reveal", path) : platform_.reveal_in_file_manager(path);
+}
+
+bool App::open_path(const std::string& path) {
+  return seams.shell ? seams.shell("open", path) : platform_.open_with_default_app(path);
 }
 
 void App::open_item(std::uint64_t id) {
   const QueueItem* item = state_->find(id);
   if (!item) return;
   const std::string path = !item->saved_path.empty() ? item->saved_path : item->output_path;
-  if (path.empty() || !platform_.open_with_default_app(path)) {
+  if (path.empty() || !open_path(path)) {
     toast("No app is set up to open this kind of file.", {}, {}, true);
   }
 }
@@ -528,6 +552,7 @@ void App::build_drop_overlay() {
     c.restore();
   });
   ui_.request_frame();
+  ui_.describe(ui_.id("drop-overlay-node"), Role::Group, "Drop to add files", zone);
   ui_.text_in("Drop to add files", t.type.title2, {zone.x, logo_r.bottom() + 20.0f, zone.w, 32.0f},
               t.color.text_primary.fade(a), 0.5f);
   ui_.text_in("They stay on this device", t.type.body, {zone.x, logo_r.bottom() + 54.0f, zone.w, 24.0f},
@@ -576,7 +601,7 @@ void App::build_toasts() {
       bo.kind = ButtonKind::Link;
       const Rect br = cut_right(inner, action_w);
       if (button(ui_, ui_.id("toast-action"), br, toast.action_label, bo)) {
-        platform_.reveal_in_file_manager(toast.action_path);
+        reveal_path(toast.action_path);
       }
     }
     ui_.text_in(msg, st, inner, t.color.text_primary);
@@ -672,6 +697,35 @@ Json App::dump_state() const {
     j.set("progress", static_cast<double>(item.progress));
     j.set("stage", item.stage);
     j.set("options", item.values);
+    j.set("sourceLabel", item.source_label);
+    j.set("advancedOpen", item.advanced_open);
+    Json target_ids = Json::array();
+    for (const auto& t : item.targets) target_ids.push_back(t.id);
+    j.set("targetIds", target_ids);
+    Json specs = Json::array();
+    static const char* types[] = {"int", "float", "bool", "enum", "string"};
+    for (const auto& o : item.options) {
+      Json spec = Json::object();
+      spec.set("key", o.key);
+      spec.set("label", o.label);
+      spec.set("type", types[static_cast<int>(o.type)]);
+      spec.set("default", o.default_value);
+      if (o.min) spec.set("min", *o.min);
+      if (o.max) spec.set("max", *o.max);
+      Json ch = Json::array();
+      for (const auto& c : o.choices) ch.push_back(c);
+      spec.set("choices", ch);
+      spec.set("advanced", o.advanced);
+      specs.push_back(spec);
+    }
+    j.set("optionSpecs", specs);
+    j.set("outputPath", item.output_path);
+    j.set("hasPreset", has_preset(item.options));
+    std::string compress;
+    for (const auto& t : item.targets) {
+      if (t.compress) compress = t.id;
+    }
+    j.set("compressTarget", compress);
     if (item.status == ItemStatus::Done) {
       j.set("outputName", item.output_name);
       j.set("outputSize", static_cast<double>(item.output_size));
@@ -691,6 +745,23 @@ Json App::dump_state() const {
   Json picker = Json::object();
   picker.set("open", picker_.open);
   picker.set("query", picker_query);
+  picker.set("highlight", picker_.highlight);
+  picker.set("groupSource", picker_.group_source);
+  if (picker_.open) {
+    if (const QueueItem* item = state_->find(picker_.item_id)) {
+      Json groups = Json::array();
+      for (const auto& g : group_targets(item->targets, item->category, picker_query)) {
+        Json group = Json::object();
+        group.set("category", g.category);
+        Json ids = Json::array();
+        for (const TargetInfo* t : g.targets) ids.push_back(t->id);
+        group.set("targets", ids);
+        groups.push_back(group);
+      }
+      picker.set("groups", groups);
+      picker.set("sourceCategory", item->category);
+    }
+  }
   root.set("picker", picker);
   Json toasts = Json::array();
   for (const auto& toast : toasts_) toasts.push_back(toast.message);
@@ -710,12 +781,68 @@ Json App::dump_state() const {
     rect.push_back(static_cast<double>(std::round(n.rect.w)));
     rect.push_back(static_cast<double>(std::round(n.rect.h)));
     j.set("rect", rect);
+    Json full = Json::array();
+    for (const float v : {n.full.x, n.full.y, n.full.w, n.full.h}) full.push_back(static_cast<double>(std::round(v)));
+    if (!(full == rect)) j.set("full", full);
+    if (n.scrolled) j.set("scrolled", true);
+    if (n.layer != Layer::Base) j.set("layer", static_cast<int>(n.layer));
     if (n.focused) j.set("focused", true);
     if (n.selected) j.set("selected", true);
     if (!n.enabled) j.set("enabled", false);
     nodes.push_back(j);
   }
   root.set("accessibility", nodes);
+
+  // Diagnostics for the end-to-end tests.
+  root.set("time", now_);
+  root.set("introMs", intro_start_ < 0.0 ? 0.0 : (now_ - intro_start_) * 1000.0);
+  root.set("dropOverlay", drag_active_ || ui_.drag_hovering());
+  root.set("focusVisible", ui_.focus_visible());
+  root.set("tempDir", state_->temp_dir());
+  root.set("configDir", config_dir_);
+  Json glyphs = Json::object();
+  glyphs.set("shaped", static_cast<double>(glyphs_last_frame_.shaped));
+  glyphs.set("missing", static_cast<double>(glyphs_last_frame_.missing));
+  Json missing_cps = Json::array();
+  for (const std::uint32_t cp : glyphs_last_frame_.missing_codepoints) missing_cps.push_back(static_cast<double>(cp));
+  glyphs.set("missingCodepoints", missing_cps);
+  root.set("glyphs", glyphs);
+  Json a11y = Json::object();
+  a11y.set("focusable", static_cast<double>(ui_.focusable_count()));
+  Json undescribed = Json::array();
+  for (const Rect& r : ui_.undescribed_focusables()) {
+    Json rect = Json::array();
+    for (const float v : {r.x, r.y, r.w, r.h}) rect.push_back(static_cast<double>(std::round(v)));
+    undescribed.push_back(rect);
+  }
+  a11y.set("undescribed", undescribed);
+  root.set("a11y", a11y);
+  Json formats = Json::object();
+  formats.set("query", formats_query_);
+  formats.set("category", formats_category_);
+  formats.set("matched", formats_matched_);
+  formats.set("total", static_cast<double>(Catalog::instance().formats().size()));
+  root.set("formats", formats);
+  Json menu = Json::object();
+  menu.set("open", menu_.open);
+  Json choices = Json::array();
+  for (const auto& c : menu_.choices) choices.push_back(c);
+  menu.set("choices", choices);
+  menu.set("highlight", menu_.highlight);
+  root.set("menu", menu);
+  Json browser = Json::object();
+  browser.set("open", browser_ != nullptr);
+  if (browser_) {
+    const FileBrowser::Mode m = browser_->mode();
+    browser.set("mode", m == FileBrowser::Mode::OpenFiles ? "open" : m == FileBrowser::Mode::SaveFile ? "save" : "folder");
+    browser.set("directory", browser_->directory());
+    browser.set("fileName", browser_->file_name);
+    Json entries = Json::array();
+    for (const auto& e : browser_->entries()) entries.push_back(e.name);
+    browser.set("entries", entries);
+  }
+  root.set("browser", browser);
+  if (automation_) root.set("automation", automation_->dump());
   return root;
 }
 

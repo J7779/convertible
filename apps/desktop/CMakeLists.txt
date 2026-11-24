@@ -187,6 +187,9 @@ if(CVD_BUILD_TESTS AND BUILD_TESTING)
       "-DFIXTURES=${CVD_DIR}/tests/fixtures"
       -P "${CVD_DIR}/tests/automation/run_smoke.cmake")
   set_tests_properties(desktop_automation_smoke PROPERTIES LABELS "desktop")
+
+  # End-to-end suite (label "desktop-e2e"); see e2e/E2E.cmake.
+  include("${CVD_DIR}/e2e/E2E.cmake")
 endif()
 
 # ---------------------------------------------------------------------------

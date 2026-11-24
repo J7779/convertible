@@ -1,0 +1,8 @@
+[
+  {"op": "log", "message": "reduced motion: the static mark from the first frame, then a short fade"},
+  {"op": "screenshot", "path": "reduced-0000.bmp"},
+  {"op": "dump", "path": "reduced-0000.json"},
+  {"op": "at", "ms": 400},
+  {"op": "dump", "path": "reduced-0400.json"},
+  {"op": "expect", "path": "intro", "equals": "done"}
+]

@@ -1,0 +1,11 @@
+[
+  {"op": "log", "message": "the intro skips on a key press, then on a click in a second launch"},
+  {"op": "at", "ms": 300},
+  {"op": "dump", "path": "before.json"},
+  {"op": "${GESTURE}", "key": "Space", "x": 560, "y": 380},
+  {"op": "frames", "count": 1},
+  {"op": "dump", "path": "skipped.json"},
+  {"op": "at", "ms": 800},
+  {"op": "dump", "path": "after.json"},
+  {"op": "screenshot", "path": "after.bmp"}
+]

@@ -1,0 +1,15 @@
+[
+  {"op": "log", "message": "glyph coverage: accented Latin shapes completely, an uncovered script is reported"},
+  {"op": "navigate", "screen": "formats"},
+  {"op": "frames", "count": 20},
+  {"op": "click", "label": "Search formats", "role": "textfield"},
+  {"op": "type", "text": "Ångström façade naïve Œuvre Łódź Ștefănescu"},
+  {"op": "frames", "count": 3},
+  {"op": "screenshot", "path": "latin.bmp"},
+  {"op": "dump", "path": "latin.json"},
+  {"op": "key", "key": "A", "primary": true},
+  {"op": "type", "text": "漢字"},
+  {"op": "frames", "count": 3},
+  {"op": "screenshot", "path": "cjk.bmp"},
+  {"op": "dump", "path": "cjk.json"}
+]

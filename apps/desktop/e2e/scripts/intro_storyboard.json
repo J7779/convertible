@@ -1,0 +1,19 @@
+[
+  {"op": "log", "message": "cold start: the intro at fixed points of the virtual clock"},
+  {"op": "screenshot", "path": "intro-0000.bmp"},
+  {"op": "dump", "path": "intro-0000.json"},
+  {"op": "at", "ms": 200},
+  {"op": "screenshot", "path": "intro-0200.bmp"},
+  {"op": "at", "ms": 600},
+  {"op": "screenshot", "path": "intro-0600.bmp"},
+  {"op": "at", "ms": 1200},
+  {"op": "screenshot", "path": "intro-1200.bmp"},
+  {"op": "dump", "path": "intro-1200.json"},
+  {"op": "at", "ms": 1800},
+  {"op": "screenshot", "path": "intro-1800.bmp"},
+  {"op": "dump", "path": "intro-1800.json"},
+  {"op": "at", "ms": 2600},
+  {"op": "dump", "path": "after.json"},
+  {"op": "expect", "path": "intro", "equals": "done"},
+  {"op": "expect", "path": "screen", "equals": "home"}
+]

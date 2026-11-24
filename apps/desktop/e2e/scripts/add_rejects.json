@@ -1,0 +1,8 @@
+[
+  {"op": "log", "message": "folders and missing files are refused with a message"},
+  {"op": "frames", "count": 2},
+  {"op": "open", "files": ["${IN}/folder", "${IN}/missing.txt"]},
+  {"op": "frames", "count": 3},
+  {"op": "dump", "path": "rejected.json"},
+  {"op": "screenshot", "path": "rejected.bmp"}
+]

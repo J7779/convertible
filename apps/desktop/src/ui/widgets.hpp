@@ -58,6 +58,10 @@ struct ButtonOptions {
   const text::Style* style = nullptr;  // default: theme bodyStrong / label
   float radius = -1.0f;                // default: theme radius_md
   bool selected = false;               // ghost/tab buttons: draw as current
+  // Accessible name and value when the visible label alone is not enough
+  // (e.g. a menu button that shows only its current choice).
+  std::string_view access_label;
+  std::string_view access_value;
 };
 
 /// Preferred width of a button with the given label and options.

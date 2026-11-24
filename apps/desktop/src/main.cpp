@@ -38,6 +38,8 @@ int run_app(const std::vector<std::string>& args) {
       options.skip_intro = true;
     } else if (a == "--config-dir") {
       options.config_dir = next();
+    } else if (a == "--workers") {
+      options.workers = std::max(1, std::atoi(next().c_str()));
     } else if (a == "--scale") {
       popts.scale = static_cast<float>(std::atof(next().c_str()));
     } else if (a == "--size") {
@@ -54,12 +56,20 @@ int run_app(const std::vector<std::string>& args) {
       std::printf(
           "Usage: Convertible [files...]\n"
           "       Convertible --headless --automation <script.json> [--out <dir>] [--size WxH] [--scale S]\n"
-          "Options: --skip-intro  --config-dir <dir>  --version\n");
+          "Options: --skip-intro  --config-dir <dir>  --workers <n>  --version\n"
+          "Environment: CONVERTIBLE_CONFIG_DIR (settings folder when --config-dir is not given)\n");
       return 0;
     } else if (a.rfind("-psn_", 0) == 0) {
       // Legacy macOS process serial number argument.
     } else if (!a.empty() && a[0] != '-') {
       options.open_files.push_back(a);
+    }
+  }
+  // CONVERTIBLE_CONFIG_DIR overrides the per-user settings location (tests
+  // and portable installs); --config-dir wins over it.
+  if (options.config_dir.empty()) {
+    if (const char* env = std::getenv("CONVERTIBLE_CONFIG_DIR"); env != nullptr && *env != '\0') {
+      options.config_dir = env;
     }
   }
   if (popts.headless && options.automation_script.empty()) {

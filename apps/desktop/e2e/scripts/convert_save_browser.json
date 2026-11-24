@@ -1,0 +1,17 @@
+[
+  {"op": "log", "message": "Save through the in-house browser: the suggested name never replaces the source"},
+  {"op": "open", "files": ["${IN}/notes.txt"]},
+  {"op": "setTarget", "index": 0, "target": "txt"},
+  {"op": "setOption", "index": 0, "key": "encoding", "value": "utf-16le"},
+  {"op": "frames", "count": 30},
+  {"op": "click", "label": "Convert", "exact": true, "last": true},
+  {"op": "waitIdle"},
+  {"op": "frames", "count": 5},
+  {"op": "click", "label": "Save", "exact": true},
+  {"op": "frames", "count": 20},
+  {"op": "dump", "path": "s-browser.json"},
+  {"op": "screenshot", "path": "s-browser.bmp"},
+  {"op": "click", "label": "Save", "exact": true, "last": true},
+  {"op": "frames", "count": 5},
+  {"op": "dump", "path": "s-saved.json"}
+]

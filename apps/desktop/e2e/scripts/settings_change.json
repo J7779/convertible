@@ -1,0 +1,15 @@
+[
+  {"op": "log", "message": "settings: change every preference through the UI"},
+  {"op": "frames", "count": 3},
+  {"op": "dump", "path": "set-0.json"},
+  {"op": "click", "label": "Settings", "exact": true},
+  {"op": "frames", "count": 20},
+  {"op": "click", "label": "Theme", "role": "group", "dx": 0.83},
+  {"op": "click", "label": "Motion", "role": "group", "dx": 0.5},
+  {"op": "click", "label": "Default quality", "role": "group", "dx": 0.83},
+  {"op": "click", "label": "Strip metadata", "role": "toggle"},
+  {"op": "click", "label": "Text size", "role": "group", "dx": 0.5},
+  {"op": "frames", "count": 30},
+  {"op": "dump", "path": "set-1.json"},
+  {"op": "screenshot", "path": "set-1.bmp"}
+]

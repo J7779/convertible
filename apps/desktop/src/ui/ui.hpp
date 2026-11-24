@@ -43,7 +43,10 @@ struct AccessNode {
   Role role = Role::Label;
   std::string label;
   std::string value;
-  Rect rect;
+  Rect rect;       // on screen, clipped to the enclosing clip/scroll rectangle
+  Rect full;       // unclipped (to tell scrolled-away from cut-off controls)
+  bool scrolled = false;  // inside a scroll view
+  Layer layer = Layer::Base;
   bool focused = false;
   bool enabled = true;
   bool selected = false;
@@ -144,6 +147,10 @@ class Context {
   void describe(WidgetId id, Role role, std::string_view label, const Rect& r, std::string_view value = {},
                 bool selected = false, bool enabled = true);
   [[nodiscard]] const std::vector<AccessNode>& access_nodes() const { return access_prev_; }
+  /// Focusable widgets of the last frame that registered no accessibility node
+  /// (their on-screen rectangles); empty when every control is described.
+  [[nodiscard]] std::vector<Rect> undescribed_focusables() const;
+  [[nodiscard]] std::size_t focusable_count() const { return prev_focus_order_.size(); }
 
   [[nodiscard]] WidgetId hot() const { return hot_; }
   [[nodiscard]] WidgetId active() const { return active_; }

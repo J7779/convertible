@@ -95,6 +95,17 @@ class App : public AppHandler {
 
   std::string picker_query;  // search text of the open picker
 
+  /// Test seams, installed by automation so end-to-end runs never open OS
+  /// dialogs, file managers or other apps. Empty = use the platform.
+  struct Seams {
+    /// kind: "open" (files), "save" (one file) or "folder"; reply with the chosen paths (empty = cancelled).
+    std::function<void(const std::string& kind, const std::string& title, const std::string& directory,
+                       const std::string& suggested_name, std::function<void(std::vector<std::string>)> reply)>
+        dialog;
+    /// action: "reveal" or "open"; returns what the platform call would.
+    std::function<bool(const std::string& action, const std::string& path)> shell;
+  } seams;
+
  private:
   friend class Automation;
 
@@ -119,6 +130,8 @@ class App : public AppHandler {
   void build_toasts();
   void handle_shortcuts();
   void persist_settings();
+  bool reveal_path(const std::string& path);
+  bool open_path(const std::string& path);
 
   Platform& platform_;
   AppOptions options_;
@@ -173,6 +186,8 @@ class App : public AppHandler {
   std::unique_ptr<FileBrowser> browser_;
   std::unique_ptr<Automation> automation_;
   bool drag_active_ = false;
+  int formats_matched_ = 0;
+  text::GlyphStats glyphs_last_frame_;
   std::string last_save_dir_;
 };
 

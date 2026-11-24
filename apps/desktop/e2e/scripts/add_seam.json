@@ -1,0 +1,17 @@
+[
+  {"op": "log", "message": "the native file dialog path through the test seam (no OS dialog opens)"},
+  {"op": "dialogs", "mode": "seam"},
+  {"op": "dialogReply", "paths": ["${IN}/alpha.txt", "${IN}/beta.txt"]},
+  {"op": "frames", "count": 2},
+  {"op": "click", "label": "Choose files", "exact": true},
+  {"op": "frames", "count": 3},
+  {"op": "dump", "path": "chosen.json"},
+  {"op": "dialogReply", "paths": []},
+  {"op": "click", "label": "Add files", "exact": true},
+  {"op": "frames", "count": 3},
+  {"op": "dump", "path": "cancelled.json"},
+  {"op": "dialogReply", "paths": ["${IN}/three.json"]},
+  {"op": "key", "key": "O", "primary": true},
+  {"op": "frames", "count": 3},
+  {"op": "dump", "path": "shortcut.json"}
+]

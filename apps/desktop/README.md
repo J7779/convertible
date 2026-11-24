@@ -9,8 +9,9 @@ self-contained executable. Fonts (Inter, JetBrains Mono NL), the design tokens,
 the motion storyboard and the licence texts are embedded at build time.
 
 Contents: [Prerequisites](#prerequisites) · [Build and run](#build-and-run) ·
-[Tests](#tests) · [Packaging](#packaging) · [Automation](#automation-mode) ·
-[Architecture](#architecture) · [How the core is linked](#how-the-core-is-linked)
+[Tests](#tests) · [End-to-end tests](#end-to-end-tests) · [Packaging](#packaging) ·
+[Automation](#automation-mode) · [Architecture](#architecture) ·
+[How the core is linked](#how-the-core-is-linked)
 
 ## Prerequisites
 
@@ -43,8 +44,10 @@ cmake --build build/desktop -j 6 --config Release
 | Linux | `build/desktop/apps/desktop/convertible-desktop` |
 
 Command line: `Convertible [files…]` opens files straight into the queue.
-`--skip-intro`, `--config-dir <dir>`, `--size WxH`, `--scale S` and `--version`
-are available; see [Automation](#automation-mode) for the rest.
+`--skip-intro`, `--config-dir <dir>`, `--workers N`, `--size WxH`, `--scale S`
+and `--version` are available; see [Automation](#automation-mode) for the rest.
+The `CONVERTIBLE_CONFIG_DIR` environment variable names the settings folder
+when `--config-dir` is not given (tests, portable setups).
 
 Settings are stored as JSON in the per-user config location:
 `~/Library/Application Support/Convertible` (macOS),
@@ -57,11 +60,12 @@ live in a private temporary folder until saved and are deleted on exit.
 ```sh
 cmake -S . -B build/desktop -DCVT_BUILD_DESKTOP=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build/desktop -j 6 --config Release
-ctest --test-dir build/desktop -L desktop -C Release --output-on-failure
+ctest --test-dir build/desktop -L '^desktop$' -C Release --output-on-failure
 ```
 
 Two CTest entries carry the `desktop` label, and both run headless (no
-display, no window):
+display, no window). (`-L` is a regular expression: `-L desktop` also picks
+up the [end-to-end groups](#end-to-end-tests), labelled `desktop-e2e`.)
 
 - `desktop_unit_tests` (`convertible_desktop_tests`, the core's in-house test
   framework): JSON/UTF-8/formatting, the renderer (coverage, AA, strokes,
@@ -84,6 +88,71 @@ display, no window):
 
 Run a subset: `build/desktop/apps/desktop/convertible_desktop_tests --test-case="desktop/ui*"`.
 
+## End-to-end tests
+
+```sh
+cmake -S . -B build/desktop -DCVT_BUILD_DESKTOP=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build/desktop -j 6 --config Release
+ctest --test-dir build/desktop -L desktop-e2e -C Release --output-on-failure
+```
+
+or the wrappers, which configure, build and run in one go:
+`apps/desktop/e2e.sh [--windowed] [--repeat N]` (macOS, Linux) and
+`powershell -File apps\desktop\e2e.ps1 [-Windowed] [-Repeat N]` (Windows).
+Linux without a display: `xvfb-run -a` around the windowed run (the
+wrapper does it when `xvfb-run` is installed).
+
+The suite drives the real executable through [automation](#automation-mode)
+with real conversions in the core, then checks what the app left behind. It
+is in-house like the rest: a C++ runner (`convertible_desktop_e2e`, the
+core's test framework, the toolkit's JSON type, the core's internal hashes),
+scripts and nothing else. One CTest entry per group, all labelled
+`desktop-e2e`:
+
+| Group | What it proves |
+| --- | --- |
+| `intro` | sampled intro frames differ over time; the last one equals the static mark that reduced motion shows at once; a key or a click skips it |
+| `add-files` | command line, a drop anywhere on the window (the overlay appears), the in-house file browser, the native-dialog seam; folders and missing files are refused with a message |
+| `queue`, `picker` | detected-format chips, the "All N files to…" control, remove and clear; the picker's grouping, search, keyboard navigation, Escape and outside clicks |
+| `options` | a slider, a switch, a menu and a text field found in the core's schemas change the saved output; presets and Compress where the catalogue offers them |
+| `convert`, `cancel`, `errors` | monotonic per-file progress to 100 %; before/after sizes and percentages; Save, Save all (numbered on collisions, never overwriting), Convert again, Reveal and Open through the shell seam; saved bytes decoded or digested independently (Base64, hex, SHA-256/SHA-1/MD5/CRC-32, UTF-16LE with BOM); cancel one, cancel all, convert again; a friendly error with the queue intact |
+| `formats`, `settings` | the formats browser against the catalogue the app reports; every preference changed through the UI, persisted in `CONVERTIBLE_CONFIG_DIR` and restored after a restart |
+| `keyboard` | the main flow with the keyboard only, focus kept inside the file browser, a focus ring in the screenshot |
+| `layout`, `themes`, `text`, `a11y` | every screen from the minimum window to 1920×1200, at 1×/1.5×/2× and 130 % text: no clipped or partially overlapping controls (layout rectangles from the state dump); token colours at known pixels in both themes; no missing glyphs; every control named and given a role |
+| `catalog` | only when the core has the formats (skipped with a message otherwise): PNG → JPEG (JPEG markers, smaller at lower quality), any file → ZIP (central directory parsed here), WAV → another audio container |
+| `window` | the real Cocoa/Win32/X11 window; opt-in with `CVD_E2E_WINDOWED=1` |
+
+Determinism: headless runs use a virtual 60 Hz clock (frame *n* is at
+*n*/60 s; scripts advance it with `at`/`wait`/`frames`, nothing sleeps);
+conversions are stepped through a progress gate that parks the workers in
+the core's progress callback, so progress, cancellation and "Cancel all" are
+observed at exact points. Clicks and key presses arrive over separate frames
+as real input does.
+
+Isolation: every test gets fresh `in/`, `out/`, `config/`, `tmp/` and `home/`
+folders under `<build>/apps/desktop/e2e/runs/<test>/`. The runner points
+`CONVERTIBLE_CONFIG_DIR`, `TMPDIR`/`TMP`/`TEMP` and `HOME`/`XDG_CONFIG_HOME`
+(`APPDATA`/`LOCALAPPDATA` on Windows) there, and after each run checks that
+the app removed its session folder and wrote nothing to the user folders.
+File dialogs, "Show in folder" and "Open" go through test seams under
+automation, so no OS dialog or other app is ever opened. On a failure the
+app writes `failures/failure-N.png` next to its outputs and the runner
+copies every screenshot and dump of the failed test to
+`<build>/apps/desktop/e2e/failures/<test>/` (inside the build tree, not in git).
+
+Run one group or test: `ctest --test-dir build/desktop -R e2e_convert`, or
+`build/desktop/apps/desktop/convertible_desktop_e2e --app=<exe> --work=<dir>
+--e2e=apps/desktop/e2e --assets=assets --test-case="e2e/picker/*"` (the exact
+command line is printed by `ctest -V`).
+
+Linux with GCC 14 (`ubuntu:24.04`): configure with
+`-DCMAKE_C_FLAGS=-D_DEFAULT_SOURCE` for now; the core's imported H.264
+decoder calls `strnlen`, which strict C11 headers do not declare otherwise.
+
+Windows: the runner starts the app with `CreateProcessW` and needs no POSIX
+shell; the suite runs with `ctest -L desktop-e2e -C Release` on a GitHub
+Windows runner (MSVC) and cross-compiles with MinGW-w64 GCC 14.
+
 ## Packaging
 
 CPack, no external tools:
@@ -105,10 +174,13 @@ Convertible --headless --automation script.json --out out-dir [--size 1120x760] 
 ```
 
 `--headless` renders into an off-screen bitmap on a virtual 60 Hz clock (no
-window, deterministic timing). Without it the same script drives the real
-window. The exit code is 1 when any `expect` step fails. A script is a JSON
-array of steps; relative input paths resolve against the script's folder,
-output paths against `--out`:
+window, deterministic timing: frame *n* is at exactly *n*/60 s). Without it
+the same script drives the real window. The exit code is 1 when any step
+fails; failures and progress also go to `automation.log` in `--out`, with a
+`failures/failure-N.png` screenshot of the first failures. Under automation
+"Show in folder" and "Open" are recorded instead of calling the OS. A script
+is a JSON array of steps; relative input paths resolve against the script's
+folder, output paths against `--out`:
 
 | Step | Effect |
 | --- | --- |
@@ -119,15 +191,25 @@ output paths against `--out`:
 | `{"op":"convert","index":0}`, `{"op":"convertAll"}`, `{"op":"cancel","index":0}`, `{"op":"cancelAll"}`, `{"op":"waitIdle"}` | conversion |
 | `{"op":"save","index":0,"path":"x.b64"}`, `{"op":"saveAll","dir":"saved","expect":3}` | save without dialogs |
 | `{"op":"screenshot","path":"a.png"}` (`.png` or `.bmp`), `{"op":"dump","path":"state.json"}` | capture the next frame / the state |
-| `{"op":"click","label":"Convert all"}` or `{"op":"click","x":10,"y":20}`, `{"op":"hover",…}`, `{"op":"key","key":"Tab","shift":true,"primary":true}`, `{"op":"type","text":"…"}`, `{"op":"drag","phase":"enter"}` | input |
+| `{"op":"click","label":"Convert all"}` (`"exact"`, `"role"`, `"nth"`, `"last"`, `"dx"`/`"dy"` inside the element, `"shift"`, `"primary"`, `"clicks":2`) or `{"op":"click","x":10,"y":20}`, `{"op":"hover",…}`, `{"op":"scroll","dy":120}`, `{"op":"key","key":"Tab","shift":true,"primary":true,"repeat":3}`, `{"op":"type","text":"…"}`, `{"op":"drag","phase":"enter","x":40,"y":700}` (`enter`/`over`/`leave`) | input: a click is pressed in one frame and released in the next, one key press per frame |
+| `{"op":"tabTo","label":"Open","exact":true}`, `{"op":"focusCycle","count":12,"path":"focus.json"}` | keyboard navigation: Tab until a control has focus / record the focus after each Tab |
+| `{"op":"dialogs","mode":"seam"}` + `{"op":"dialogReply","paths":[…]}` (`[]` = cancelled), `{"op":"shellResult","value":false}` | answer file dialogs without the OS dialog or the in-house browser; make Reveal/Open report failure |
+| `{"op":"gate","mode":"hold"}`, `{"op":"gateWait","parked":2}`, `{"op":"stepProgress","index":0,"steps":1,"stride":1}`, `{"op":"gate","mode":"open"}` | progress gate: park conversions at their progress reports, wait until N workers are parked, release one report per frame while recording the item's progress (`automation.samples`) |
 | `{"op":"navigate","screen":"formats"}`, `{"op":"theme","value":"light"}`, `{"op":"settings","values":{…}}`, `{"op":"resize","width":800,"height":600,"scale":2}` | app state |
-| `{"op":"wait","ms":500}`, `{"op":"frames","count":3}`, `{"op":"skipIntro"}` | timing |
-| `{"op":"expect","path":"items.0.status","equals":"done"}`, `{"op":"expect","file":"saved/a.b64","content":"…"}` | assertions on the state dump / output files |
+| `{"op":"at","ms":1800}`, `{"op":"wait","ms":500}`, `{"op":"frames","count":3}`, `{"op":"waitFor","path":"items.0.status","equals":"done","timeoutMs":20000}`, `{"op":"skipIntro"}` | timing: run the clock to a time after the first frame / by an amount / by frames; render until a condition holds |
+| `{"op":"expect","path":"items.0.status","equals":"done"}` (also `notEquals`, `exists`, `min`, `max`, `length`, `contains`), `{"op":"expect","file":"saved/a.b64","content":"…"}` | assertions on the state dump / output files |
 
-The state dump lists the screen, theme, window size and zoom, settings, every
-queued file (format, target, options, status, progress, output size, errors,
-warnings), the picker, toasts, and the accessibility tree (role, label, value,
-rectangle, focus) of the last frame.
+The state dump lists the screen, theme, window size, scale and zoom,
+settings, the intro phase and its clock, every queued file (format, chip,
+targets, option values and schemas, preset and compress availability, status,
+progress, output name, size and temporary path, errors, warnings), the
+picker (query, highlight, grouped targets), the option menu, the file
+browser, the formats browser's search, toasts, glyph statistics (missing
+glyphs in the last frame), the drop overlay, focus visibility, focusable
+controls without an accessibility node, what the automation seams recorded,
+and the accessibility tree (role, label, value, rectangle, unclipped
+rectangle, scroll and layer, focus) of the last frame. `"catalog":true` adds
+the whole format catalogue.
 
 ## Architecture
 
@@ -153,6 +235,7 @@ src/app/        binding (C API -> typed catalogue, targets, schemas, conversions
 src/platform/   platform.hpp (the one OS interface), headless.cpp, fileio,
                 mac/ (Cocoa, Objective-C++), win/ (Win32), x11/ (Xlib)
 tests/          unit tests, fixtures, automation smoke script
+e2e/            end-to-end suite: runner (C++), tests, automation scripts
 ```
 
 Layering: `binding` → `state` (view-model, no UI) → views (`app.cpp`,

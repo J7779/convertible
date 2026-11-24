@@ -123,7 +123,8 @@ float button_width(Context& ctx, std::string_view label, const ButtonOptions& op
 bool button(Context& ctx, WidgetId wid, const Rect& r, std::string_view label, const ButtonOptions& opt) {
   const Theme& t = ctx.theme();
   const Interaction in = ctx.interact(wid, r, opt.enabled ? (kFocusable | kKeyboardActivate) : kDisabled);
-  ctx.describe(wid, Role::Button, label.empty() ? opt.tooltip : label, r, {}, opt.selected, opt.enabled);
+  ctx.describe(wid, Role::Button, !opt.access_label.empty() ? opt.access_label : (label.empty() ? opt.tooltip : label), r,
+               opt.access_value, opt.selected, opt.enabled);
   if (in.hovered) ctx.set_cursor(Cursor::Hand);
   const float radius = opt.radius >= 0.0f ? opt.radius : t.radius_md;
   const float hover = ctx.animate(hash_id("hover", wid), in.hovered ? 1.0f : 0.0f, t.motion.fast, t.motion.standard);

@@ -1,0 +1,11 @@
+[
+  {"op": "log", "message": "settings after a restart: everything came back from the configuration folder"},
+  {"op": "frames", "count": 1},
+  {"op": "dump", "path": "restart-0.json"},
+  {"op": "at", "ms": 600},
+  {"op": "open", "files": ["${IN}/${PRESET_INPUT}"]},
+  {"op": "setTarget", "index": 0, "target": "${PRESET_TARGET}"},
+  {"op": "frames", "count": 30},
+  {"op": "dump", "path": "restart-1.json"},
+  {"op": "screenshot", "path": "restart-1.bmp"}
+]

@@ -70,6 +70,17 @@ struct ShapedRun {
 };
 
 ShapedRun shape(std::string_view text, const Style& style);
+
+/// Diagnostics (automation and tests): printable code points that no bundled
+/// face could map since the last reset, i.e. would render as a missing-glyph
+/// box, and the number of glyphs shaped.
+struct GlyphStats {
+  std::uint64_t shaped = 0;
+  std::uint64_t missing = 0;
+  std::vector<std::uint32_t> missing_codepoints;  // first few, for messages
+};
+GlyphStats glyph_stats();
+void reset_glyph_stats();
 float measure(std::string_view text, const Style& style);
 
 /// Distance from the top of a line box to the baseline.

@@ -153,7 +153,7 @@ class MacPlatform final : public Platform {
     frame_pending_ = false;
     if (!handler_) return;
     if (!handler_->keep_running()) {
-      [NSApp terminate:nil];
+      stop_loop();
       return;
     }
     const float sc = scale();
@@ -167,7 +167,7 @@ class MacPlatform final : public Platform {
     update_chrome();
     NSAccessibilityPostNotification(view_, NSAccessibilityLayoutChangedNotification);
     if (!handler_->keep_running()) {
-      [NSApp terminate:nil];
+      stop_loop();
       return;
     }
     if (handler_->wants_frame()) {
@@ -243,6 +243,25 @@ class MacPlatform final : public Platform {
     }
   }
 
+  /// Ends [NSApp run] so run() returns and the app's destructors run (they
+  /// delete the session's temporary outputs); -terminate: would exit() first.
+  void stop_loop() {
+    if (stopping_) return;
+    stopping_ = true;
+    [NSApp stop:nil];
+    // -stop: takes effect after the next event; post one so it happens now.
+    NSEvent* wake = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                                       location:NSZeroPoint
+                                  modifierFlags:0
+                                      timestamp:0
+                                   windowNumber:0
+                                        context:nil
+                                        subtype:0
+                                          data1:0
+                                          data2:0];
+    [NSApp postEvent:wake atStart:YES];
+  }
+
   void dispatch(const Event& e) {
     if (!handler_) {
       if (e.type == EventType::OpenFiles) pending_open_.push_back(e.paths);
@@ -270,7 +289,7 @@ class MacPlatform final : public Platform {
     });
   }
 
-  void quit() override { [NSApp terminate:nil]; }
+  void quit() override { stop_loop(); }
 
   [[nodiscard]] double now() const override { return CACurrentMediaTime(); }
   [[nodiscard]] float scale() const override {
@@ -454,6 +473,7 @@ class MacPlatform final : public Platform {
   CvdAppDelegate* delegate_ = nil;
   NSTimer* timer_ = nil;
   bool frame_pending_ = false;
+  bool stopping_ = false;
   double pending_delay_ = 0.0;
   gfx::Bitmap bitmap_;
   CursorShape cursor_ = CursorShape::Arrow;
@@ -478,6 +498,16 @@ std::unique_ptr<Platform> create_platform(const PlatformOptions& options) {
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
   return YES;
+}
+
+// Quit (menu, Dock, window close) leaves the run loop instead of exit()ing,
+// so the C++ side shuts down and removes the session's temporary files.
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
+  if (self.platform) {
+    self.platform->stop_loop();
+    return NSTerminateCancel;
+  }
+  return NSTerminateNow;
 }
 
 - (void)application:(NSApplication*)application openURLs:(NSArray<NSURL*>*)urls {

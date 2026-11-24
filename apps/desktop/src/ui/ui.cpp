@@ -1,6 +1,7 @@
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
 #include "ui/ui.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 namespace cvd::ui {
@@ -359,7 +360,9 @@ Interaction Context::interact(WidgetId wid, const Rect& r, unsigned flags) {
   const Rect screen = r.offset(t.x, t.y).intersect(current_clip());
   hits_.push_back({wid, screen, layer_, flags});
   const bool disabled = (flags & kDisabled) != 0;
-  if ((flags & kFocusable) && !disabled) focus_order_.push_back(wid);
+  // Keyboard focus stays inside a modal sheet: controls it covers are not in the Tab order.
+  const bool covered = static_cast<int>(layer_) < static_cast<int>(prev_block_layer_);
+  if ((flags & kFocusable) && !disabled && !covered) focus_order_.push_back(wid);
   if (focused_ == wid) {
     focused_seen_ = true;
     focused_rect_ = r.offset(t.x, t.y);
@@ -406,11 +409,36 @@ void Context::describe(WidgetId wid, Role role, std::string_view label, const Re
   n.role = role;
   n.label = std::string(label);
   n.value = std::string(value);
-  n.rect = r.offset(t.x, t.y).intersect(current_clip());
+  n.full = r.offset(t.x, t.y);
+  n.rect = n.full.intersect(current_clip());
+  n.scrolled = !scroll_stack_.empty();
+  n.layer = layer_;
   n.focused = focused_ == wid;
   n.enabled = enabled;
   n.selected = selected;
+  // One node per widget: a later description (e.g. a button re-described as a tab) replaces the first.
+  for (auto& existing : access_) {
+    if (existing.id == wid) {
+      existing = std::move(n);
+      return;
+    }
+  }
   access_.push_back(std::move(n));
+}
+
+std::vector<Rect> Context::undescribed_focusables() const {
+  std::vector<Rect> out;
+  for (const WidgetId wid : prev_focus_order_) {
+    const bool described = std::any_of(access_prev_.begin(), access_prev_.end(),
+                                       [&](const AccessNode& n) { return n.id == wid && !n.label.empty(); });
+    if (described) continue;
+    Rect r;
+    for (const auto& h : prev_hits_) {
+      if (h.id == wid) r = h.rect;
+    }
+    if (!r.empty()) out.push_back(r);
+  }
+  return out;
 }
 
 void Context::set_focus(WidgetId wid, bool visible) {

@@ -178,7 +178,7 @@ void App::build_formats(Rect r) {
                 {col.x, list.y + 40.0f, col.w, 24.0f}, t.color.text_secondary, 0.5f);
   }
   ui_.end_scroll();
-  (void)matched;
+  formats_matched_ = matched;
 }
 
 // ---------------------------------------------------------------------------

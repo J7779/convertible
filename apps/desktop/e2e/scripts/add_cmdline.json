@@ -1,0 +1,7 @@
+[
+  {"op": "log", "message": "files passed on the command line land in the queue with detected formats"},
+  {"op": "frames", "count": 3},
+  {"op": "dump", "path": "queue.json", "catalog": true},
+  {"op": "screenshot", "path": "queue.bmp"},
+  {"op": "expect", "path": "screen", "equals": "home"}
+]

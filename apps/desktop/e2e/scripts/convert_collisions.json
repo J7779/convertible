@@ -1,0 +1,16 @@
+[
+  {"op": "log", "message": "Save all never overwrites: same output names get numbered"},
+  {"op": "dialogs", "mode": "seam"},
+  {"op": "open", "files": ["${IN}/first/a.txt", "${IN}/second/a.txt"]},
+  {"op": "setTarget", "source": "txt", "target": "base64"},
+  {"op": "frames", "count": 30},
+  {"op": "click", "label": "Convert all", "exact": true},
+  {"op": "waitIdle"},
+  {"op": "frames", "count": 5},
+  {"op": "dialogReply", "paths": ["${OUT}/coll"]},
+  {"op": "click", "label": "Save all", "exact": true},
+  {"op": "frames", "count": 3},
+  {"op": "dump", "path": "coll-1.json"},
+  {"op": "saveAll", "dir": "coll", "expect": 2},
+  {"op": "dump", "path": "coll-2.json"}
+]
