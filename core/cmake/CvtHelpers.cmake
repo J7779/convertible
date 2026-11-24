@@ -47,7 +47,14 @@ function(cvt_apply_sanitizers target)
   else()
     set(scope PUBLIC)
   endif()
-  target_compile_options(${target} ${scope} -fsanitize=${kinds} -fno-omit-frame-pointer -fno-sanitize-recover=undefined)
+  # CVT_SANITIZE_RECOVER=ON lets UBSan report and continue (with
+  # UBSAN_OPTIONS=halt_on_error=0) so that one run lists every finding.
+  if(CVT_SANITIZE_RECOVER)
+    set(recover -fsanitize-recover=undefined)
+  else()
+    set(recover -fno-sanitize-recover=undefined)
+  endif()
+  target_compile_options(${target} ${scope} -fsanitize=${kinds} -fno-omit-frame-pointer ${recover})
   target_link_options(${target} ${scope} -fsanitize=${kinds})
 endfunction()
 
@@ -56,7 +63,8 @@ endfunction()
 #     [INCLUDE_DIRS <dir>...]        # relative to core/src/imported/<name>/; default: the library root
 #     [DEFINITIONS <def>...]         # compile definitions for the library AND for core code that includes it
 #     [PRIVATE_DEFINITIONS <def>...] # compile definitions for the library sources only
-#     [C_STANDARD <n>] [CXX_STANDARD <n>])   # CXX_STANDARD default 17, never the core's
+#     [C_STANDARD <n>] [CXX_STANDARD <n>]   # CXX_STANDARD default 17, never the core's
+#     [SIZE_OPTIMIZED])              # WebAssembly only: -Os (rarely used or size-heavy codecs)
 #
 #   The core is written in-house. This function exists for the rare component
 #   that policy allows to be imported (see core/README.md, "Imported code"):
@@ -70,7 +78,7 @@ endfunction()
 #
 #   Call it from core/src/families/<family>/family.cmake.
 function(cvt_add_imported name)
-  cmake_parse_arguments(TP "" "C_STANDARD;CXX_STANDARD" "SOURCES;INCLUDE_DIRS;DEFINITIONS;PRIVATE_DEFINITIONS" ${ARGN})
+  cmake_parse_arguments(TP "SIZE_OPTIMIZED" "C_STANDARD;CXX_STANDARD" "SOURCES;INCLUDE_DIRS;DEFINITIONS;PRIVATE_DEFINITIONS" ${ARGN})
   set(root "${CVT_CORE_DIR}/src/imported/${name}")
   if(NOT IS_DIRECTORY "${root}")
     message(FATAL_ERROR "cvt_add_imported(${name}): ${root} does not exist")
@@ -151,6 +159,12 @@ function(cvt_add_imported name)
     # `function` check reports in C too. It is how those libraries are
     # written; their behaviour is not what this sanitizer run is about.
     target_compile_options(${tp_target} PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:C>,$<C_COMPILER_ID:Clang>>:-fno-sanitize=function>")
+  endif()
+  # CVT_WASM_FAST_IMPORTS=ON keeps them at -O3 (to measure, or for speed).
+  if(EMSCRIPTEN AND TP_SIZE_OPTIMIZED AND NOT CVT_WASM_FAST_IMPORTS)
+    # The download size of the web app counts more than the speed of codecs
+    # that few conversions use; later options win, so this overrides -O3.
+    target_compile_options(${tp_target} PRIVATE -Os)
   endif()
   if(EMSCRIPTEN AND CVT_WASM_EXCEPTIONS)
     target_compile_options(${tp_target} PRIVATE -fwasm-exceptions)

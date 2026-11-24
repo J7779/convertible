@@ -147,7 +147,8 @@ cvt_add_imported(libjxl
     FJXL_ENABLE_AVX2=0
     FJXL_ENABLE_AVX512=0
   C_STANDARD 11
-  CXX_STANDARD 17)
+  CXX_STANDARD 17
+  SIZE_OPTIMIZED)
 set(_cvt_libjxl_root "${CVT_CORE_DIR}/src/imported/libjxl")
 # The bundled dependencies stay private to the import: their headers are not
 # visible to the rest of the core.

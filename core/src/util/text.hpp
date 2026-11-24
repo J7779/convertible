@@ -3,6 +3,7 @@
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
 #pragma once
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -70,6 +71,15 @@ namespace cvt::util {
 /// Split into lines on LF, CRLF or lone CR. A trailing line terminator does
 /// not produce a final empty line. Views point into `text`.
 [[nodiscard]] std::vector<std::string_view> split_lines(std::string_view text);
+/// The views would point into a string that dies at the end of the
+/// statement (a range-for over split(f()) reads freed memory: found on
+/// Linux in four places). Name the string first.
+template <class S>
+  requires(std::same_as<S, std::string>)  // deduced from an rvalue std::string only
+std::vector<std::string_view> split(S&& text, char separator, bool keep_empty = true) = delete;
+template <class S>
+  requires(std::same_as<S, std::string>)
+std::vector<std::string_view> split_lines(S&& text) = delete;
 [[nodiscard]] std::string join(const std::vector<std::string>& parts, std::string_view separator);
 [[nodiscard]] std::string join(const std::vector<std::string_view>& parts, std::string_view separator);
 [[nodiscard]] std::string replace_all(std::string_view text, std::string_view from, std::string_view to);

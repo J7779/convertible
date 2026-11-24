@@ -12,6 +12,7 @@
 #include <deque>
 #include <optional>
 #include <string>
+#include <type_traits>
 
 #include "aom/aom_decoder.h"
 #include "aom/aom_encoder.h"
@@ -72,6 +73,17 @@ std::uint32_t get_sample(const std::uint8_t* row, std::size_t x, bool wide) {
   return row[x];
 }
 
+// libaom stores the colour code points of the stream in enum fields, also
+// reserved values that no enumerator names. Loading such a value as the enum
+// type is undefined in C++, so the field's bytes are read as an integer.
+template <class Enum>
+std::uint8_t raw_code(const Enum& field) {
+  std::underlying_type_t<Enum> value{};
+  static_assert(sizeof(value) == sizeof(Enum));
+  std::memcpy(&value, &field, sizeof(value));
+  return static_cast<std::uint8_t>(static_cast<std::uint64_t>(value) & 0xFF);
+}
+
 Result<Picture> to_picture(const aom_image_t& img) {
   if (img.d_w == 0 || img.d_h == 0 || img.planes[0] == nullptr) {
     return fail(Status::Decode, "the AV1 decoder returned an empty picture");
@@ -85,11 +97,11 @@ Result<Picture> to_picture(const aom_image_t& img) {
   Picture picture;
   picture.bit_depth = coded_depth;
   picture.monochrome = img.monochrome != 0;
-  picture.color.color_primaries = static_cast<std::uint8_t>(img.cp);
-  picture.color.transfer_characteristics = static_cast<std::uint8_t>(img.tc);
-  picture.color.matrix_coefficients = static_cast<std::uint8_t>(img.mc);
-  picture.color.full_range = img.range == AOM_CR_FULL_RANGE;
-  picture.color.chroma_sample_position = static_cast<std::uint8_t>(img.csp);
+  picture.color.color_primaries = raw_code(img.cp);
+  picture.color.transfer_characteristics = raw_code(img.tc);
+  picture.color.matrix_coefficients = raw_code(img.mc);
+  picture.color.full_range = raw_code(img.range) == AOM_CR_FULL_RANGE;
+  picture.color.chroma_sample_position = raw_code(img.csp);
 
   const bool out10 = coded_depth > 8;
   ir::PixelFormat format{};

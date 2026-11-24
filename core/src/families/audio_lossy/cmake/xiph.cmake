@@ -59,7 +59,8 @@ file(STRINGS "${_cvt_imp}/speex/sources.txt" _cvt_speex_sources)
 cvt_add_imported(speex
   SOURCES ${_cvt_speex_sources}
   INCLUDE_DIRS include
-  PRIVATE_DEFINITIONS FLOATING_POINT USE_SMALLFT EXPORT= NDEBUG ${_cvt_alloca_h})
+  PRIVATE_DEFINITIONS FLOATING_POINT USE_SMALLFT EXPORT= NDEBUG ${_cvt_alloca_h}
+  SIZE_OPTIMIZED)
 target_include_directories(cvt_imported_speex PRIVATE "${_cvt_imp}/speex/libspeex")
 _cvt_force_include(cvt_imported_speex "${_cvt_xiph}/speex_rename.h")
 target_compile_definitions(convertible_core PRIVATE CVT_HAVE_SPEEX=1)

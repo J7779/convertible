@@ -147,7 +147,8 @@ TEST_CASE("encoding/xxe and encoding/hqx: files written by uudeview and macutils
   CHECK(xx->filename == "sample.bin");
   // uuenview writes the same lines as we do.
   const std::string ours = encoding::xxencode(sample(), "sample.bin");
-  CHECK(util::split_lines(text_of("sample.xxe"))[1] == util::split_lines(ours)[1]);
+  const std::string theirs = text_of("sample.xxe");
+  CHECK(util::split_lines(theirs)[1] == util::split_lines(ours)[1]);
   CHECK(detected(as_bytes(ours), "") == "xxe");
 
   const auto hqx = encoding::binhex_decode(text_of("sample.hqx"), 1 << 20);

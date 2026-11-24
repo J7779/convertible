@@ -12,7 +12,8 @@ cvt_add_imported(opencore-amr
   SOURCES ${_cvt_oc_sources}
   INCLUDE_DIRS amrnb amrwb
   PRIVATE_DEFINITIONS NDEBUG
-  CXX_STANDARD 14)
+  CXX_STANDARD 14
+  SIZE_OPTIMIZED)
 target_include_directories(cvt_imported_opencore_amr PRIVATE
   "${_cvt_imp}/opencore-amr/oscl"
   "${_cvt_oc_amr}/amr_nb/common/include" "${_cvt_oc_amr}/amr_nb/dec/include" "${_cvt_oc_amr}/amr_nb/dec/src"
@@ -31,7 +32,8 @@ file(STRINGS "${_cvt_imp}/vo-amrwbenc/sources.txt" _cvt_voamr_sources)
 cvt_add_imported(vo-amrwbenc
   SOURCES ${_cvt_voamr_sources}
   INCLUDE_DIRS .
-  PRIVATE_DEFINITIONS NDEBUG)
+  PRIVATE_DEFINITIONS NDEBUG
+  SIZE_OPTIMIZED)
 target_include_directories(cvt_imported_vo_amrwbenc PRIVATE
   "${_cvt_imp}/vo-amrwbenc/amrwbenc/inc" "${_cvt_imp}/vo-amrwbenc/common/include")
 if(MSVC)

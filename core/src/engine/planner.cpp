@@ -162,15 +162,18 @@ Plan to_plan(const NativeChoice& choice, const FormatInfo* source, const FormatI
 // Targets ranked with the source's own category: the same category, and the
 // few neighbours users reach for first - a drawing becomes a picture or a
 // PDF, data becomes a spreadsheet and back, any page-like document a PDF.
-bool near_category(const FormatInfo& source, const FormatInfo& target) {
-  if (target.category == source.category) return true;
+// 0: ranked with the source's own category (a drawing's pictures and PDF);
+// 1: right after it (data <-> spreadsheets, PDF for spreadsheets, e-books and
+// presentations); 2: everything else.
+int closeness(const FormatInfo& source, const FormatInfo& target) {
+  if (target.category == source.category) return 0;
   switch (source.category) {
-    case Category::Vector: return target.category == Category::Image || target.id == "pdf";
-    case Category::Data: return target.category == Category::Spreadsheet;
-    case Category::Spreadsheet: return target.category == Category::Data || target.id == "pdf";
+    case Category::Vector: return target.category == Category::Image || target.id == "pdf" ? 0 : 2;
+    case Category::Data: return target.category == Category::Spreadsheet ? 1 : 2;
+    case Category::Spreadsheet: return target.category == Category::Data || target.id == "pdf" ? 1 : 2;
     case Category::Ebook:
-    case Category::Presentation: return target.id == "pdf" || target.id == "docx";
-    default: return false;
+    case Category::Presentation: return target.id == "pdf" || target.id == "docx" ? 1 : 2;
+    default: return 2;
   }
 }
 
@@ -256,9 +259,17 @@ std::vector<TargetInfo> list_targets(const Registry& registry, std::string_view 
   // byte-level targets (Base64, checksums ...) come last. The same-format
   // "compress" entry is flagged for UIs and sorts like any other.
   std::ranges::stable_sort(out, [source](const TargetInfo& a, const TargetInfo& b) {
-    const bool a_same = !a.byte_level && near_category(*source, *a.format);
-    const bool b_same = !b.byte_level && near_category(*source, *b.format);
+    const int a_rank = a.byte_level ? 3 : closeness(*source, *a.format);
+    const int b_rank = b.byte_level ? 3 : closeness(*source, *b.format);
+    const bool a_same = a_rank < 2;
+    const bool b_same = b_rank < 2;
     if (a_same != b_same) return a_same;
+    if (a_same) {
+      // Neighbours (rank 1) count a little less popular than the source's own kind.
+      const int a_score = a.format->popularity - 10 * a_rank;
+      const int b_score = b.format->popularity - 10 * b_rank;
+      if (a_score != b_score) return a_score > b_score;
+    }
     if (!a_same) {
       if (a.byte_level != b.byte_level) return !a.byte_level;
       if (a.bridges != b.bridges) return a.bridges < b.bridges;
