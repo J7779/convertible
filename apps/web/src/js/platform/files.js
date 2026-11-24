@@ -5,7 +5,8 @@ import { uniqueName } from '../model/format.js';
 
 const IGNORED = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
 
-function keep(file) {
+/** False for system clutter (.DS_Store, Thumbs.db, desktop.ini, AppleDouble files). */
+export function isUserFile(file) {
   return file && !IGNORED.has(file.name) && !file.name.startsWith('._');
 }
 
@@ -31,7 +32,7 @@ async function walkEntry(entry, out, depth = 0) {
   if (!entry || depth > 32) return;
   if (entry.isFile) {
     const file = await new Promise((resolve) => entry.file(resolve, () => resolve(null)));
-    if (keep(file)) out.push(file);
+    if (isUserFile(file)) out.push(file);
   } else if (entry.isDirectory) {
     const children = await readAllEntries(entry.createReader());
     for (const child of children) await walkEntry(child, out, depth + 1);
@@ -47,14 +48,14 @@ export async function filesFromDataTransfer(dt) {
     for (const entry of entries) await walkEntry(entry, out);
     return out;
   }
-  return [...(dt.files || [])].filter(keep);
+  return [...(dt.files || [])].filter(isUserFile);
 }
 
 /** Files (or text, as a .txt file) from a paste event. */
 export function filesFromClipboard(event) {
   const cd = event.clipboardData;
   if (!cd) return [];
-  const files = [...(cd.files || [])].filter(keep);
+  const files = [...(cd.files || [])].filter(isUserFile);
   if (files.length) return files;
   const text = cd.getData('text/plain');
   if (text) return [new File([text], 'Pasted text.txt', { type: 'text/plain' })];

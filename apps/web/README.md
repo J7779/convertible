@@ -86,6 +86,55 @@ apps/web/test.sh --build     # build first
 Tests are written against the dynamic catalogue, so they keep passing as the
 core gains formats.
 
+## End-to-end tests
+
+```sh
+apps/web/e2e.sh                                  # builds dist first if it is missing
+apps/web/e2e.sh --test-name-pattern=offline      # any node --test option
+```
+
+The real app in a real headless Chrome or Chromium, performing real
+conversions whose downloaded bytes are checked in Node (`Buffer`,
+`node:crypto`, `TextDecoder`, an independent ZIP reader). No packages: an
+in-house driver (`e2e/lib/`) speaks the Chrome DevTools Protocol over Node's
+built-in `WebSocket`, and the app is served by `tools/serve.mjs` on a free
+port.
+
+Needs Node.js 22+ and Chrome/Chromium: `CHROME_BIN`, otherwise the usual
+install locations on macOS, Linux and Windows. Without a browser the suite is
+skipped with a note; `E2E_REQUIRE_BROWSER=1` makes that a failure (use it in
+CI). With `CI` set, Chrome runs with `--no-sandbox` (as GitHub's Ubuntu
+runners need). Other knobs: `E2E_CONCURRENCY` (test files in parallel,
+default 2), `E2E_LONG_MB` (size of the cancel-test inputs, default 192),
+`E2E_DEBUG=1` (log every protocol command).
+
+- `e2e/lib/cdp.mjs`, `browser.mjs` — protocol client; Chrome launched with a
+  temporary profile; one isolated browser context per test; pages, their
+  workers and service workers are instrumented from their first request.
+  Primitives: navigate, condition waits with timeouts, click/type/press,
+  native file chooser, file inputs, drag-and-drop of files, downloads to a
+  temporary directory, viewport/touch/colour-scheme/reduced-motion
+  emulation, offline, screenshots.
+- `e2e/lib/harness.mjs` — after every test: no console errors, no uncaught
+  exceptions, no CSP violations, no failed requests and every request
+  same-origin. A failing test leaves a screenshot and a log in
+  `e2e/artifacts/` (git-ignored).
+- `startup` (intro, skip, reduced motion), `queue` (picker, drag-and-drop,
+  detected formats, bulk target, Convert all, Save all), `picker` (catalogue,
+  groups, search, keyboard, Compress), `convert` (progress, sizes, names,
+  bytes, schema-driven options, UTF-16, large files, native save dialog),
+  `cancel`, `errors`, `sheets` (formats browser, settings persistence,
+  licences, deep links), `keyboard`, `layout` (320/375/768/1440 px, dark and
+  light), `pwa` (manifest, precache, offline reload and conversion, update
+  prompt), `catalogue` (PNG → JPEG, any file → ZIP, WAV → audio; skipped
+  with "format not in catalogue" until the core can do them).
+
+Downloads use the app's fallback for browsers without the File System Access
+API (the tests remove it, since a headless browser cannot answer the native
+save dialog); one test covers the native dialog path by answering it.
+Waits are on conditions only, there are no retries, and every test starts
+from a fresh browser context.
+
 ## Architecture
 
 ```

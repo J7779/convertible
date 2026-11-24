@@ -15,7 +15,7 @@ import { badge, renderCard, updateProgress } from './ui/cards.js';
 import { openPicker } from './ui/picker.js';
 import { createFormatsSheet, createLicencesSheet, createSettingsSheet } from './ui/sheets.js';
 import { playIntro, staticMark } from './ui/motion.js';
-import { canOpen, canShareFile, filesFromClipboard, filesFromDataTransfer, hasFiles, openInTab, saveAll, saveFile, shareFile } from './platform/files.js';
+import { canOpen, canShareFile, filesFromClipboard, filesFromDataTransfer, hasFiles, isUserFile, openInTab, saveAll, saveFile, shareFile } from './platform/files.js';
 import { consumeLaunchFiles, consumeSharedFiles, registerServiceWorker, setupInstall } from './platform/pwa.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -493,7 +493,7 @@ function wireInput() {
   $('#choose-folder').addEventListener('click', () => folderInput.click());
   for (const input of [fileInput, folderInput]) {
     input.addEventListener('change', () => {
-      addFiles([...input.files].filter((f) => !f.name.startsWith('.')));
+      addFiles([...input.files].filter((f) => isUserFile(f) && !f.name.startsWith('.')));
       input.value = '';
     });
   }
