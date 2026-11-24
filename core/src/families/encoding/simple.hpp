@@ -22,6 +22,10 @@
 //       .expansion = 2,
 //   });
 //
+// Every member has a default member initialiser, so designated initialisers
+// may leave any of them out (GCC's -Wmissing-field-initializers only accepts
+// that for members that have one).
+//
 // The helpers take care of everything else: format and codec registration,
 // reading the input as text whatever its Unicode encoding, size limits, and
 // carrying the file name along.
@@ -39,30 +43,30 @@ namespace cvt::encoding {
 
 /// A representation of arbitrary bytes as text.
 struct BinaryEncoding {
-  std::string id;           ///< canonical format id, e.g. "base32"
-  std::string name;         ///< human name, e.g. "Base32 text"
-  std::string description;  ///< one sentence
+  std::string id{};           ///< canonical format id, e.g. "base32"
+  std::string name{};         ///< human name, e.g. "Base32 text"
+  std::string description{};  ///< one sentence
   /// Extensions, first = default for output files. "txt" may only be listed
   /// when `sniff` is provided (several formats share it).
-  std::vector<std::string> extensions;
+  std::vector<std::string> extensions{};
   std::string mime = "text/plain";
   int popularity = 20;
   /// Bytes -> text. Required.
-  std::function<Result<std::string>(const ir::Blob& blob, const WriteContext& ctx)> encode;
+  std::function<Result<std::string>(const ir::Blob& blob, const WriteContext& ctx)> encode{};
   /// Text -> bytes. Leave null for one-way encodings. The text has already
   /// been decoded to UTF-8 (BOM removed) by the helper.
-  std::function<Result<Bytes>(std::string_view text, const ReadContext& ctx)> decode;
+  std::function<Result<Bytes>(std::string_view text, const ReadContext& ctx)> decode{};
   /// Alternative to `decode` for encodings that also carry a file name or a
   /// media type (set `filename` / `mime` on the returned blob).
-  std::function<Result<ir::Blob>(std::string_view text, const ReadContext& ctx)> decode_blob;
-  std::vector<OptionSpec> encode_options;
-  std::vector<OptionSpec> decode_options;
+  std::function<Result<ir::Blob>(std::string_view text, const ReadContext& ctx)> decode_blob{};
+  std::vector<OptionSpec> encode_options{};
+  std::vector<OptionSpec> decode_options{};
   /// Upper bound on output characters per input byte (base64: 2 is plenty,
   /// hex with separators: 4, binary digits: 9). Used to refuse inputs whose
   /// encoding would exceed the output limit before any memory is spent.
   unsigned expansion = 4;
   /// Optional content test for detection (see FormatInfo::sniff).
-  std::function<int(ByteView data, std::string_view filename)> sniff;
+  std::function<int(ByteView data, std::string_view filename)> sniff{};
 };
 
 /// Register the format and its Blob codec.
@@ -70,21 +74,25 @@ void add_binary_encoding(Registry& registry, BinaryEncoding encoding);
 
 /// A reversible (or one-way) rewriting of text.
 struct TextTransform {
-  std::string id;
-  std::string name;
-  std::string description;
-  std::vector<std::string> extensions;
+  std::string id{};
+  std::string name{};
+  std::string description{};
+  std::vector<std::string> extensions{};
   std::string mime = "text/plain";
   int popularity = 15;
   /// UTF-8 text -> transformed text (UTF-8). Required.
-  std::function<Result<std::string>(std::string_view text, const WriteContext& ctx)> encode;
+  std::function<Result<std::string>(std::string_view text, const WriteContext& ctx)> encode{};
   /// Transformed text -> UTF-8 text. Leave null for one-way transforms.
-  std::function<Result<std::string>(std::string_view text, const ReadContext& ctx)> decode;
-  std::vector<OptionSpec> encode_options;
-  std::vector<OptionSpec> decode_options;
+  std::function<Result<std::string>(std::string_view text, const ReadContext& ctx)> decode{};
+  std::vector<OptionSpec> encode_options{};
+  std::vector<OptionSpec> decode_options{};
   /// True when `encode` loses information (e.g. Morse drops letter case).
   bool lossy = false;
-  std::function<int(ByteView data, std::string_view filename)> sniff;
+  std::function<int(ByteView data, std::string_view filename)> sniff{};
+  /// Upper bound on output bytes per input byte of `encode`; inputs whose
+  /// result could exceed the output limit are refused before any work is
+  /// done. 0 disables the check (for transforms that never grow the text).
+  unsigned expansion = 16;
 };
 
 /// Register the format and its PlainText codec.

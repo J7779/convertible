@@ -90,8 +90,13 @@ void add_text_transform(Registry& registry, TextTransform transform) {
   codec.read_options = std::move(transform.decode_options);
 
   if (transform.encode) {
-    codec.write = [encode = std::move(transform.encode)](const AnyIR& value, WriteContext& ctx) -> Result<Bytes> {
-      CVT_TRY_ASSIGN(const std::string text, encode(value.get<ir::PlainText>().text, ctx));
+    codec.write = [encode = std::move(transform.encode), expansion = transform.expansion](
+                      const AnyIR& value, WriteContext& ctx) -> Result<Bytes> {
+      const std::string& input = value.get<ir::PlainText>().text;
+      if (expansion != 0 && input.size() > ctx.limits.max_output_bytes / expansion) {
+        return fail(Status::Limit, "the transformed text would exceed the limit of {} bytes", ctx.limits.max_output_bytes);
+      }
+      CVT_TRY_ASSIGN(const std::string text, encode(input, ctx));
       CVT_TRY(ctx.limits.check_output(text.size()));
       return to_bytes(text);
     };

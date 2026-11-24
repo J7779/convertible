@@ -69,11 +69,12 @@ TEST_CASE("encoding: html-entities decoding") {
   for (const auto& [reference, character] : named) CHECK_MESSAGE(html_entities_decode(reference) == character, reference);
 
   // Anything that is not a known reference is left untouched.
-  for (const std::string_view untouched : {"&bogus;", "&;", "&#;", "&#x;", "&#xZZ;", "&#12a;", "& ", "&", "AT&T", "&amp", "a&b;c",
+  for (const std::string_view untouched : {"&bogus;", "&;", "&#;", "&#x;", "&#xZZ;", "&#12a;", "& ", "&", "AT&T", "a&b;c",
                                            "&EACUTE;", "&thisnameisfartoolongtobeanentityreference;"}) {
     CHECK_MESSAGE(html_entities_decode(untouched) == untouched, untouched);
   }
   CHECK(html_entities_decode("&&amp;&") == "&&&");
+  CHECK(html_entities_decode("&amp") == "&");  // HTML5 legacy name without the semicolon
   CHECK(html_entities_decode("&lt;&bogus;&gt;") == "<&bogus;>");
 
   // Code points that are not characters become U+FFFD; 0x80..0x9F map through Windows-1252.

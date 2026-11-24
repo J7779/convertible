@@ -1,0 +1,10 @@
+bücher.example	xn--bcher-kva.example
+Bücher.Example	xn--bcher-kva.Example
+例え.テスト	xn--r8jz45g.xn--zckzah
+παράδειγμα.δοκιμή	xn--hxajbheg2az3al.xn--jxalpdlp
+пример.испытание	xn--e1afmkfd.xn--80akhbyknj4f
+ドメイン名例.jp	xn--eckwd4c7cu47r2wf.jp
+münchen.de	xn--mnchen-3ya.de
+ＢÜＣＨＥＲ。example	xn--bcher-kva.example
+faß.de	fass.de
+straße.example	strasse.example

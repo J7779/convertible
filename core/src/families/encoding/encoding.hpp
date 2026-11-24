@@ -24,10 +24,11 @@ namespace cvt::encoding {
 struct HexStyle {
   bool uppercase = false;
   std::size_t bytes_per_line = 0;  ///< 0 = everything on one line
-  std::string_view separator;      ///< between bytes on a line, e.g. " " or ":"
+  std::string_view separator{};    ///< between bytes on a line, e.g. " " or ":"
+  std::string_view prefix{};       ///< before every byte, e.g. "0x" or "\\x"
 };
 [[nodiscard]] std::string hex_text(ByteView data, const HexStyle& style);
-/// Accepts what `hex_text` produces plus "0x" prefixes and , : - separators.
+/// Accepts what `hex_text` produces: "0x", "\\x" and "%" prefixes and , : - ; separators.
 [[nodiscard]] Result<Bytes> parse_hex_text(std::string_view text);
 
 // -- xxd-style hex dump -------------------------------------------------------
@@ -50,8 +51,15 @@ struct ParsedDataUri {
 // -- C source ---------------------------------------------------------------------
 
 /// A valid C identifier derived from arbitrary text ("my photo.png" ->
-/// "my_photo_png"); "data" when nothing usable remains.
-[[nodiscard]] std::string c_identifier(std::string_view text);
+/// "my_photo_png"); "data" when nothing usable remains. Never a reserved
+/// word of any language the array writers target (a trailing '_' is added),
+/// and never one of the names C reserves for the implementation ("__x", "_X").
+/// `avoid_reserved = false` skips the keyword check (for callers that change
+/// the case first and check afterwards).
+[[nodiscard]] std::string c_identifier(std::string_view text, bool avoid_reserved = true);
+/// True for the keywords and reserved words of C, C++, C#, Go, Java,
+/// JavaScript, TypeScript, Kotlin, PHP, Python, Ruby, Rust, Swift and Zig.
+[[nodiscard]] bool is_reserved_identifier(std::string_view word) noexcept;
 /// `unsigned char name[] = {...}; unsigned int name_len = N;`
 [[nodiscard]] std::string c_header(ByteView data, std::string_view variable_name, std::size_t bytes_per_line,
                                    std::string_view comment);
@@ -112,6 +120,10 @@ inline constexpr std::size_t big_number_max_bytes = 64 * 1024;
 /// Digits 0-9 a-z; every leading zero byte becomes a leading '0'.
 [[nodiscard]] Result<std::string> base36_encode(ByteView data, bool uppercase = false);
 [[nodiscard]] Result<Bytes> base36_decode(std::string_view text);
+/// Digits 0-9 A-Z a-z (the order used by most Base62 libraries); every
+/// leading zero byte becomes a leading '0'.
+[[nodiscard]] Result<std::string> base62_encode(ByteView data);
+[[nodiscard]] Result<Bytes> base62_decode(std::string_view text);
 
 // -- Ascii85 and Z85 (base_n.cpp) ---------------------------------------------------------------
 
@@ -170,7 +182,7 @@ struct ParsedYenc {
 
 // -- array literals (array_literals.cpp) ---------------------------------------------------------------
 
-enum class ArrayLanguage { Cpp, Python, JavaScript, Java, Go, Rust, Swift, CSharp };
+enum class ArrayLanguage { Cpp, Python, JavaScript, Java, Go, Rust, Swift, CSharp, TypeScript, Kotlin, Php, Ruby, Zig };
 /// `c_identifier(text)` adjusted for the language: upper case for a Rust
 /// static, and never a reserved word.
 [[nodiscard]] std::string array_identifier(std::string_view text, ArrayLanguage language);
@@ -184,8 +196,12 @@ enum class ArrayLanguage { Cpp, Python, JavaScript, Java, Go, Rust, Swift, CShar
 /// & < > " ' become references; with `non_ascii` so does everything above
 /// U+007F (as &#x...;), except the C1 controls, which HTML cannot express.
 [[nodiscard]] std::string html_entities_encode(std::string_view text, bool non_ascii);
-/// Decodes decimal and hexadecimal references and the HTML 4 entity names;
-/// anything that is not a known reference is left untouched.
+/// With `named`, characters that have an HTML entity name are written with
+/// it (the HTML 4 name where there is one, else the shortest HTML5 name).
+[[nodiscard]] std::string html_entities_encode(std::string_view text, bool non_ascii, bool named);
+/// Decodes decimal and hexadecimal references and all HTML5 entity names
+/// (including the legacy forms without ';', longest match first, as browsers
+/// do in text); anything that is not a known reference is left untouched.
 [[nodiscard]] std::string html_entities_decode(std::string_view text);
 
 // -- percent-encoded text (text_transforms.cpp) ------------------------------------------------------------
@@ -194,6 +210,10 @@ enum class ArrayLanguage { Cpp, Python, JavaScript, Java, Go, Rust, Swift, CShar
 /// A-Z a-z 0-9 - . _ ~; otherwise the reserved characters
 /// : / ? # [ ] @ ! $ & ' ( ) * + , ; = are kept as well.
 [[nodiscard]] std::string url_text_encode(std::string_view text, bool component);
+/// The same as Python's urllib.parse.quote(text, safe="") (Component),
+/// quote(text, safe=reserved) (Uri), quote(text) (Path) and quote_plus (Form).
+enum class UrlStyle { Component, Uri, Path, Form };
+[[nodiscard]] std::string url_text_encode(std::string_view text, UrlStyle style);
 /// The result is valid UTF-8 (escapes that do not form UTF-8 become U+FFFD).
 [[nodiscard]] Result<std::string> url_text_decode(std::string_view text, bool plus_as_space);
 
@@ -263,5 +283,13 @@ void register_html_entities(Registry& registry);
 void register_text_transforms(Registry& registry);
 void register_punycode(Registry& registry);
 void register_morse_nato(Registry& registry);
+void register_txt(Registry& registry);            // txt.cpp: plain text and its character encodings
+void register_hashes(Registry& registry);         // hashes.cpp: digests, checksums, reports
+void register_unicode(Registry& registry);        // unicode*.cpp: normalisation, code points, IDNA
+void register_charsets(Registry& registry);       // charsets*.cpp: legacy charsets, detection, EBCDIC
+void register_more_bases(Registry& registry);     // more_bases.cpp: Base16/45/62/91/... Bech32, PEM
+void register_firmware_hex(Registry& registry);   // firmware_hex.cpp: Intel HEX, S-record, TI-TXT, readmemh
+void register_text_tools(Registry& registry);     // text_tools.cpp: case, slugify, lines, classic ciphers
+void register_byte_views(Registry& registry);     // byte_views.cpp: hexdump styles, listings, envelopes
 
 }  // namespace cvt::encoding

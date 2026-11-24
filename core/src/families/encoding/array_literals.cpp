@@ -43,13 +43,13 @@ struct Language {
   unsigned expansion;                        // output characters per byte with one byte per line
 };
 
-constexpr std::array<Language, 8> languages = {{
+constexpr std::array<Language, 13> languages = {{
     {ArrayLanguage::Cpp, "cpp-array", "C++ array header", "The file as a constexpr std::array of bytes for C++.", "hpp",
      "text/x-c++", 25, "// ", "    ", "};", {"constexpr std::array<std::uint8_t, ", "> "}, "", false, false, 10},
     {ArrayLanguage::Python, "python-bytes", "Python bytes literal", "The file as a bytes object for Python.", "py",
      "text/x-python", 25, "# ", "    ", "])", {" = bytes([", "])"}, "", false, false, 10},
     {ArrayLanguage::JavaScript, "js-array", "JavaScript Uint8Array", "The file as a Uint8Array for JavaScript.", "js",
-     "text/javascript", 25, "// ", "  ", "]);", {"const ", " = new Uint8Array(["}, "", false, false, 8},
+     "text/javascript", 25, "// ", "  ", "]);", {"const ", " = new Uint8Array(["}, ": Uint8Array", false, false, 8},
     {ArrayLanguage::Java, "java-array", "Java byte array", "The file as a byte[] initialiser for Java.", "java",
      "text/x-java", 15, "// ", "    ", "};", {"byte[] ", " = {"}, "new byte[]", false, true, 17},
     {ArrayLanguage::Go, "go-array", "Go byte slice", "The file as a []byte literal for Go.", "go", "text/x-go", 15, "// ",
@@ -60,6 +60,17 @@ constexpr std::array<Language, 8> languages = {{
      "text/x-swift", 12, "// ", "    ", "]", {"let ", ": [UInt8] = ["}, "", false, false, 10},
     {ArrayLanguage::CSharp, "csharp-array", "C# byte array", "The file as a byte[] initialiser for C#.", "cs",
      "text/x-csharp", 15, "// ", "    ", "};", {"byte[] ", " = new byte[] {"}, "", false, false, 10},
+    {ArrayLanguage::TypeScript, "ts-array", "TypeScript Uint8Array", "The file as a typed Uint8Array constant for TypeScript.",
+     "ts", "text/x-typescript", 15, "// ", "  ", "]);", {"export const ", ": Uint8Array = new Uint8Array(["}, "", false,
+     false, 8},
+    {ArrayLanguage::Kotlin, "kotlin-array", "Kotlin ByteArray", "The file as a byteArrayOf(...) value for Kotlin.", "kt",
+     "text/x-kotlin", 12, "// ", "    ", ")", {"val ", " = byteArrayOf("}, "", false, true, 17},
+    {ArrayLanguage::Php, "php-array", "PHP byte array", "The file as an array of byte values for PHP.", "php",
+     "application/x-php", 10, "// ", "    ", "];", {"<?php", " = ["}, "", false, false, 8},
+    {ArrayLanguage::Ruby, "ruby-bytes", "Ruby byte string", "The file as an array packed into a binary String for Ruby.",
+     "rb", "text/x-ruby", 10, "# ", "  ", "].pack('C*').freeze", {" = [", "].pack('C*')"}, "", true, false, 8},
+    {ArrayLanguage::Zig, "zig-array", "Zig byte array", "The file as a [_]u8 array constant for Zig.", "zig",
+     "text/x-zig", 8, "// ", "    ", "};", {"pub const ", " = [_]u8{"}, "", false, false, 8},
 }};
 
 constexpr const Language& language_info(ArrayLanguage language) noexcept {
@@ -69,25 +80,59 @@ constexpr const Language& language_info(ArrayLanguage language) noexcept {
   return languages[0];
 }
 
-// Words that cannot be used as a variable name in at least one of the
-// languages above. An identifier that collides gets a trailing underscore.
+// Words that cannot be used as a variable name in at least one of the target
+// languages (C, C++, C#, Go, Java, JavaScript, TypeScript, Kotlin, PHP, Python,
+// Ruby, Rust, Swift, Zig). An identifier that collides gets a trailing
+// underscore. Kept sorted for the binary search.
 constexpr auto reserved_words = std::to_array<std::string_view>({
-    "False", "None", "Self", "True", "abstract", "and", "as", "assert", "async", "auto", "await", "base", "bool",
-    "boolean", "break", "byte", "case", "catch", "chan", "char", "class", "const", "continue", "crate", "decimal",
-    "def", "default", "defer", "del", "delete", "do", "double", "elif", "else", "enum", "except", "export",
-    "extends", "extern", "false", "final", "finally", "fixed", "float", "fn", "for", "friend", "from", "func",
-    "function", "global", "go", "goto", "guard", "if", "impl", "import", "in", "init", "inline", "int", "interface",
-    "internal", "is", "lambda", "let", "lock", "long", "map", "match", "mod", "mut", "namespace", "native", "new",
-    "nil", "not", "null", "object", "operator", "or", "out", "override", "package", "pass", "private", "protected",
-    "pub", "public", "raise", "range", "ref", "register", "return", "self", "short", "signed", "sizeof", "static",
-    "string", "struct", "super", "switch", "template", "this", "throw", "trait", "true", "try", "type", "typedef",
-    "typeof", "union", "unsigned", "use", "using", "var", "virtual", "void", "volatile", "where", "while", "with",
-    "yield",
+    "Any", "BEGIN", "END", "False", "None", "Protocol", "Self", "True", "Type", "_Alignas", "_Alignof", "_Atomic",
+    "_Bool", "_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert", "_Thread_local", "__ENCODING__",
+    "__END__", "__FILE__", "__LINE__", "abstract", "addrspace", "alias", "align", "alignas", "alignof", "allowzero",
+    "and", "and_eq", "anyframe", "anytype", "arguments", "array", "as", "asm", "assert", "associatedtype",
+    "async", "auto", "await", "base", "become", "begin", "bitand", "bitor", "bool", "boolean", "box", "break", "byte",
+    "callable", "case", "catch", "chan", "char", "char16_t", "char32_t", "char8_t", "checked", "class", "clone",
+    "co_await", "co_return", "co_yield", "companion", "compl", "comptime", "concept", "const", "const_cast",
+    "consteval", "constexpr", "constinit", "continue", "convenience", "crate", "crossinline", "debugger",
+    "decimal", "declare", "decltype", "def", "default", "defer", "defined", "deinit", "del", "delegate", "delete",
+    "didSet", "do", "double", "dyn", "dynamic", "dynamic_cast", "echo", "elif", "else", "empty", "enddeclare",
+    "endfor", "endforeach", "endif", "endswitch", "endwhile", "ensure", "enum", "errdefer", "error", "eval", "event",
+    "except", "explicit", "export", "extends", "extension", "extern", "external", "fallthrough", "false",
+    "fileprivate", "final", "finally", "fixed", "float", "fn", "for", "foreach", "friend", "from",
+    "func", "function", "gen", "global", "go", "goto", "guard", "if", "impl", "implements", "implicit",
+    "import", "in", "include", "include_once", "indirect", "infix", "init", "inline", "inner", "inout",
+    "instanceof", "insteadof", "int", "interface", "internal", "is", "isset", "lambda", "lateinit",
+    "lazy", "let", "linksection", "list", "lock", "long", "loop", "macro", "map", "match", "mod", "module",
+    "move", "mut", "mutable", "namespace", "native", "new", "next", "nil", "noalias", "noexcept", "noinline",
+    "non-sealed", "nonlocal", "nosuspend", "not", "not_eq", "nullptr", "object", "opaque", "open", "operator",
+    "optional", "or", "or_eq", "orelse", "out", "override", "package", "packed", "params", "pass", "permits",
+    "postfix", "precedence", "precedencegroup", "prefix", "print", "priv", "private", "protected", "protocol", "pub",
+    "public", "raise", "range", "readonly", "record", "redo", "ref", "register", "reified", "reinterpret_cast",
+    "repeat", "require", "require_once", "required", "requires", "rescue", "restrict", "resume", "rethrows", "retry",
+    "return", "sbyte", "sealed", "select", "self", "short", "signed", "sizeof", "some",
+    "stackalloc", "static", "static_assert", "static_cast", "strictfp", "string", "struct", "subscript", "super",
+    "suspend", "switch", "synchronized", "tailrec", "template", "test", "then", "this", "thread_local",
+    "threadlocal", "throw", "throws", "trait", "transient", "true", "try", "type", "typealias", "typedef", "typeid",
+    "typename", "typeof", "uint", "ulong", "unchecked", "undef", "union", "unless", "unowned",
+    "unreachable", "unsafe", "unset", "unsigned", "unsized", "until", "ushort", "using", "usingnamespace", "val",
+    "var", "vararg", "virtual", "void", "volatile", "wchar_t", "weak", "when", "where", "while", "willSet",
+    "with", "xor", "xor_eq", "yield",
 });
 
-bool is_reserved_word(std::string_view word) {
-  return std::ranges::find(reserved_words, word) != reserved_words.end();
+constexpr bool reserved_words_sorted() noexcept {
+  for (std::size_t i = 1; i < reserved_words.size(); ++i) {
+    if (!(reserved_words[i - 1] < reserved_words[i])) return false;
+  }
+  return true;
 }
+static_assert(reserved_words_sorted(), "reserved_words must be sorted and unique");
+
+}  // namespace
+
+bool is_reserved_identifier(std::string_view word) noexcept {
+  return std::ranges::binary_search(reserved_words, word);
+}
+
+namespace {
 
 // A comment must stay on its line whatever the file was called: control
 // characters and the Unicode line terminators become spaces.
@@ -123,6 +168,11 @@ std::string open_declaration(ArrayLanguage language, std::string_view name, std:
     case ArrayLanguage::Rust: return std::format("pub static {}: [u8; {}] = [", name, size);
     case ArrayLanguage::Swift: return std::format("let {}: [UInt8] = [", name);
     case ArrayLanguage::CSharp: return std::format("byte[] {} = new byte[] {{", name);
+    case ArrayLanguage::TypeScript: return std::format("export const {}: Uint8Array = new Uint8Array([", name);
+    case ArrayLanguage::Kotlin: return std::format("val {} = byteArrayOf(", name);
+    case ArrayLanguage::Php: return std::format("${} = [", name);  // "<?php" is written before the comment
+    case ArrayLanguage::Ruby: return std::format("{} = [", name);
+    case ArrayLanguage::Zig: return std::format("pub const {} = [_]u8{{", name);
   }
   return {};
 }
@@ -133,15 +183,18 @@ int sniff_array(const Language& spec, ByteView data) {
     if (text.find(needle) == std::string_view::npos) return 0;
   }
   if (!spec.not_shape.empty() && text.find(spec.not_shape) != std::string_view::npos) return 0;
-  return 82;
+  // The declaration followed by hexadecimal byte values is unmistakable; it must win over
+  // the source-code formats that share the extension (a .php or .js file).
+  const std::size_t open = text.find(spec.shape[1]);
+  return text.substr(open, spec.shape[1].size() + 16).find("0x") != std::string_view::npos ? 92 : 82;
 }
 
 }  // namespace
 
 std::string array_identifier(std::string_view text, ArrayLanguage language) {
-  std::string name = c_identifier(text);
+  std::string name = c_identifier(text, false);
   if (language_info(language).upper_case_name) name = util::to_upper(name);
-  if (is_reserved_word(name)) name.push_back('_');
+  if (is_reserved_identifier(name)) name.push_back('_');
   return name;
 }
 
@@ -151,6 +204,8 @@ std::string array_literal(ByteView data, ArrayLanguage language, std::string_vie
   bytes_per_line = std::clamp<std::size_t>(bytes_per_line, 1, 256);
   std::string out;
   out.reserve(data.size() * 6 + data.size() / bytes_per_line * 6 + comment.size() + 160);
+  // Text before "<?php" would be printed by PHP, so the tag comes first.
+  if (language == ArrayLanguage::Php) out.append("<?php\n\n");
   if (!comment.empty()) {
     out.append(spec.comment_prefix);
     out.append(single_line(comment));
@@ -165,9 +220,10 @@ std::string array_literal(ByteView data, ArrayLanguage language, std::string_vie
       out.push_back(' ');
     }
     const std::uint8_t value = detail::byte_at(data, i);
-    if (spec.signed_bytes && value > 127) out.append("(byte) ");
+    if (spec.signed_bytes && value > 127 && language == ArrayLanguage::Java) out.append("(byte) ");
     out.append("0x");
     detail::append_hex_byte(out, value, false);
+    if (spec.signed_bytes && value > 127 && language == ArrayLanguage::Kotlin) out.append(".toByte()");
     out.push_back(',');
   }
   out.push_back('\n');

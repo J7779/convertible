@@ -1,0 +1,7 @@
+# a query
+query Hero($episode: Episode = JEDI, $withFriends: Boolean!) {
+  hero(episode: $episode) { name, ...Details
+    friends @include(if: $withFriends) { name }
+  }
+}
+fragment Details on Character { id appearsIn }

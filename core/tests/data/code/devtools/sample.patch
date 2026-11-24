@@ -1,0 +1,32 @@
+diff --git a/added.txt b/added.txt
+new file mode 100644
+index 0000000..92d5444
+--- /dev/null
++++ b/added.txt
+@@ -0,0 +1 @@
++fresh
+diff --git a/docs/numbers.txt b/docs/numbers.txt
+index 4cb29ea..ea14db2 100644
+--- a/docs/numbers.txt
++++ b/docs/numbers.txt
+@@ -1,3 +1,4 @@
+ one
+-two
++2
+ three
++four
+diff --git a/greek.txt b/greek.txt
+index 1e395f2..ccec500 100644
+--- a/greek.txt
++++ b/greek.txt
+@@ -1,8 +1,9 @@
+ alpha
+-beta
++BETA
+ gamma
+ delta
+ epsilon
+ zeta
+ eta
+ theta
++iota

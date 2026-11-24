@@ -358,11 +358,11 @@ TEST_CASE("encoding: formats are recognised by content, whatever the file is cal
   CHECK(detected("Dear diary,\n\ntoday I converted a file.\n", "") == "txt");
   CHECK(detected("import os\n\nprint(os.getcwd())\n", "script.py") == "py");
   CHECK(detected("const answer = 42;\nconsole.log(answer);\n", "app.js") == "js");
-  CHECK(detected("#pragma once\n#include <vector>\nstd::vector<int> numbers();\n", "numbers.hpp") == "cpp");
+  CHECK(detected("#pragma once\n#include <vector>\nstd::vector<int> numbers();\n", "numbers.hpp") == "hpp");  // headers are formats of their own (code family)
   CHECK(detected("package main\n\nfunc main() {}\n", "main.go") == "go");
   CHECK(detected("fn main() {}\n", "main.rs") == "rs");
   CHECK(detected("public class Main {}\n", "Main.java") == "java");
-  CHECK(detected("int main(void) { return 0; }\n", "main.h") == "c");
+  CHECK(detected("int main(void) { return 0; }\n", "main.h") == "h");
 
   // Encodings without a content test are found by their extension.
   CHECK(detected("MZXW6YTBOI======", "secret.b32") == "base32");

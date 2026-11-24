@@ -41,7 +41,7 @@ constexpr char uu_char(std::uint32_t six_bits) noexcept {
 
 std::string hex_text(ByteView data, const HexStyle& style) {
   std::string out;
-  out.reserve(data.size() * (2 + style.separator.size()) + data.size() / 16 + 1);
+  out.reserve(data.size() * (2 + style.separator.size() + style.prefix.size()) + data.size() / 16 + 1);
   for (std::size_t i = 0; i < data.size(); ++i) {
     if (i > 0) {
       if (style.bytes_per_line > 0 && i % style.bytes_per_line == 0) {
@@ -50,6 +50,7 @@ std::string hex_text(ByteView data, const HexStyle& style) {
         out.append(style.separator);
       }
     }
+    out.append(style.prefix);
     put_hex(out, byte_at(data, i), style.uppercase);
   }
   if (style.bytes_per_line > 0 && !data.empty()) out.push_back('\n');
@@ -61,8 +62,8 @@ Result<Bytes> parse_hex_text(std::string_view text) {
   digits.reserve(text.size());
   for (std::size_t i = 0; i < text.size(); ++i) {
     const char c = text[i];
-    if (c == ',' || c == ':' || c == '-') continue;
-    if (c == '0' && i + 1 < text.size() && (text[i + 1] == 'x' || text[i + 1] == 'X')) {
+    if (c == ',' || c == ':' || c == '-' || c == ';' || c == '%') continue;
+    if ((c == '0' || c == '\\') && i + 1 < text.size() && (text[i + 1] == 'x' || text[i + 1] == 'X')) {
       ++i;
       continue;
     }
@@ -168,7 +169,7 @@ Result<ParsedDataUri> parse_data_uri(std::string_view text) {
 
 // --------------------------------------------------------------------------- C source
 
-std::string c_identifier(std::string_view text) {
+std::string c_identifier(std::string_view text, bool avoid_reserved) {
   std::string out;
   out.reserve(text.size() + 1);
   for (const char c : text) {
@@ -178,6 +179,9 @@ std::string c_identifier(std::string_view text) {
   // identifier cannot be empty, all underscores, or start with a digit.
   if (out.find_first_not_of('_') == std::string::npos) return "data";
   if (util::is_ascii_digit(out.front())) out.insert(out.begin(), '_');
+  // "__x" and "_X" are reserved for the C and C++ implementation.
+  if (out.size() >= 2 && out[0] == '_' && (out[1] == '_' || (out[1] >= 'A' && out[1] <= 'Z'))) out.insert(out.begin(), 'v');
+  if (avoid_reserved && is_reserved_identifier(out)) out.push_back('_');
   return out;
 }
 

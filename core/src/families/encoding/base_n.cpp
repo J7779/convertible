@@ -54,6 +54,8 @@ constexpr DigitTable base32_standard_table = detail::make_digit_table(base32_sta
 constexpr DigitTable base32_hex_table = detail::make_digit_table(base32_hex_alphabet, true);
 constexpr DigitTable base32_crockford_table = make_crockford_table();
 constexpr DigitTable base58_table = detail::make_digit_table(base58_alphabet, false);
+constexpr std::string_view base62_alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+constexpr DigitTable base62_table = detail::make_digit_table(base62_alphabet, false);
 constexpr DigitTable base36_table = detail::make_digit_table(base36_lower_alphabet, true);
 constexpr DigitTable z85_table = detail::make_digit_table(z85_alphabet, false);
 
@@ -108,6 +110,7 @@ struct BigBase {
 
 constexpr BigBase base58_numbers{"Base58", 58, 5, 656'356'768u, 89'500};
 constexpr BigBase base36_numbers{"Base36", 36, 6, 2'176'782'336u, 101'412};
+constexpr BigBase base62_numbers{"Base62", 62, 5, 916'132'832u, 88'100};
 
 Result<std::string> big_number_encode(ByteView data, const BigBase& spec, std::string_view alphabet) {
   if (data.size() > big_number_max_bytes) {
@@ -293,6 +296,10 @@ Result<std::string> base36_encode(ByteView data, bool uppercase) {
 }
 
 Result<Bytes> base36_decode(std::string_view text) { return big_number_decode(text, base36_numbers, base36_table); }
+
+Result<std::string> base62_encode(ByteView data) { return big_number_encode(data, base62_numbers, base62_alphabet); }
+
+Result<Bytes> base62_decode(std::string_view text) { return big_number_decode(text, base62_numbers, base62_table); }
 
 // --------------------------------------------------------------------------- Ascii85
 

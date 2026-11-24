@@ -1,0 +1,13 @@
+--- a/greek.txt
++++ b/greek.txt
+@@ -1,8 +1,9 @@
+ alpha
+-beta
++BETA
+ gamma
+ delta
+ epsilon
+ zeta
+ eta
+ theta
++iota

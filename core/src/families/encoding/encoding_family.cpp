@@ -9,20 +9,22 @@
 //     and bin (the raw bytes). Most also have a Blob reader that decodes
 //     them back, so e.g. base64 -> bin restores the original file.
 //
-//  2. Plain text (`txt`), read into and written from ir::PlainText with a
-//     choice of character encoding, byte order mark and line endings, plus
-//     the PlainText -> Document bridge that lets every document writer accept
-//     plain text.
+//  2. Plain text (`txt`, txt.cpp), read into and written from ir::PlainText
+//     with a choice of character encoding, byte order mark and line endings,
+//     plus the PlainText -> Document bridge that lets every document writer
+//     accept plain text.
 //
 // This file is also the reference for how a family registers itself; see
 // core/README.md for the walkthrough.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
+#include "engine/detect.hpp"
 #include "engine/registry.hpp"
 #include "families/encoding/encoding.hpp"
 #include "families/encoding/simple.hpp"
@@ -72,14 +74,30 @@ Result<std::string> encode_hex(const ir::Blob& blob, const WriteContext& ctx) {
   encoding::HexStyle style;
   style.uppercase = ctx.options.get_bool("uppercase", false);
   style.bytes_per_line = static_cast<std::size_t>(ctx.options.get_int("bytes_per_line", 0, 0, 4096));
-  const std::string separator = ctx.options.get_enum("separator", "none", {"none", "space", "colon"});
-  style.separator = separator == "space" ? " "sv : separator == "colon" ? ":"sv : ""sv;
+  const std::string separator =
+      ctx.options.get_enum("separator", "none", {"none", "space", "colon", "comma", "comma-space", "dash"});
+  style.separator = separator == "space"         ? " "sv
+                    : separator == "colon"       ? ":"sv
+                    : separator == "comma"       ? ","sv
+                    : separator == "comma-space" ? ", "sv
+                    : separator == "dash"        ? "-"sv
+                                                 : ""sv;
+  const std::string prefix = ctx.options.get_enum("prefix", "none", {"none", "0x", "\\x", "%"});
+  style.prefix = prefix == "0x" ? "0x"sv : prefix == "\\x" ? "\\x"sv : prefix == "%" ? "%"sv : ""sv;
   return encoding::hex_text(blob.bytes, style);
 }
 
 Result<std::string> encode_data_uri(const ir::Blob& blob, const WriteContext& ctx) {
   std::string mime = ctx.options.get_string("mime");
-  if (mime.empty()) mime = blob.mime.empty() ? "application/octet-stream" : blob.mime;
+  if (mime.empty() && blob.mime != "application/octet-stream") mime = blob.mime;
+  if (mime.empty() && ctx.registry != nullptr) {
+    // Sniff the content with the registry (a PNG file called "x.bin" is still image/png).
+    if (const auto detection = detect_format(*ctx.registry, blob.bytes, blob.filename);
+        detection && detection->format != nullptr && detection->confidence >= 50) {
+      mime = detection->format->mime;
+    }
+  }
+  if (mime.empty()) mime = "application/octet-stream";
   for (const char c : mime) {
     // A media type is token "/" token with optional parameters; anything
     // that could break out of the URI header is rejected.
@@ -115,96 +133,8 @@ Result<ir::Blob> decode_uue(std::string_view text, const ReadContext&) {
   return blob;
 }
 
-// --------------------------------------------------------------------------- plain text
-
-const std::vector<std::string>& encoding_choices() {
-  static const std::vector<std::string> choices = {"utf-8",    "utf-16le", "utf-16be",    "utf-32le",
-                                                    "utf-32be", "latin1",   "windows-1252"};
-  return choices;
-}
-
-Result<AnyIR> read_txt(ReadContext& ctx) {
-  const std::string requested = ctx.options.get_string("source_encoding", "auto");
-  util::TextEncoding encoding = util::TextEncoding::Utf8;
-  bool had_bom = false;
-  if (requested == "auto") {
-    const util::EncodingGuess guess = util::guess_encoding(ctx.input);
-    encoding = guess.encoding;
-    had_bom = guess.bom_length > 0;
-    if (!guess.confident) {
-      ctx.warn("The text is not valid Unicode; it was read as Windows-1252. Set 'source_encoding' if that is wrong.");
-    }
-  } else {
-    const auto parsed = util::parse_encoding(requested);
-    if (!parsed) return fail(Status::InvalidArgument, "unknown source encoding '{}'", requested);
-    encoding = *parsed;
-    const auto bom = util::detect_bom(ctx.input);
-    had_bom = bom && bom->encoding == encoding;
-  }
-  CVT_TRY(ctx.limits.check_decompressed(static_cast<std::uint64_t>(ctx.input.size()) * 3));
-  util::DecodedText decoded = util::decode_text(ctx.input, encoding);
-  if (decoded.replaced > 0) {
-    ctx.warn(std::to_string(decoded.replaced) + " malformed byte sequence(s) were replaced with U+FFFD.");
-  }
-  ir::PlainText text;
-  text.text = std::move(decoded.text);
-  text.source_encoding = std::string(util::encoding_name(encoding));
-  text.had_bom = had_bom;
-  return text;
-}
-
-Result<Bytes> write_txt(const AnyIR& value, WriteContext& ctx) {
-  const ir::PlainText& text = value.get<ir::PlainText>();
-  const auto encoding = util::parse_encoding(ctx.options.get_string("encoding", "utf-8"));
-  if (!encoding) return fail(Status::InvalidArgument, "unknown text encoding");
-
-  const std::string line_endings = ctx.options.get_enum("line_endings", "keep", {"keep", "lf", "crlf", "cr"});
-  std::string converted;
-  std::string_view content = text.text;
-  if (line_endings != "keep") {
-    converted = util::convert_line_endings(
-        text.text, line_endings == "lf" ? util::LineEnding::Lf
-                                         : line_endings == "crlf" ? util::LineEnding::CrLf : util::LineEnding::Cr);
-    content = converted;
-  }
-  CVT_TRY(ctx.limits.check_output(static_cast<std::uint64_t>(content.size()) * 4 + 4));
-  util::EncodedText encoded = util::encode_text(content, *encoding, ctx.options.get_bool("bom", false));
-  if (encoded.replaced > 0) {
-    ctx.warn(std::to_string(encoded.replaced) + " character(s) cannot be represented in " +
-             std::string(util::encoding_name(*encoding)) + " and were replaced with '?'.");
-  }
-  return std::move(encoded.bytes);
-}
-
-// Plain text becomes one paragraph per block of non-blank lines; single line
-// breaks inside a block are kept as soft breaks.
-Result<AnyIR> plain_text_to_document(AnyIR value, Context& ctx) {
-  const ir::PlainText text = std::move(value).get<ir::PlainText>();
-  ir::Document document;
-  std::string paragraph;
-  const auto flush = [&] {
-    if (paragraph.empty()) return;
-    document.blocks.push_back(ir::Paragraph{{ir::Text{std::move(paragraph)}}});
-    paragraph.clear();
-  };
-  const std::vector<std::string_view> lines = util::split_lines(text.text);
-  for (std::size_t i = 0; i < lines.size(); ++i) {
-    if ((i & 0xFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(lines.size())));
-    const std::string_view line = util::trim_right(lines[i]);
-    if (util::trim(line).empty()) {
-      flush();
-      continue;
-    }
-    if (!paragraph.empty()) paragraph.push_back('\n');
-    paragraph.append(line);
-  }
-  flush();
-  return document;
-}
-
 // --------------------------------------------------------------------------- detection
 
-int sniff_txt(ByteView data, std::string_view /*filename*/) { return util::looks_like_text(data) ? 60 : 0; }
 
 int sniff_hexdump(ByteView data, std::string_view /*filename*/) {
   const std::string_view text = as_chars(data).substr(0, 64);
@@ -234,13 +164,18 @@ int sniff_uue(ByteView data, std::string_view /*filename*/) {
   for (std::size_t i = 6; i < 9; ++i) {
     if (text[i] < '0' || text[i] > '7') return 0;
   }
-  return text[9] == ' ' ? 88 : 0;
+  if (text[9] != ' ') return 0;
+  // xxencode shares the "begin" line; its data lines use lower-case letters,
+  // which uuencode (characters 0x20-0x60) never does.
+  const std::string_view body = as_chars(data).substr(0, 1024);
+  const std::size_t first_line = body.find('\n');
+  if (first_line != std::string_view::npos) {
+    const std::string_view rest = body.substr(first_line + 1);
+    if (std::ranges::any_of(rest.substr(0, rest.find("\nend")), [](char c) { return c >= 'a' && c <= 'z'; })) return 0;
+  }
+  return 88;
 }
 
-int sniff_checksums(ByteView data, std::string_view /*filename*/) {
-  const std::string_view text = as_chars(data).substr(0, 1024);
-  return text.find("\nCRC-32: ") != std::string_view::npos && text.find("\nSHA-256: ") != std::string_view::npos ? 85 : 0;
-}
 
 }  // namespace
 
@@ -285,9 +220,12 @@ void register_encoding_family(Registry& registry) {
       .encode_options = {uppercase_option(),
                          OptionSpec::integer("bytes_per_line", "Bytes per line", 0, 0, 4096,
                                              "Start a new line after this many bytes; 0 writes a single line."),
-                         OptionSpec::choice("separator", "Separator", "none", {"none", "space", "colon"},
-                                            "Character placed between bytes.")},
-      .expansion = 4,
+                         OptionSpec::choice("separator", "Separator", "none",
+                                            {"none", "space", "colon", "comma", "comma-space", "dash"},
+                                            "Character placed between bytes."),
+                         OptionSpec::choice("prefix", "Byte prefix", "none", {"none", "0x", "\\x", "%"},
+                                            "Written before every byte: 0x41, \\x41 or %41.")},
+      .expansion = 8,
   });
   add_binary_encoding(registry, {
       .id = "hexdump", .name = "Hex dump",
@@ -379,60 +317,8 @@ void register_encoding_family(Registry& registry) {
       .expansion = 9,
   });
 
-  // ---- checksums ------------------------------------------------------------------------
-  add_binary_encoding(registry, {
-      .id = "checksums", .name = "Checksum report",
-      .description = "CRC-32, Adler-32, MD5, SHA-1 and SHA-256 of the file.",
-      .extensions = {"txt", "checksums"}, .popularity = 55,
-      .encode = [](const ir::Blob& blob, const WriteContext& ctx) -> Result<std::string> {
-        CVT_TRY(ctx.checkpoint(0.0, "Hashing"));
-        return encoding::checksum_report(blob.bytes, blob.filename, ctx.options.get_bool("uppercase", false));
-      },
-      .encode_options = {uppercase_option()},
-      .expansion = 0,  // fixed-size output
-      .sniff = sniff_checksums,
-  });
-
-  // ---- plain text ---------------------------------------------------------------------------
-  FormatInfo txt;
-  txt.id = "txt";
-  txt.name = "Plain text";
-  txt.description = "Unformatted text in a choice of character encodings.";
-  txt.extensions = {"txt", "text", "log"};
-  txt.mime = "text/plain";
-  txt.popularity = 90;
-  txt.category = Category::Document;
-  txt.sniff = sniff_txt;
-  registry.add_format(std::move(txt));
-
-  std::vector<std::string> source_encodings = {"auto"};
-  source_encodings.insert(source_encodings.end(), encoding_choices().begin(), encoding_choices().end());
-  Codec text_codec;
-  text_codec.format_id = "txt";
-  text_codec.kind = Kind::PlainText;
-  text_codec.read = read_txt;
-  text_codec.write = write_txt;
-  text_codec.read_options = {OptionSpec::choice(
-      "source_encoding", "Source encoding", "auto", std::move(source_encodings),
-      "Character encoding of the input; 'auto' detects Unicode and falls back to Windows-1252.")};
-  text_codec.write_options = {
-      OptionSpec::choice("encoding", "Encoding", "utf-8", encoding_choices(), "Character encoding of the output."),
-      OptionSpec::boolean("bom", "Byte order mark", false, "Start the output with a Unicode byte order mark."),
-      OptionSpec::choice("line_endings", "Line endings", "keep", {"keep", "lf", "crlf", "cr"},
-                         "Convert line endings: lf (Unix), crlf (Windows), cr (classic Mac), or keep them as they are."),
-  };
-  registry.add_codec(std::move(text_codec));
-
-  // ---- bridges --------------------------------------------------------------------------------
-  Bridge to_document;
-  to_document.from = Kind::PlainText;
-  to_document.to = Kind::Document;
-  to_document.fn = plain_text_to_document;
-  to_document.cost = 15;
-  to_document.label = "split plain text into paragraphs";
-  registry.add_bridge(std::move(to_document));
-
   // ---- further encodings, one group per source file ---------------------------------------------
+  encoding::register_txt(registry);
   encoding::register_base_n(registry);
   encoding::register_byte_lists(registry);
   encoding::register_mail_encodings(registry);
@@ -441,6 +327,13 @@ void register_encoding_family(Registry& registry) {
   encoding::register_text_transforms(registry);
   encoding::register_punycode(registry);
   encoding::register_morse_nato(registry);
+  encoding::register_hashes(registry);
+  encoding::register_unicode(registry);
+  encoding::register_charsets(registry);
+  encoding::register_more_bases(registry);
+  encoding::register_firmware_hex(registry);
+  encoding::register_text_tools(registry);
+  encoding::register_byte_views(registry);
 }
 
 }  // namespace cvt

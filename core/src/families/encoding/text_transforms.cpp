@@ -104,10 +104,17 @@ UnicodeEscapeStyle escape_style_of(const Options& options) {
 // --------------------------------------------------------------------------- percent-encoded text
 
 std::string url_text_encode(std::string_view text, bool component) {
+  return url_text_encode(text, component ? UrlStyle::Component : UrlStyle::Uri);
+}
+
+std::string url_text_encode(std::string_view text, UrlStyle style) {
   std::string out;
   out.reserve(text.size() * 3);
   for (const char c : text) {
-    if (is_url_unreserved(c) || (!component && is_url_reserved(c))) {
+    if (style == UrlStyle::Form && c == ' ') {
+      out.push_back('+');
+    } else if (is_url_unreserved(c) || (style == UrlStyle::Uri && is_url_reserved(c)) ||
+               (style == UrlStyle::Path && c == '/')) {
       out.push_back(c);
     } else {
       out.push_back('%');
@@ -390,14 +397,25 @@ void register_text_transforms(Registry& registry) {
       .extensions = {"urltext"}, .popularity = 25,
       .encode = [](std::string_view text, const WriteContext& ctx) -> Result<std::string> {
         CVT_TRY(detail::check_expansion(ctx, text.size(), 3));
-        return url_text_encode(text, ctx.options.get_bool("component", true));
+        UrlStyle style = ctx.options.get_bool("component", true) ? UrlStyle::Component : UrlStyle::Uri;
+        if (ctx.options.was_set("mode")) {
+          const std::string mode = ctx.options.get_enum("mode", "component", {"component", "uri", "path", "form"});
+          style = mode == "uri" ? UrlStyle::Uri : mode == "path" ? UrlStyle::Path : mode == "form" ? UrlStyle::Form
+                                                                                                    : UrlStyle::Component;
+        }
+        return url_text_encode(text, style);
       },
       .decode = [](std::string_view text, const ReadContext& ctx) {
         return url_text_decode(text, ctx.options.get_bool("plus_as_space", false));
       },
-      .encode_options = {OptionSpec::boolean(
+      .encode_options = {OptionSpec::choice("mode", "Style", "component", {"component", "uri", "path", "form"},
+                                            "component: escape everything but A-Z a-z 0-9 - . _ ~ (a query value); "
+                                            "uri: keep the characters that structure a URL; path: also keep '/'; "
+                                            "form: like component, with spaces as '+' (HTML forms)."),
+                         OptionSpec::boolean(
           "component", "Encode reserved characters", true,
-          "Also escape the characters that structure a URL, such as / ? & and =; turn off to encode a whole URL.")},
+          "Also escape the characters that structure a URL, such as / ? & and =; turn off to encode a whole URL.")
+                             .advanced()},
       .decode_options = {OptionSpec::boolean("plus_as_space", "+ means space", false,
                                              "Treat '+' in the input as a space (form encoding).")},
   });
@@ -440,6 +458,7 @@ void register_text_transforms(Registry& registry) {
       .extensions = {"rot13"}, .popularity = 15,
       .encode = [](std::string_view text, const WriteContext&) -> Result<std::string> { return rot13(text); },
       .decode = [](std::string_view text, const ReadContext&) -> Result<std::string> { return rot13(text); },
+      .expansion = 1,
   });
   add_text_transform(registry, {
       .id = "rot47", .name = "ROT47 text",
@@ -447,6 +466,7 @@ void register_text_transforms(Registry& registry) {
       .extensions = {"rot47"}, .popularity = 8,
       .encode = [](std::string_view text, const WriteContext&) -> Result<std::string> { return rot47(text); },
       .decode = [](std::string_view text, const ReadContext&) -> Result<std::string> { return rot47(text); },
+      .expansion = 1,
   });
 }
 

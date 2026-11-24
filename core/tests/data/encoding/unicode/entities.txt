@@ -1,0 +1,34 @@
+&amp;	0026
+&amp	0026
+&ampx	0026 0078
+&notit;	00AC 0069 0074 003B
+&notin;	2209
+&not	00AC
+&copy2024	00A9 0032 0030 0032 0034
+&NotEqualTilde;	2242 0338
+&nbsp;x	00A0 0078
+&lt;b&gt;	003C 0062 003E
+&#x1F600;	1F600
+&#128512;	1F600
+&#38;	0026
+&#x26;	0026
+&Aacute;&aacute	00C1 00E1
+&unknown;	0026 0075 006E 006B 006E 006F 0077 006E 003B
+& amp;	0026 0020 0061 006D 0070 003B
+&#xZZ;	0026 0023 0078 005A 005A 003B
+&;	0026 003B
+&ThickSpace;	205F 200A
+&fjlig;	0066 006A
+&bne;	003D 20E5
+&acE;	223E 0333
+&Uuml;ber	00DC 0062 0065 0072
+&quot;q&quot;	0022 0071 0022
+&lt&gt	003C 003E
+&LT;&GT;	003C 003E
+a&b&c	0061 0026 0062 0026 0063
+&eacute;t&eacute;	00E9 0074 00E9
+&rarr;&larr;&hArr;	2192 2190 21D4
+&frac12;&frac34;	00BD 00BE
+&euro;100	20AC 0031 0030 0030
+&sup2;&sup3;	00B2 00B3
+&hellip;	2026
