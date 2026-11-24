@@ -1,0 +1,8 @@
+{
+  "name": "libaom",
+  "version": "3.15.3",
+  "license": "BSD-2-Clause AND AOMedia-Patent-License-1.0 (third_party/fastfeat: BSD-3-Clause; third_party/vector: MIT)",
+  "url": "https://aomedia.googlesource.com/aom",
+  "commit": "b141d9c45db236335351c8a4b2a14b3ade27c937",
+  "files_modified": true
+}
