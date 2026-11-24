@@ -74,3 +74,6 @@ __pycache__/
 
 # Release and CI staging (tools/ci/*)
 /release/
+
+# Test fixtures are never secrets: keep them even when they match a pattern above
+!core/tests/data/**
