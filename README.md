@@ -34,7 +34,7 @@ without ever leaving your computer or phone.
 | Windows 10+, Linux (X11/XWayland), macOS 13.3+ | C++ with an in-house UI toolkit | [`apps/desktop`](apps/desktop) | [![CI](https://github.com/J7779/convertible/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/J7779/convertible/actions/workflows/ci.yml) |
 | iPhone and iPad (iOS 16.4+) | SwiftUI | [`apps/ios`](apps/ios) | built and tested locally (no CI job: signing needs the owner's certificate) |
 
-Sizes and tests, measured on this version (1,485 formats: 699 readable, 514 writable):
+Sizes and tests, measured on this version (1,450 formats: 694 readable, 514 writable):
 
 | Build | Size | App tests |
 | --- | --- | --- |
@@ -75,25 +75,25 @@ the other encodings.
 
 | Category | Known | Read | Write | Most common it converts |
 | --- | ---: | ---: | ---: | --- |
-| Images | 128 | 92 | 59 | jpg, png, gif, webp, heic, avif, tiff, bmp |
+| Images | 126 | 87 | 59 | jpg, png, gif, webp, heic, avif, tiff, bmp |
 | Vector graphics | 41 | 16 | 11 | svg, dxf, emf, dwg, eps, wmf, lottie, vectordrawable |
-| Audio | 104 | 34 | 25 | mp3, wav, flac, m4a, ogg, aac, opus, alac |
+| Audio | 101 | 33 | 24 | mp3, wav, flac, m4a, ogg, aac, opus, alac |
 | Video | 68 | 26 | 17 | mp4, mkv, mov, webm, avi, mpegts, mpg, wmv |
-| Documents | 91 | 50 | 30 | pdf, docx, html, txt, md, doc, eml, odt |
-| E-books | 16 | 11 | 4 | epub, mobi, azw3, cbr, fb2, fbz, palmdoc, cb7 |
-| Spreadsheets and tables | 37 | 23 | 18 | csv, xlsx, tsv, xls, ods, csv-semicolon, xlsm, dbf |
-| Presentations | 19 | 10 | 2 | pptx, ppt, odp, ppsx, potx, pptm, fodp, otp |
-| Data and configuration | 193 | 108 | 87 | json, yaml, xml, toml, sqlite, ini, m3u, m3u8 |
-| Archives and compression | 124 | 48 | 35 | zip, 7z, gz, rar, tar, tar.gz, tar.xz, xz |
+| Documents | 88 | 50 | 30 | pdf, docx, html, txt, md, doc, eml, odt |
+| E-books | 18 | 13 | 5 | epub, mobi, azw3, cbz, cbr, fb2, chm, fbz |
+| Spreadsheets and tables | 34 | 21 | 17 | csv, xlsx, tsv, xls, ods, csv-semicolon, xlsm, dbf |
+| Presentations | 17 | 10 | 2 | pptx, ppt, odp, ppsx, potx, pptm, fodp, otp |
+| Data and configuration | 183 | 111 | 87 | json, yaml, xml, toml, sqlite, ini, m3u, m3u8 |
+| Archives and compression | 120 | 46 | 35 | zip, 7z, gz, rar, tar, tar.gz, extract, tar.xz |
 | Fonts | 22 | 18 | 15 | ttf, otf, woff2, woff, ttc, eot, pfb, afm |
-| Subtitles | 25 | 21 | 20 | srt, vtt, ass, lrc, ttml, ssa, dfxp, microdvd |
-| 3D models | 77 | 29 | 19 | obj, stl, glb, gltf, 3mf, fbx, ply, dae |
+| Subtitles | 24 | 21 | 20 | srt, vtt, ass, lrc, ttml, ssa, dfxp, microdvd |
+| 3D models | 77 | 30 | 20 | obj, stl, glb, gltf, 3mf, fbx, ply, dae |
 | Geospatial | 52 | 30 | 25 | geojson, gpx, kml, shp.zip, kmz, fit, geocsv, tcx |
 | Calendars and contacts | 16 | 11 | 10 | ics, vcf, google-contacts-csv, google-calendar-csv, ldif, outlook-contacts-csv, outlook-calendar-csv, vcs |
-| Source code | 205 | 105 | 32 | js, py, css, ts, c, cpp, java, cs |
+| Source code | 201 | 104 | 32 | js, py, css, ts, c, cpp, java, cs |
 | Encodings and checksums | 106 | 67 | 105 | base64, hex, checksums, sha256, data-uri, hexdump, md5, base64url |
-| Other | 161 | 0 | 0 | detected only, for now |
-| **Total** | **1485** | **699** | **514** | |
+| Other | 156 | 0 | 0 | detected only, for now |
+| **Total** | **1450** | **694** | **514** | |
 
 <!-- formats:end -->
 
