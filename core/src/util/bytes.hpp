@@ -58,6 +58,23 @@ inline void append(Bytes& out, std::string_view text) { append(out, as_bytes(tex
 
 namespace util {
 
+// std::memcpy & co. with a null pointer are undefined behaviour even for a
+// zero length (glibc declares them nonnull; UBSan reports it), and an empty
+// std::vector or span has data() == nullptr. Our code calls these instead:
+// identical for n > 0, nothing at all for n == 0.
+inline void* copy_bytes(void* destination, const void* source, std::size_t n) noexcept {
+  return n == 0 ? destination : std::memcpy(destination, source, n);
+}
+inline void* move_bytes(void* destination, const void* source, std::size_t n) noexcept {
+  return n == 0 ? destination : std::memmove(destination, source, n);
+}
+inline void* fill_bytes(void* destination, int value, std::size_t n) noexcept {
+  return n == 0 ? destination : std::memset(destination, value, n);
+}
+[[nodiscard]] inline int compare_bytes(const void* a, const void* b, std::size_t n) noexcept {
+  return n == 0 ? 0 : std::memcmp(a, b, n);
+}
+
 /// Bounds-checked sequential reader over a byte span.
 ///
 /// Reads never throw and never run past the end: a failed read returns zero
@@ -156,7 +173,7 @@ class ByteReader {
   }
   /// True when the unconsumed input begins with `magic` (nothing is consumed).
   [[nodiscard]] bool starts_with(std::string_view magic) const noexcept {
-    return remaining() >= magic.size() && std::memcmp(data_.data() + pos_, magic.data(), magic.size()) == 0;
+    return remaining() >= magic.size() && compare_bytes(data_.data() + pos_, magic.data(), magic.size()) == 0;
   }
   /// Consume `magic` if present.
   bool consume(std::string_view magic) noexcept {

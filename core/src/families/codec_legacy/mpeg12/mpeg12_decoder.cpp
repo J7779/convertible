@@ -22,6 +22,7 @@
 #include <optional>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/codec_legacy/common/bitstream.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
 #include "families/codec_legacy/common/dct.hpp"
@@ -498,10 +499,10 @@ class Mpeg12Decoder final : public codec::VideoDecoder {
             std::uint8_t* d = cur.plane[p].data() + static_cast<std::ptrdiff_t>(my * bh + y) * cur.stride[p] + mx * bw;
             if (ref >= 0 && ref != current_) {
               const Picture& r = pictures_[static_cast<std::size_t>(ref)];
-              std::memcpy(d, r.plane[p].data() + static_cast<std::ptrdiff_t>(my * bh + y) * r.stride[p] + mx * bw,
+              ::cvt::util::copy_bytes(d, r.plane[p].data() + static_cast<std::ptrdiff_t>(my * bh + y) * r.stride[p] + mx * bw,
                           static_cast<std::size_t>(bw));
             } else {
-              std::memset(d, p == 0 ? 16 : 128, static_cast<std::size_t>(bw));
+              ::cvt::util::fill_bytes(d, p == 0 ? 16 : 128, static_cast<std::size_t>(bw));
             }
           }
         }
@@ -559,7 +560,7 @@ class Mpeg12Decoder final : public codec::VideoDecoder {
       const std::size_t row = ir::plane_row_bytes(format, p, width_);
       const std::size_t rows = ir::plane_height(format, p, height_);
       for (std::size_t y = 0; y < rows; ++y) {
-        std::memcpy(frame.planes[p].data.data() + y * frame.planes[p].stride,
+        ::cvt::util::copy_bytes(frame.planes[p].data.data() + y * frame.planes[p].stride,
                     pic.plane[p].data() + y * static_cast<std::size_t>(pic.stride[p]), row);
       }
     }

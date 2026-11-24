@@ -17,6 +17,7 @@
 #include <string_view>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image_modern/exr_internal.hpp"
 
 namespace cvt::image_modern::exr {
@@ -498,7 +499,7 @@ Result<Bytes> dwa_decompress(const ChunkLayout& layout, ByteView packed) {
       case Scheme::Unknown: {
         const std::size_t row_bytes = w * ps;
         for (std::size_t row = 0; row < h; ++row) {
-          std::memcpy(out.data() + targets[c].rows[row], unknown.data() + unknown_pos, row_bytes);
+          ::cvt::util::copy_bytes(out.data() + targets[c].rows[row], unknown.data() + unknown_pos, row_bytes);
           unknown_pos += row_bytes;
         }
         break;

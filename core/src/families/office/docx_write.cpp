@@ -815,7 +815,7 @@ Result<Bytes> DocxWriter::write() {
       "<w:compat><w:compatSetting w:name=\"compatibilityMode\" w:uri=\"http://schemas.microsoft.com/office/word\" "
       "w:val=\"15\"/></w:compat></w:settings>";
 
-  int level = ctx_.options.get_int("compression_level", 9, 0, 9);
+  int level = static_cast<int>(ctx_.options.get_int("compression_level", 9, 0, 9));
   if (!ctx_.options.was_set("compression_level")) level = 9;
   util::ZipEntryOptions entry;
   entry.level = level;

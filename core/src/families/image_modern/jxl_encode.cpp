@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/standard_options.hpp"
 #include "families/image/common.hpp"
 #include "families/image/image_ops.hpp"
@@ -256,7 +257,7 @@ Result<Bytes> write(const ir::Image& source, WriteContext& ctx) {
   }
   CVT_TRY(ctx.checkpoint(1.0, "Encoding JPEG XL"));
   Bytes result(used);
-  std::memcpy(result.data(), out.data(), used);
+  ::cvt::util::copy_bytes(result.data(), out.data(), used);
   return result;
 }
 

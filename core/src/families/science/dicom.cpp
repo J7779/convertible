@@ -18,6 +18,7 @@
 #include <format>
 #include <map>
 
+#include "util/bytes.hpp"
 #include "engine/standard_options.hpp"
 #include "families/science/imaging.hpp"
 #include "families/science/science.hpp"
@@ -461,14 +462,14 @@ Result<Bytes> rle_decode_frame(ByteView frame, std::size_t segment_size, std::si
         const std::size_t copy = static_cast<std::size_t>(n) + 1;
         if (at + copy > seg.size()) return fail(Status::Decode, "RLE literal run is truncated");
         const std::size_t take = std::min(copy, segment_size - produced);
-        std::memcpy(dst + produced, seg.data() + at, take);
+        ::cvt::util::copy_bytes(dst + produced, seg.data() + at, take);
         produced += take;
         at += copy;
       } else if (n != -128) {
         const std::size_t repeat = static_cast<std::size_t>(1 - n);
         if (at >= seg.size()) return fail(Status::Decode, "RLE replicate run is truncated");
         const std::size_t take = std::min(repeat, segment_size - produced);
-        std::memset(dst + produced, static_cast<int>(seg[at]), take);
+        ::cvt::util::fill_bytes(dst + produced, static_cast<int>(seg[at]), take);
         produced += take;
         ++at;
       }

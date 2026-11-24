@@ -13,6 +13,7 @@
 #include <optional>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image_modern/raw_readers.hpp"
 
 namespace cvt::image_modern::raw::detail {
@@ -132,7 +133,7 @@ constexpr std::uint8_t preview_uuid[16] = {0xea, 0xf4, 0x2b, 0x5e, 0x1c, 0x98, 0
                                            0xb9, 0xfb, 0xb7, 0xdc, 0x40, 0x6e, 0x4d, 0x16};
 
 bool is_uuid(const Box& b, const std::uint8_t (&id)[16]) {
-  return b.uuid.size() == 16 && std::memcmp(b.uuid.data(), id, 16) == 0;
+  return b.uuid.size() == 16 && ::cvt::util::compare_bytes(b.uuid.data(), id, 16) == 0;
 }
 
 // ---------------------------------------------------------------------------- CIFF

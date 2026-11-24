@@ -337,7 +337,7 @@ Result<void> subset_font(ir::Font& font, const SubsetOptions& options, const Con
     std::vector<Bytes> glyphs;
     glyphs.reserve(order.size());
     for (std::size_t i = 0; i < order.size(); ++i) {
-      if ((i & 255) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / order.size(), "Subsetting"));
+      if ((i & 255) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(order.size()), "Subsetting"));
       if (!keep_out[i]) {
         glyphs.emplace_back();
         continue;

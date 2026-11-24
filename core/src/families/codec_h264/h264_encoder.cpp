@@ -12,6 +12,7 @@
 #include <numeric>
 #include <utility>
 
+#include "util/bytes.hpp"
 #include "codec/colorspace.hpp"
 #include "families/codec_h264/h264_bitstream.hpp"
 #include "families/codec_h264/h264_codec.hpp"
@@ -670,7 +671,7 @@ Result<void> H264Encoder::send_frame(const codec::VideoFrame& frame) {
     const std::size_t rows = ir::plane_height(ir::PixelFormat::I420, p, e.params.height);
     const std::size_t row_bytes = ir::plane_row_bytes(ir::PixelFormat::I420, p, e.params.width);
     for (std::size_t r = 0; r < rows; ++r) {
-      std::memcpy(picture.planes[p] + r * row_bytes, source->planes[p].data.data() + r * source->planes[p].stride,
+      ::cvt::util::copy_bytes(picture.planes[p] + r * row_bytes, source->planes[p].data.data() + r * source->planes[p].stride,
                   row_bytes);
     }
     offset += sizes[p];

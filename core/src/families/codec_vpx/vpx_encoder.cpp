@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 
+#include "util/bytes.hpp"
 #include "codec/codec.hpp"
 #include "codec/colorspace.hpp"
 #include "families/codec_vpx/vpx_bitstream.hpp"
@@ -293,13 +294,13 @@ class VpxEncoder final : public codec::VideoEncoder {
         const std::uint8_t* in = frame.planes[p].data.data() + y * frame.planes[p].stride;
         std::uint8_t* out = image_->planes[p] + static_cast<std::ptrdiff_t>(y) * image_->stride[p];
         if (!wide) {
-          std::memcpy(out, in, cols);
+          ::cvt::util::copy_bytes(out, in, cols);
           continue;
         }
         for (std::size_t x = 0; x < cols; ++x) {
           const auto value = static_cast<std::uint16_t>(
               std::min<std::uint32_t>(in[x * 2] | (std::uint32_t{in[x * 2 + 1]} << 8), 1023u));
-          std::memcpy(out + x * 2, &value, 2);  // libvpx works in host order (little-endian)
+          ::cvt::util::copy_bytes(out + x * 2, &value, 2);  // libvpx works in host order (little-endian)
         }
       }
     }

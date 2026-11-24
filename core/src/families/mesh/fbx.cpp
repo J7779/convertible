@@ -749,7 +749,7 @@ Result<AnyIR> build_scene(const FbxNode& root, ReadContext& ctx) {
   std::size_t done = 0;
   for (const FbxNode& model : objects->children) {
     if (model.name != "Model") continue;
-    CVT_TRY(ctx.checkpoint(0.5 + 0.4 * static_cast<double>(++done) / (objects->children.size() + 1.0)));
+    CVT_TRY(ctx.checkpoint(0.5 + 0.4 * static_cast<double>(++done) / (static_cast<double>(objects->children.size()) + 1.0)));
     const std::int64_t id = object_id(model);
     const FbxNode* geometry = nullptr;
     std::vector<std::int64_t> material_ids;
@@ -935,7 +935,7 @@ Result<Bytes> write_fbx(const AnyIR& value, WriteContext& ctx) {
   std::map<std::string, std::size_t> material_index;
   for (std::size_t i = 0; i < mesh.materials.size(); ++i) material_index.emplace(mesh.materials[i].name, i);
   for (std::size_t p = 0; p < parts.size(); ++p) {
-    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / parts.size()));
+    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / static_cast<double>(parts.size())));
     ir::Mesh& part = parts[p].mesh;
     ir::Vec3 t{0, 0, 0}, r{0, 0, 0}, s{1, 1, 1};
     if (!parts[p].transform.is_identity() && !decompose(parts[p].transform, t, r, s)) {

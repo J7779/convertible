@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image_modern/jp2_codec.hpp"
 #include "openjp2/openjpeg.h"
 
@@ -84,11 +85,11 @@ OPJ_SIZE_T read_input(void* buffer, OPJ_SIZE_T count, void* user) {
   auto* in = static_cast<InputStream*>(user);
   if (in->cancelled || in->position >= in->data.size()) return static_cast<OPJ_SIZE_T>(-1);
   const std::size_t n = std::min<std::size_t>(count, in->data.size() - in->position);
-  std::memcpy(buffer, in->data.data() + in->position, n);
+  ::cvt::util::copy_bytes(buffer, in->data.data() + in->position, n);
   in->position += n;
   // Tile data is read tile by tile between decoding steps, so the read
   // position is a fair measure of progress and a place to notice a cancel.
-  if (in->ctx != nullptr && !in->ctx->checkpoint(0.95 * static_cast<double>(in->position) / in->data.size())) {
+  if (in->ctx != nullptr && !in->ctx->checkpoint(0.95 * static_cast<double>(in->position) / static_cast<double>(in->data.size()))) {
     in->cancelled = true;
   }
   return n;
@@ -133,7 +134,7 @@ OPJ_SIZE_T write_output(void* buffer, OPJ_SIZE_T count, void* user) {
     return static_cast<OPJ_SIZE_T>(-1);
   }
   if (end > out->data.size()) out->data.resize(static_cast<std::size_t>(end));
-  std::memcpy(out->data.data() + out->position, buffer, count);
+  ::cvt::util::copy_bytes(out->data.data() + out->position, buffer, count);
   out->position = static_cast<std::size_t>(end);
   return count;
 }
@@ -286,7 +287,7 @@ Result<Bytes> encode_codestream(const EncodeParams& params, const Context& ctx) 
 
   std::vector<opj_image_cmptparm_t> parts(params.components);
   for (opj_image_cmptparm_t& c : parts) {
-    std::memset(&c, 0, sizeof c);
+    ::cvt::util::fill_bytes(&c, 0, sizeof c);
     c.dx = 1;
     c.dy = 1;
     c.w = params.width;

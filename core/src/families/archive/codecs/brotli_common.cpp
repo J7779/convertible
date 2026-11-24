@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 
+#include "util/bytes.hpp"
 #include "families/archive/codecs/brotli_internal.hpp"
 
 namespace cvt::compression::detail::brotli {
@@ -117,7 +118,7 @@ const std::array<Transform, transform_count> transforms = {{
 std::size_t apply_transform(std::uint8_t* out, const std::uint8_t* word, int length, int id) noexcept {
   const Transform& tr = transforms[static_cast<std::size_t>(id)];
   std::size_t n = 0;
-  std::memcpy(out, tr.prefix, tr.prefix_size);
+  ::cvt::util::copy_bytes(out, tr.prefix, tr.prefix_size);
   n += tr.prefix_size;
   int skip = 0;
   int keep = length;
@@ -127,7 +128,7 @@ std::size_t apply_transform(std::uint8_t* out, const std::uint8_t* word, int len
   } else if (tr.type >= OmitLast1 && tr.type <= OmitLast1 + 8) {
     keep = std::max(0, length - tr.type);
   }
-  if (keep > 0) std::memcpy(out + n, word + skip, static_cast<std::size_t>(keep));
+  if (keep > 0) ::cvt::util::copy_bytes(out + n, word + skip, static_cast<std::size_t>(keep));
   if (tr.type == UppercaseFirst && keep > 0) {
     (void)ferment(out + n, keep);
   } else if (tr.type == UppercaseAll) {
@@ -135,7 +136,7 @@ std::size_t apply_transform(std::uint8_t* out, const std::uint8_t* word, int len
     while (at < keep) at += ferment(out + n + static_cast<std::size_t>(at), keep - at);
   }
   n += static_cast<std::size_t>(keep);
-  std::memcpy(out + n, tr.suffix, tr.suffix_size);
+  ::cvt::util::copy_bytes(out + n, tr.suffix, tr.suffix_size);
   return n + tr.suffix_size;
 }
 

@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/image_api.hpp"
 #include "families/vector/metafile_internal.hpp"
 
@@ -255,7 +256,7 @@ Result<FramePtr> decode_dib(const DibRequest& request, const Context& ctx, Pixel
   const auto put = [&](std::uint32_t x, std::uint32_t stored_row, std::array<std::uint8_t, 4> c) {
     const std::uint32_t y = top_down ? stored_row : height - 1 - stored_row;
     const std::size_t at = frame->offset(x, y);
-    std::memcpy(frame->rgba.data() + at, c.data(), 4);
+    ::cvt::util::copy_bytes(frame->rgba.data() + at, c.data(), 4);
   };
   const auto lookup = [&](std::uint32_t index) -> std::array<std::uint8_t, 4> {
     if (index < table.size()) return table[index];
@@ -361,7 +362,7 @@ FramePtr crop_frame(const FramePtr& frame, std::int64_t x, std::int64_t y, std::
   for (std::int64_t row = y0; row < y1; ++row) {
     const std::size_t src = frame->offset(static_cast<std::uint32_t>(x0), static_cast<std::uint32_t>(row));
     const std::size_t dst = out->offset(0, static_cast<std::uint32_t>(row - y0));
-    std::memcpy(out->rgba.data() + dst, frame->rgba.data() + src, static_cast<std::size_t>(x1 - x0) * 4);
+    ::cvt::util::copy_bytes(out->rgba.data() + dst, frame->rgba.data() + src, static_cast<std::size_t>(x1 - x0) * 4);
   }
   return out;
 }

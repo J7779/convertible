@@ -66,7 +66,7 @@ ByteView riff_payload(ByteView input) {
 void read_metadata(const WebPDemuxer* demux, ir::Image& image) {
   const auto chunk = [&](const char* fourcc) -> ByteView {
     WebPChunkIterator iter;
-    std::memset(&iter, 0, sizeof iter);
+    ::cvt::util::fill_bytes(&iter, 0, sizeof iter);
     if (WebPDemuxGetChunk(demux, fourcc, 1, &iter) == 0) return {};
     const ByteView bytes(reinterpret_cast<const std::byte*>(iter.chunk.bytes), iter.chunk.size);
     WebPDemuxReleaseChunkIterator(&iter);
@@ -145,7 +145,7 @@ Result<void> decode_animation(ReadContext& ctx, ByteView data, ir::Image& image)
       return fail(Status::Decode, "frame {} of the WebP animation is corrupt or truncated", index + 1);
     }
     CVT_TRY_ASSIGN(ir::Frame frame, image::new_frame(ctx, width, height, {0, 0, 0, 0}));
-    std::memcpy(frame.rgba.data(), pixels, frame.rgba.size());
+    ::cvt::util::copy_bytes(frame.rgba.data(), pixels, frame.rgba.size());
     // Timestamps are the end times of the frames.
     frame.delay_ms = timestamp > previous_timestamp ? static_cast<std::uint32_t>(timestamp - previous_timestamp) : 0;
     previous_timestamp = timestamp;

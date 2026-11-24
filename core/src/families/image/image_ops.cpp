@@ -1,5 +1,6 @@
 // Convertible core - image family: the shared raster toolbox.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/image/image_ops.hpp"
 
 #include <algorithm>
@@ -1235,7 +1236,7 @@ ir::Frame Quantized::to_frame() const {
   frame.rgba.resize(indices.size() * 4);
   for (std::size_t i = 0; i < indices.size(); ++i) {
     const Rgba c = indices[i] < palette.size() ? palette[indices[i]] : Rgba{0, 0, 0, 0};
-    std::memcpy(frame.rgba.data() + i * 4, c.data(), 4);
+    ::cvt::util::copy_bytes(frame.rgba.data() + i * 4, c.data(), 4);
   }
   return frame;
 }

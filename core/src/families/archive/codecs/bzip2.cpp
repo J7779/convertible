@@ -13,6 +13,7 @@
 #include <numeric>
 #include <optional>
 
+#include "util/bytes.hpp"
 #include "families/archive/checksums.hpp"
 #include "families/archive/codec_impl.hpp"
 #include "families/archive/codecs/bitio.hpp"
@@ -199,7 +200,7 @@ class Bzip2Decoder {
       const int index = sym - 1;
       if (index >= in_use) return fail(Status::Decode, "bzip2 symbol is out of range");
       const std::uint8_t v = order[static_cast<std::size_t>(index)];
-      std::memmove(order.data() + 1, order.data(), static_cast<std::size_t>(index));
+      ::cvt::util::move_bytes(order.data() + 1, order.data(), static_cast<std::size_t>(index));
       order[0] = v;
       if (n >= max_block) return fail(Status::Decode, "bzip2 block is larger than its declared size");
       const std::uint8_t byte = seq_to_unseq[v];

@@ -65,7 +65,7 @@ struct Canvas {
     return frame.planes[0].data.data() + static_cast<std::size_t>(y) * frame.planes[0].stride + static_cast<std::size_t>(x) * 4;
   }
   void set(std::uint32_t x, std::uint32_t y, const Rgba& c) {
-    if (x < frame.width && y < frame.height) std::memcpy(px(x, y), c.data(), 4);
+    if (x < frame.width && y < frame.height) ::cvt::util::copy_bytes(px(x, y), c.data(), 4);
   }
 };
 
@@ -240,13 +240,13 @@ class QtrleEncoder final : public SimpleEncoder {
     const auto row = [&](const std::vector<std::uint8_t>& image, std::uint32_t y) { return image.data() + static_cast<std::size_t>(y) * w * 4; };
     std::vector<std::uint8_t> current(static_cast<std::size_t>(w) * h * 4);
     for (std::uint32_t y = 0; y < h; ++y) {
-      std::memcpy(current.data() + static_cast<std::size_t>(y) * w * 4, rgba.planes[0].data.data() + y * rgba.planes[0].stride, static_cast<std::size_t>(w) * 4);
+      ::cvt::util::copy_bytes(current.data() + static_cast<std::size_t>(y) * w * 4, rgba.planes[0].data.data() + y * rgba.planes[0].stride, static_cast<std::size_t>(w) * 4);
     }
     std::uint32_t first = 0;
     std::uint32_t last = h;  // exclusive
     if (!keyframe) {
-      while (first < h && std::memcmp(row(current, first), row(previous_, first), static_cast<std::size_t>(w) * 4) == 0) ++first;
-      while (last > first && std::memcmp(row(current, last - 1), row(previous_, last - 1), static_cast<std::size_t>(w) * 4) == 0) --last;
+      while (first < h && ::cvt::util::compare_bytes(row(current, first), row(previous_, first), static_cast<std::size_t>(w) * 4) == 0) ++first;
+      while (last > first && ::cvt::util::compare_bytes(row(current, last - 1), row(previous_, last - 1), static_cast<std::size_t>(w) * 4) == 0) --last;
     }
     util::ByteWriter out;
     if (first == last) {
@@ -272,7 +272,7 @@ class QtrleEncoder final : public SimpleEncoder {
       // Leading skip.
       std::uint32_t skip = 0;
       if (old != nullptr) {
-        while (x + skip < w && std::memcmp(cur + (x + skip) * 4, old + (x + skip) * 4, 4) == 0) ++skip;
+        while (x + skip < w && ::cvt::util::compare_bytes(cur + (x + skip) * 4, old + (x + skip) * 4, 4) == 0) ++skip;
       }
       std::uint32_t pending_skip = skip;
       x += skip;
@@ -287,7 +287,7 @@ class QtrleEncoder final : public SimpleEncoder {
         // Unchanged pixels: skip code.
         if (old != nullptr) {
           std::uint32_t same = 0;
-          while (x + same < w && std::memcmp(cur + (x + same) * 4, old + (x + same) * 4, 4) == 0) ++same;
+          while (x + same < w && ::cvt::util::compare_bytes(cur + (x + same) * 4, old + (x + same) * 4, 4) == 0) ++same;
           if (same >= 2 || (same > 0 && x + same == w)) {
             if (x + same == w) break;  // the rest of the line is unchanged
             std::uint32_t s = same;
@@ -302,7 +302,7 @@ class QtrleEncoder final : public SimpleEncoder {
         }
         // Run of identical pixels.
         std::uint32_t run = 1;
-        while (x + run < w && run < 128 && std::memcmp(cur + x * 4, cur + (x + run) * 4, 4) == 0) ++run;
+        while (x + run < w && run < 128 && ::cvt::util::compare_bytes(cur + x * 4, cur + (x + run) * 4, 4) == 0) ++run;
         if (run >= 3) {
           out.u8(static_cast<std::uint8_t>(static_cast<std::int8_t>(-static_cast<int>(run))));
           pixel(cur + x * 4, out);
@@ -313,9 +313,9 @@ class QtrleEncoder final : public SimpleEncoder {
         std::uint32_t count = 0;
         while (x + count < w && count < 127) {
           const std::uint8_t* p = cur + (x + count) * 4;
-          if (x + count + 2 < w && std::memcmp(p, p + 4, 4) == 0 && std::memcmp(p, p + 8, 4) == 0) break;
-          if (old != nullptr && x + count + 1 < w && std::memcmp(p, old + (x + count) * 4, 4) == 0 &&
-              std::memcmp(p + 4, old + (x + count + 1) * 4, 4) == 0) {
+          if (x + count + 2 < w && ::cvt::util::compare_bytes(p, p + 4, 4) == 0 && ::cvt::util::compare_bytes(p, p + 8, 4) == 0) break;
+          if (old != nullptr && x + count + 1 < w && ::cvt::util::compare_bytes(p, old + (x + count) * 4, 4) == 0 &&
+              ::cvt::util::compare_bytes(p + 4, old + (x + count + 1) * 4, 4) == 0) {
             break;
           }
           ++count;
@@ -402,7 +402,7 @@ class MsrleDecoder final : public CanvasDecoder {
     for (std::int64_t y = 0; y < h; ++y) {
       for (std::int64_t xx = 0; xx < w; ++xx) {
         const Rgba& c = palette_[indices_[static_cast<std::size_t>(y * w + xx)]];
-        std::memcpy(f.planes[0].data.data() + static_cast<std::size_t>(y) * f.planes[0].stride + static_cast<std::size_t>(xx) * 4, c.data(), 4);
+        ::cvt::util::copy_bytes(f.planes[0].data.data() + static_cast<std::size_t>(y) * f.planes[0].stride + static_cast<std::size_t>(xx) * 4, c.data(), 4);
       }
     }
     return f;
@@ -597,7 +597,7 @@ class SmcDecoder final : public CanvasDecoder {
     };
     const auto copy_block = [&](std::uint64_t from, std::uint64_t to) {
       for (std::uint32_t y = 0; y < 4; ++y) {
-        std::memcpy(indices_.data() + origin(to) + y * stride, indices_.data() + origin(from) + y * stride, 4);
+        ::cvt::util::copy_bytes(indices_.data() + origin(to) + y * stride, indices_.data() + origin(from) + y * stride, 4);
       }
     };
     const auto paint = [&](std::uint64_t index, const auto& pixel) {
@@ -706,7 +706,7 @@ class SmcDecoder final : public CanvasDecoder {
     VideoFrame& f = canvas_.frame;
     for (std::uint32_t y = 0; y < params_.height; ++y) {
       for (std::uint32_t x = 0; x < params_.width; ++x) {
-        std::memcpy(f.planes[0].data.data() + y * f.planes[0].stride + x * 4, palette_[indices_[y * stride + x]].data(), 4);
+        ::cvt::util::copy_bytes(f.planes[0].data.data() + y * f.planes[0].stride + x * 4, palette_[indices_[y * stride + x]].data(), 4);
       }
     }
     return f;

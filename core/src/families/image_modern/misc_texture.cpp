@@ -375,7 +375,7 @@ TexFormat gl_format(std::uint32_t type, std::uint32_t format, std::uint32_t inte
 
 Result<ir::Image> read_ktx(ReadContext& ctx) {
   util::ByteReader r(ctx.input);
-  if (ctx.input.size() < 64 || std::memcmp(ctx.input.data(), ktx1_id, 12) != 0) return fail(Status::Decode, "not a KTX file");
+  if (ctx.input.size() < 64 || ::cvt::util::compare_bytes(ctx.input.data(), ktx1_id, 12) != 0) return fail(Status::Decode, "not a KTX file");
   (void)r.skip(12);
   const std::uint32_t endian = r.u32le();
   if (endian != 0x04030201 && endian != 0x01020304) return fail(Status::Decode, "KTX endianness marker is invalid");
@@ -475,7 +475,7 @@ TexFormat vk_format(std::uint32_t vk) {
 }
 
 Result<ir::Image> read_ktx2(ReadContext& ctx) {
-  if (ctx.input.size() < 104 || std::memcmp(ctx.input.data(), ktx2_id, 12) != 0) {
+  if (ctx.input.size() < 104 || ::cvt::util::compare_bytes(ctx.input.data(), ktx2_id, 12) != 0) {
     return fail(Status::Decode, "not a KTX2 file");
   }
   util::ByteReader r(ctx.input);

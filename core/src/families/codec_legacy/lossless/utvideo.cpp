@@ -19,6 +19,7 @@
 #include <cstring>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/codec_legacy/common/bitstream.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
 #include "families/codec_legacy/common/vlc.hpp"
@@ -137,7 +138,7 @@ class UtvideoDecoder final : public SimpleDecoder {
       for (int p = 0; p < 3; ++p) {
         auto& out = f.planes[static_cast<std::size_t>(p)];
         for (int y = 0; y < ph[static_cast<std::size_t>(p)]; ++y) {
-          std::memcpy(out.data.data() + static_cast<std::size_t>(y) * out.stride,
+          ::cvt::util::copy_bytes(out.data.data() + static_cast<std::size_t>(y) * out.stride,
                       planes[static_cast<std::size_t>(p)].data() + static_cast<std::size_t>(y) * static_cast<std::size_t>(pw[static_cast<std::size_t>(p)]),
                       static_cast<std::size_t>(pw[static_cast<std::size_t>(p)]));
         }

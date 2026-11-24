@@ -9,6 +9,7 @@
 #include <cstring>
 #include <string>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossless/common.hpp"
 #include "families/audio_lossy/synth/tracker.hpp"
 #include "util/text.hpp"
@@ -289,7 +290,7 @@ Result<Module> load_mod(ByteView data, const Context& ctx) {
 
 Result<Module> load_s3m(ByteView data, const Context& ctx) {
   const auto d = as_u8(data);
-  if (d.size() < 96 || std::memcmp(d.data() + 44, "SCRM", 4) != 0) return fail(Status::Decode, "not an S3M module");
+  if (d.size() < 96 || ::cvt::util::compare_bytes(d.data() + 44, "SCRM", 4) != 0) return fail(Status::Decode, "not an S3M module");
   Module m;
   m.format = "s3m";
   m.title = text(d, 0, 28);
@@ -391,7 +392,7 @@ Result<Module> load_s3m(ByteView data, const Context& ctx) {
 
 Result<Module> load_xm(ByteView data, const Context& ctx) {
   const auto d = as_u8(data);
-  if (d.size() < 80 || std::memcmp(d.data(), "Extended Module: ", 17) != 0) return fail(Status::Decode, "not an XM module");
+  if (d.size() < 80 || ::cvt::util::compare_bytes(d.data(), "Extended Module: ", 17) != 0) return fail(Status::Decode, "not an XM module");
   Module m;
   m.format = "xm";
   m.instruments = true;
@@ -606,7 +607,7 @@ std::vector<float> it_decompress(std::span<const std::uint8_t> d, std::size_t at
 
 Result<Module> load_it(ByteView data, const Context& ctx) {
   const auto d = as_u8(data);
-  if (d.size() < 192 || std::memcmp(d.data(), "IMPM", 4) != 0) return fail(Status::Decode, "not an IT module");
+  if (d.size() < 192 || ::cvt::util::compare_bytes(d.data(), "IMPM", 4) != 0) return fail(Status::Decode, "not an IT module");
   Module m;
   m.format = "it";
   m.title = text(d, 4, 26);
@@ -640,7 +641,7 @@ Result<Module> load_it(ByteView data, const Context& ctx) {
   Budget budget;
   for (int s = 0; s < samples; ++s) {
     const std::size_t at = le32(d, smp_at + static_cast<std::size_t>(s) * 4);
-    if (at + 80 > d.size() || std::memcmp(d.data() + at, "IMPS", 4) != 0) continue;
+    if (at + 80 > d.size() || ::cvt::util::compare_bytes(d.data() + at, "IMPS", 4) != 0) continue;
     Sample& smp = m.samples[static_cast<std::size_t>(s) + 1];
     const int sflags = u8(d, at + 18);
     smp.global = std::min(64, static_cast<int>(u8(d, at + 17)));
@@ -663,7 +664,7 @@ Result<Module> load_it(ByteView data, const Context& ctx) {
   for (int i = 0; i < instruments; ++i) {
     const std::size_t at = le32(d, ins_at + static_cast<std::size_t>(i) * 4);
     Instrument& ins = m.instrument_list[static_cast<std::size_t>(i) + 1];
-    if (at + 554 > d.size() || std::memcmp(d.data() + at, "IMPI", 4) != 0 || cmwt < 0x200) continue;
+    if (at + 554 > d.size() || ::cvt::util::compare_bytes(d.data() + at, "IMPI", 4) != 0 || cmwt < 0x200) continue;
     ins.fadeout = le16(d, at + 20) * 32;
     ins.global = std::min(128, static_cast<int>(u8(d, at + 24))) / 2;
     // Notes are numbered as in IT (60 = C-5 = middle C); note 0 (C-0) is

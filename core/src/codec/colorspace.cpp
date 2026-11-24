@@ -15,6 +15,7 @@
 // quantise() for ties). R'G'B' is gamma-encoded throughout: no transfer
 // function is applied or removed.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "codec/colorspace.hpp"
 
 #include <algorithm>
@@ -651,7 +652,7 @@ void carry_timing(const VideoFrame& from, VideoFrame& to) noexcept {
     const std::uint8_t* src = frame.planes[p].data.data();
     std::uint8_t* dst = out.planes[p].data.data();
     for (std::size_t row = 0; row < rows; ++row) {
-      std::memcpy(dst + row * row_bytes, src + row * frame.planes[p].stride, row_bytes);
+      ::cvt::util::copy_bytes(dst + row * row_bytes, src + row * frame.planes[p].stride, row_bytes);
     }
   }
   return out;

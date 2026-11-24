@@ -679,7 +679,7 @@ Result<Bytes> write_dae(const AnyIR& value, WriteContext& ctx) {
   xml += "  <library_geometries>\n";
   std::vector<std::vector<std::string>> part_materials(parts.size());
   for (std::size_t p = 0; p < parts.size(); ++p) {
-    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / parts.size()));
+    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / static_cast<double>(parts.size())));
     const ir::Mesh& part = parts[p].mesh;
     const std::string gid = std::format("geometry-{}", p);
     xml += std::format("    <geometry id=\"{}\" name=\"{}\">\n      <mesh>\n", gid,

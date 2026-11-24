@@ -118,7 +118,7 @@ Result<ir::Image> build(const Layout& l, HeaderReader& h, ByteView data, const C
     }
   } else if (l.ascii) {
     for (std::uint64_t i = 0; i < samples; ++i) {
-      if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / samples));
+      if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(samples)));
       auto v = h.number();
       if (!v) {
         truncated = true;

@@ -12,6 +12,7 @@
 #include <string_view>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "support/fixtures.hpp"
 #include "support/video_support.hpp"
 #include "support/test_support.hpp"
@@ -140,7 +141,7 @@ inline std::vector<ir::VideoFrame> reference_i420(std::string_view name, std::ui
     ir::VideoFrame f = ir::VideoFrame::allocate(ir::PixelFormat::I420, width, height);
     std::size_t offset = at;
     for (ir::Plane& p : f.planes) {
-      std::memcpy(p.data.data(), raw->data() + offset, p.data.size());
+      ::cvt::util::copy_bytes(p.data.data(), raw->data() + offset, p.data.size());
       offset += p.data.size();
     }
     frames.push_back(std::move(f));

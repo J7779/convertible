@@ -50,7 +50,7 @@ double iou(const ir::Frame& a, const ir::Frame& b) {
       uni += p || q;
     }
   }
-  return uni == 0 ? 1.0 : static_cast<double>(inter) / uni;
+  return uni == 0 ? 1.0 : static_cast<double>(inter) / static_cast<double>(uni);
 }
 
 std::size_t segment_count(const Scene& s) {

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include "util/bytes.hpp"
 #include "families/archive/crypto.hpp"
 #include "families/archive/formats/sevenzip_internal.hpp"
 #include "util/hash.hpp"
@@ -137,8 +138,8 @@ Result<std::array<std::uint8_t, 32>> derive_key(std::string_view password, ByteV
   Bytes buffer(unit * batch);
   for (std::size_t k = 0; k < batch; ++k) {
     std::byte* at = buffer.data() + k * unit;
-    if (!salt.empty()) std::memcpy(at, salt.data(), salt.size());
-    if (!pw.empty()) std::memcpy(at + salt.size(), pw.data(), pw.size());
+    if (!salt.empty()) ::cvt::util::copy_bytes(at, salt.data(), salt.size());
+    if (!pw.empty()) ::cvt::util::copy_bytes(at + salt.size(), pw.data(), pw.size());
   }
   util::Sha256 sha;
   const std::uint64_t rounds = std::uint64_t{1} << cycles_power;

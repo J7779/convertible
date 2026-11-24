@@ -14,6 +14,7 @@
 #include <cstring>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/codec_legacy/common/bitstream.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
 #include "families/codec_legacy/lossless/lossless.hpp"
@@ -416,7 +417,7 @@ class Ffv1Decoder final : public codec::VideoDecoder {
     cfg_.coder = c.symbol(state, false);
     if (cfg_.coder > 2) return fail(Status::Decode, "unknown FFV1 coder type {}", cfg_.coder);
     std::uint8_t table[256];
-    std::memcpy(table, kDefaultTransition, 256);
+    ::cvt::util::copy_bytes(table, kDefaultTransition, 256);
     if (cfg_.coder == 2) {
       for (int i = 1; i < 256; ++i) {
         const int st = c.symbol(state, true) + default_states_.one[static_cast<std::size_t>(i)];

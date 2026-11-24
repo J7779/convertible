@@ -19,6 +19,7 @@
 #include <cstring>
 #include <limits>
 
+#include "util/bytes.hpp"
 #include "families/archive/formats/rar_internal.hpp"
 
 namespace cvt::archive::rar {
@@ -42,7 +43,7 @@ bool LzWindow::copy(std::uint64_t distance, std::uint32_t length) noexcept {
   std::uint8_t* b = buf_.data();
   if (dst + length <= size && src + length <= size) {
     if (distance >= length) {
-      std::memmove(b + dst, b + src, length);
+      ::cvt::util::move_bytes(b + dst, b + src, length);
     } else {
       for (std::uint32_t i = 0; i < length; ++i) b[dst + i] = b[src + i];
     }
@@ -56,8 +57,8 @@ bool LzWindow::copy(std::uint64_t distance, std::uint32_t length) noexcept {
 void LzWindow::read(std::uint64_t from, std::size_t count, std::uint8_t* out) const noexcept {
   const std::size_t start = static_cast<std::size_t>(from) & mask_;
   const std::size_t first = std::min(count, buf_.size() - start);
-  std::memcpy(out, buf_.data() + start, first);
-  if (first < count) std::memcpy(out + first, buf_.data(), count - first);
+  ::cvt::util::copy_bytes(out, buf_.data() + start, first);
+  if (first < count) ::cvt::util::copy_bytes(out + first, buf_.data(), count - first);
 }
 
 // --------------------------------------------------------------------------- RAR 5

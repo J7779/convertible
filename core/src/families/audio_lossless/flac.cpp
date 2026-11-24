@@ -106,7 +106,7 @@ Result<bool> decode_frames(ByteView data, FlacStream& stream, const Context& ctx
   }
   std::size_t frame_index = 0;
   while (pos + 2 <= data.size()) {
-    if ((++frame_index & 15) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / data.size(), "Decoding"));
+    if ((++frame_index & 15) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / static_cast<double>(data.size()), "Decoding"));
     flac::FrameInfo frame;
     const std::size_t before = samples.size();
     auto used = flac::decode_frame(data.subspan(pos), info, samples, frame);
@@ -164,7 +164,7 @@ Result<AnyIR> read_ogg_flac(ReadContext& ctx) {
   if (stream.info.total_samples != 0) CVT_TRY(check_sample_budget(ctx, stream.info.total_samples * stream.info.channels));
   bool damaged = ogg.damaged;
   for (; index < ogg.packets.size(); ++index) {
-    if ((index & 31) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(index) / ogg.packets.size(), "Decoding"));
+    if ((index & 31) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(index) / static_cast<double>(ogg.packets.size()), "Decoding"));
     flac::FrameInfo frame;
     const std::size_t before = samples.size();
     auto used = flac::decode_frame(ogg.packets[index], &stream.info, samples, frame);

@@ -88,7 +88,7 @@ Result<void> render_stack(const util::XmlNode& stack, ir::Frame& canvas, std::in
     CVT_TRY_ASSIGN(const ir::Frame layer, decode_entry(state.zip, src, state.ctx));
     composite_normal(canvas, layer, x, y, opacity);
     ++state.layers_done;
-    CVT_TRY(state.ctx.checkpoint(std::min(0.99, static_cast<double>(state.layers_done) / (state.layers_done + 4.0))));
+    CVT_TRY(state.ctx.checkpoint(std::min(0.99, static_cast<double>(state.layers_done) / (static_cast<double>(state.layers_done) + 4.0))));
   }
   return {};
 }

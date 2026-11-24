@@ -562,7 +562,7 @@ Result<Bytes> encode_components(std::vector<SourcePlane> sources, std::vector<En
   std::array<HuffmanSpec, 2> std_ac = {standard_ac_luma(), standard_ac_chroma()};
   Bytes entropy;
   for (std::size_t s = 0; s < scans.size(); ++s) {
-    CVT_TRY(ctx.checkpoint(0.6 + 0.4 * static_cast<double>(s) / scans.size(), "Encoding"));
+    CVT_TRY(ctx.checkpoint(0.6 + 0.4 * static_cast<double>(s) / static_cast<double>(scans.size()), "Encoding"));
     const ScanSpec& scan = scans[s];
     Sink sink;
     std::array<HuffmanSpec, 2> dc_spec = std_dc;
@@ -730,8 +730,8 @@ Result<Bytes> encode(const ir::Frame& frame, const EncodeOptions& options, const
             ++count;
           }
         }
-        cb_plane[static_cast<std::size_t>(y) * cw + x] = static_cast<std::uint8_t>(std::clamp(sb / count + 0.5f, 0.0f, 255.0f));
-        cr_plane[static_cast<std::size_t>(y) * cw + x] = static_cast<std::uint8_t>(std::clamp(sr / count + 0.5f, 0.0f, 255.0f));
+        cb_plane[static_cast<std::size_t>(y) * cw + x] = static_cast<std::uint8_t>(std::clamp(sb / static_cast<float>(count) + 0.5f, 0.0f, 255.0f));
+        cr_plane[static_cast<std::size_t>(y) * cw + x] = static_cast<std::uint8_t>(std::clamp(sr / static_cast<float>(count) + 0.5f, 0.0f, 255.0f));
       }
     }
     cb_full = {};

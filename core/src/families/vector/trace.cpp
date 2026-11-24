@@ -389,7 +389,7 @@ Result<Scene> image_to_scene(const ir::Image& image, const TraceOptions& options
   std::vector<int> rank(quantized.palette.size(), -1);
   for (std::size_t r = 0; r < order.size(); ++r) rank[order[r]] = static_cast<int>(r);
   for (std::size_t r = 0; r < order.size(); ++r) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(r) / order.size(), "Tracing"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(r) / static_cast<double>(order.size()), "Tracing"));
     BitMask mask{w, h, std::vector<std::uint8_t>(pixels, 0)};
     for (std::size_t i = 0; i < pixels; ++i) {
       const int k = rank[quantized.indices[i]];

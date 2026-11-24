@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "engine/standard_options.hpp"
 #include "families/image/common.hpp"
@@ -42,7 +43,7 @@ void* MemoryBudget::allocate(std::size_t size) noexcept {
     return nullptr;
   }
   const std::uint64_t recorded = total;
-  std::memcpy(block, &recorded, sizeof recorded);
+  ::cvt::util::copy_bytes(block, &recorded, sizeof recorded);
   used_ += total;
   peak_ = std::max(peak_, used_);
   return block + header_size;
@@ -52,7 +53,7 @@ void MemoryBudget::release(void* address) noexcept {
   if (address == nullptr) return;
   unsigned char* block = static_cast<unsigned char*>(address) - header_size;
   std::uint64_t recorded = 0;
-  std::memcpy(&recorded, block, sizeof recorded);
+  ::cvt::util::copy_bytes(&recorded, block, sizeof recorded);
   used_ -= std::min(used_, recorded);
   std::free(block);
 }

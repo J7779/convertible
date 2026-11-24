@@ -130,7 +130,7 @@ Result<AnyIR> read_ascii(ReadContext& ctx) {
   std::size_t solids = 0;
   while (lines.next(line)) {
     if ((lines.line_number() & 0x3FFF) == 0) {
-      CVT_TRY(ctx.checkpoint(0.8 * static_cast<double>(lines.position()) / (text.size() + 1)));
+      CVT_TRY(ctx.checkpoint(0.8 * static_cast<double>(lines.position()) / static_cast<double>(text.size() + 1)));
     }
     std::string_view rest = line;
     const std::string_view keyword = next_token(rest);
@@ -217,7 +217,7 @@ Result<Bytes> write_stl(const AnyIR& value, WriteContext& ctx) {
     out.text(header);
     out.u32le(static_cast<std::uint32_t>(triangles));
     for (std::size_t t = 0; t < triangles; ++t) {
-      if ((t & 0x3FFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(t) / triangles));
+      if ((t & 0x3FFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(t) / static_cast<double>(triangles)));
       const ir::Vec3 n = facet_normal(mesh, t * 3);
       out.f32le(n.x).f32le(n.y).f32le(n.z);
       for (int k = 0; k < 3; ++k) {
@@ -259,7 +259,7 @@ Result<Bytes> write_stl(const AnyIR& value, WriteContext& ctx) {
     out += '\n';
   };
   for (std::size_t t = 0; t < triangles; ++t) {
-    if ((t & 0x3FFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(t) / triangles));
+    if ((t & 0x3FFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(t) / static_cast<double>(triangles)));
     out += "  facet normal ";
     vec(facet_normal(mesh, t * 3));
     out += "    outer loop\n";

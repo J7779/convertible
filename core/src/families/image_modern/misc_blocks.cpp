@@ -2,6 +2,7 @@
 // References: the Direct3D 10/11 block compression specifications (BC1-BC5,
 // BC7) and the Khronos Data Format Specification (ETC1, ETC2, EAC).
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/image_modern/misc_blocks.hpp"
 
 #include <algorithm>
@@ -167,7 +168,7 @@ void bc7(const u8* b, u8* out) {
   int mode = 0;
   while (mode < 8 && ((b[0] >> mode) & 1) == 0) ++mode;
   if (mode == 8) {
-    std::memset(out, 0, 64);  // reserved mode: transparent black
+    ::cvt::util::fill_bytes(out, 0, 64);  // reserved mode: transparent black
     return;
   }
   const Bc7Mode& m = bc7_modes[static_cast<std::size_t>(mode)];
@@ -572,7 +573,7 @@ Result<ir::Frame> decode_surface(BlockFormat format, ByteView data, std::uint32_
         for (int x = 0; x < shape.width; ++x) {
           const std::uint32_t px = bx * static_cast<std::uint32_t>(shape.width) + static_cast<std::uint32_t>(x);
           if (px >= width) break;
-          std::memcpy(frame.rgba.data() + frame.offset(px, py), pixels.data() + (y * shape.width + x) * 4, 4);
+          ::cvt::util::copy_bytes(frame.rgba.data() + frame.offset(px, py), pixels.data() + (y * shape.width + x) * 4, 4);
         }
       }
     }

@@ -6,6 +6,7 @@
 #include <cstring>
 #include <optional>
 
+#include "util/bytes.hpp"
 #include "families/archive/checksums.hpp"
 #include "families/archive/codec_impl.hpp"
 #include "families/archive/codecs/zstd_internal.hpp"
@@ -382,7 +383,7 @@ Result<void> compressed_block(ByteView block, FrameState& fs, Bytes& out, std::s
   Bytes literals(regen);
   if (type == 0) {
     if (pos + regen > block.size()) return fail(Status::Decode, "Zstandard literals are truncated");
-    if (regen != 0) std::memcpy(literals.data(), block.data() + pos, regen);
+    if (regen != 0) ::cvt::util::copy_bytes(literals.data(), block.data() + pos, regen);
     pos += regen;
   } else if (type == 1) {
     if (pos >= block.size()) return fail(Status::Decode, "Zstandard literals are truncated");

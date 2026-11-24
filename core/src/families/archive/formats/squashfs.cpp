@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "families/archive/archive_common.hpp"
 #include "families/archive/compression.hpp"
@@ -153,7 +154,7 @@ class Image {
           continue;
         }
         const std::size_t n = std::min(count, b.size() - offset_);
-        std::memcpy(out, b.data() + offset_, n);
+        ::cvt::util::copy_bytes(out, b.data() + offset_, n);
         out += n;
         offset_ += n;
         count -= n;

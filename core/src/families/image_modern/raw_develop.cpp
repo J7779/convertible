@@ -16,6 +16,7 @@
 #include <cstring>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/image_ops.hpp"
 #include "families/image_modern/raw_model.hpp"
 
@@ -322,7 +323,7 @@ Result<ir::Image> develop(Sensor sensor, const RawInfo& info, const DevelopOptio
   // DNG GainMap opcodes (lens shading) on the normalised data.
   for (const RawInfo::GainMap& gm : info.gain_maps) {
     const bool interleaved = !(cfa || spp == 1);
-    const std::uint32_t bottom = std::min(gm.bottom, height), right = std::min(gm.right, width);
+    const std::uint32_t map_bottom = std::min(gm.bottom, height), map_right = std::min(gm.right, width);
     const std::uint32_t row_pitch = std::max<std::uint32_t>(1, gm.row_pitch), col_pitch = std::max<std::uint32_t>(1, gm.col_pitch);
     const auto lookup = [&](double v, double h, std::uint32_t mp) {
       v = std::clamp(v, 0.0, static_cast<double>(gm.points_v - 1));
@@ -335,9 +336,9 @@ Result<ir::Image> develop(Sensor sensor, const RawInfo& info, const DevelopOptio
       };
       return (1 - fv) * ((1 - fh) * g(v0, h0) + fh * g(v0, h1)) + fv * ((1 - fh) * g(v1, h0) + fh * g(v1, h1));
     };
-    for (std::uint32_t y = gm.top; y < bottom; y += row_pitch) {
+    for (std::uint32_t y = gm.top; y < map_bottom; y += row_pitch) {
       const double v = gm.spacing_v > 0 ? ((y + 0.5) / height - gm.origin_v) / gm.spacing_v : 0.0;
-      for (std::uint32_t x = gm.left; x < right; x += col_pitch) {
+      for (std::uint32_t x = gm.left; x < map_right; x += col_pitch) {
         const double h = gm.spacing_h > 0 ? ((x + 0.5) / width - gm.origin_h) / gm.spacing_h : 0.0;
         for (std::uint32_t p = gm.plane; p < gm.plane + gm.planes; ++p) {
           const std::uint32_t mp = std::min(p - gm.plane, gm.map_planes - 1);
@@ -455,7 +456,7 @@ Result<ir::Image> develop(Sensor sensor, const RawInfo& info, const DevelopOptio
   }
   if (cw != width || ch != height) {
     for (std::uint32_t y = 0; y < ch; ++y) {
-      std::memmove(&rgba[std::size_t{y} * cw * 4], &rgba[(std::size_t{y + cy} * width + cx) * 4], std::size_t{cw} * 4 * sizeof(float));
+      ::cvt::util::move_bytes(&rgba[std::size_t{y} * cw * 4], &rgba[(std::size_t{y + cy} * width + cx) * 4], std::size_t{cw} * 4 * sizeof(float));
     }
     rgba.resize(std::size_t{cw} * ch * 4);
     rgba.shrink_to_fit();

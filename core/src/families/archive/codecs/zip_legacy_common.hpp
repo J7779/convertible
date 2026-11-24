@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include "util/bytes.hpp"
 #include "families/archive/codec_impl.hpp"
 
 namespace cvt::compression::detail {
@@ -84,7 +85,7 @@ class LegacyOutput {
     std::uint8_t* d = data() + n_;
     const std::uint8_t* s = d - distance;
     if (distance >= length) {
-      std::memcpy(d, s, length);
+      ::cvt::util::copy_bytes(d, s, length);
     } else {
       for (std::size_t i = 0; i < length; ++i) d[i] = s[i];
     }
@@ -102,7 +103,7 @@ class LegacyOutput {
       length = static_cast<std::size_t>(room());
     }
     reserve_more(length);
-    if (length != 0) std::memcpy(data() + n_, src, length);
+    if (length != 0) ::cvt::util::copy_bytes(data() + n_, src, length);
     n_ += length;
   }
 

@@ -1,6 +1,7 @@
 // Convertible core - codec_av1 family: the only code that talks to the
 // imported libaom.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/codec_av1/libaom_glue.hpp"
 
 #include <algorithm>
@@ -121,12 +122,12 @@ Result<Picture> to_picture(const aom_image_t& img) {
       const unsigned char* src = img.planes[p] + static_cast<std::ptrdiff_t>(img.stride[p]) * y;
       std::uint8_t* dst = plane.data.data() + plane.stride * y;
       if (!high) {
-        std::memcpy(dst, src, cols);
+        ::cvt::util::copy_bytes(dst, src, cols);
         continue;
       }
       for (std::uint32_t x = 0; x < cols; ++x) {
         std::uint16_t v = 0;
-        std::memcpy(&v, src + 2 * x, 2);
+        ::cvt::util::copy_bytes(&v, src + 2 * x, 2);
         std::uint32_t value = shift != 0 ? (static_cast<std::uint32_t>(v) + (1u << (shift - 1))) >> shift : v;
         value = std::min(value, max_value);
         put_sample(dst, x, value, out10);
@@ -388,7 +389,7 @@ Result<void> EncoderCore::encode(const ir::VideoFrame& frame, std::int64_t pts_m
         const std::uint16_t neutral = wide ? 512 : 128;
         for (std::uint32_t x = 0; x < cols; ++x) {
           if (wide) {
-            std::memcpy(dst + 2 * x, &neutral, 2);
+            ::cvt::util::copy_bytes(dst + 2 * x, &neutral, 2);
           } else {
             dst[x] = static_cast<unsigned char>(neutral);
           }
@@ -397,12 +398,12 @@ Result<void> EncoderCore::encode(const ir::VideoFrame& frame, std::int64_t pts_m
       }
       const std::uint8_t* src = frame.planes[p].data.data() + frame.planes[p].stride * y;
       if (!wide) {
-        std::memcpy(dst, src, cols);
+        ::cvt::util::copy_bytes(dst, src, cols);
         continue;
       }
       for (std::uint32_t x = 0; x < cols; ++x) {
         const auto v = static_cast<std::uint16_t>(std::min<std::uint32_t>(get_sample(src, x, true), 1023u));
-        std::memcpy(dst + 2 * x, &v, 2);
+        ::cvt::util::copy_bytes(dst + 2 * x, &v, 2);
       }
     }
   }

@@ -8,6 +8,7 @@
 #include <string_view>
 #include <utility>
 
+#include "util/bytes.hpp"
 #include "codec/ids.hpp"
 #include "codec/registry.hpp"
 #include "engine/registry.hpp"
@@ -82,7 +83,7 @@ Result<AnyIR> read_m4a(ReadContext& ctx) {
 int sniff_adts(ByteView data, std::string_view) {
   const auto d = as_u8(data);
   std::size_t pos = 0;
-  if (d.size() >= 10 && std::memcmp(d.data(), "ID3", 3) == 0) {
+  if (d.size() >= 10 && ::cvt::util::compare_bytes(d.data(), "ID3", 3) == 0) {
     pos = 10 + ((std::size_t{d[6] & 0x7Fu} << 21) | (std::size_t{d[7] & 0x7Fu} << 14) | (std::size_t{d[8] & 0x7Fu} << 7) |
                 (d[9] & 0x7Fu));
   }

@@ -1,5 +1,6 @@
 // Convertible core - table family: Snappy block compression.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/table/snappy.hpp"
 
 #include <algorithm>
@@ -117,7 +118,7 @@ Bytes snappy_compress(ByteView data) {
   std::vector<std::uint32_t> table(std::size_t{1} << bits, 0xFFFFFFFFu);
   const auto load = [&](std::size_t i) {
     std::uint32_t v = 0;
-    std::memcpy(&v, in.data() + i, 4);
+    ::cvt::util::copy_bytes(&v, in.data() + i, 4);
     return v;
   };
   std::size_t literal_start = 0;

@@ -64,7 +64,7 @@ Result<ir::Image> read_pcx(ReadContext& ctx) {
   bool truncated = false;
   if (encoding == 0) {
     const ByteView raw = body.bytes(std::min<std::size_t>(data.size(), body.remaining()));
-    std::memcpy(data.data(), raw.data(), raw.size());
+    ::cvt::util::copy_bytes(data.data(), raw.data(), raw.size());
     truncated = raw.size() < data.size();
   } else {
     std::size_t at = 0;
@@ -134,7 +134,7 @@ Result<ir::Image> read_pcx(ReadContext& ctx) {
           index |= ((byte >> (7 - x % 8)) & 1u) << p;
         }
       }
-      std::memcpy(d, palette[index].data(), 4);
+      ::cvt::util::copy_bytes(d, palette[index].data(), 4);
     }
   }
   ir::Image image;

@@ -1,5 +1,6 @@
 // Convertible core - archive family: AES, HMAC and PBKDF2 (see crypto.hpp).
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/archive/crypto.hpp"
 
 #include <algorithm>
@@ -185,7 +186,7 @@ Result<void> aes_cbc_decrypt(const Aes& aes, Aes::Block& iv, std::span<std::uint
   Aes::Block plain{};
   for (std::size_t i = 0; i < data.size(); i += 16) {
     Aes::Block cipher{};
-    std::memcpy(cipher.data(), data.data() + i, 16);
+    ::cvt::util::copy_bytes(cipher.data(), data.data() + i, 16);
     aes.decrypt_block(cipher.data(), plain.data());
     for (std::size_t k = 0; k < 16; ++k) data[i + k] = static_cast<std::uint8_t>(plain[k] ^ iv[k]);
     iv = cipher;
@@ -199,7 +200,7 @@ Result<void> aes_cbc_encrypt(const Aes& aes, Aes::Block& iv, std::span<std::uint
     Aes::Block block{};
     for (std::size_t k = 0; k < 16; ++k) block[k] = static_cast<std::uint8_t>(data[i + k] ^ iv[k]);
     aes.encrypt_block(block.data(), iv.data());
-    std::memcpy(data.data() + i, iv.data(), 16);
+    ::cvt::util::copy_bytes(data.data() + i, iv.data(), 16);
   }
   return {};
 }
@@ -215,9 +216,9 @@ void hmac_init(Hash& inner, Hash& outer, ByteView key) noexcept {
     Hash h;
     h.update(key);
     const auto digest = h.finish();
-    std::memcpy(k.data(), digest.data(), digest.size());
+    ::cvt::util::copy_bytes(k.data(), digest.data(), digest.size());
   } else if (!key.empty()) {
-    std::memcpy(k.data(), key.data(), key.size());
+    ::cvt::util::copy_bytes(k.data(), key.data(), key.size());
   }
   std::array<std::uint8_t, BlockSize> pad{};
   for (std::size_t i = 0; i < BlockSize; ++i) pad[i] = static_cast<std::uint8_t>(k[i] ^ 0x36u);

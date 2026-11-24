@@ -624,7 +624,7 @@ void layout_code(Layout& L, const ir::CodeBlock& code, double x, double width) {
     lines.push_back(std::move(line));
   }
   std::size_t i = 0;
-  L.ensure(line_h * std::min<std::size_t>(lines.size(), 3) + 2 * pad);
+  L.ensure(line_h * static_cast<double>(std::min<std::size_t>(lines.size(), 3)) + 2 * pad);
   while (i < lines.size()) {
     PageOut& page = L.current();
     page.used = true;

@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "engine/sniffers.hpp"
 #include "families/table/common.hpp"
@@ -688,7 +689,7 @@ Bytes leaf_cell(std::int64_t rowid, const Bytes& payload, PageAllocator& pages) 
       if (previous != 0) put_u32(pages.page(previous), 0, number);
       Bytes& page = pages.page(number);
       const std::uint64_t take = std::min<std::uint64_t>(p - offset, u - 4);
-      std::memcpy(page.data() + 4, payload.data() + offset, static_cast<std::size_t>(take));
+      ::cvt::util::copy_bytes(page.data() + 4, payload.data() + offset, static_cast<std::size_t>(take));
       offset += take;
       previous = number;
     }
@@ -706,7 +707,7 @@ void write_btree_page(Bytes& page, std::size_t header_offset, std::uint8_t type,
   const std::size_t pointers = header_offset + header_size;
   for (std::size_t k = 0; k < cells.size(); ++k) {
     content -= cells[k].size();
-    std::memcpy(page.data() + content, cells[k].data(), cells[k].size());
+    ::cvt::util::copy_bytes(page.data() + content, cells[k].data(), cells[k].size());
     put_u16(page, pointers + k * 2, static_cast<std::uint32_t>(content));
   }
   page[header_offset] = static_cast<std::byte>(type);
@@ -992,7 +993,7 @@ Result<Bytes> write_sqlite(const AnyIR& value, WriteContext& ctx) {
   build_table_tree(schema_rows, pages, schema_page);
   const auto page_count = static_cast<std::uint32_t>(pages.count());
   Bytes& first = pages.page(1);
-  std::memcpy(first.data(), magic.data(), magic.size());
+  ::cvt::util::copy_bytes(first.data(), magic.data(), magic.size());
   put_u16(first, 16, write_page_size);
   first[18] = std::byte{1};  // legacy (rollback journal) write/read versions
   first[19] = std::byte{1};

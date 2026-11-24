@@ -10,6 +10,7 @@
 #include <cstring>
 #include <memory>
 
+#include "util/bytes.hpp"
 #include "families/encoding/hashes.hpp"
 #include "util/crc.hpp"
 
@@ -412,7 +413,7 @@ class SipHash final : public WholeInput {
   explicit SipHash(const Bytes& key) {
     std::array<std::uint8_t, 16> k{};
     if (key.size() == 16) {
-      std::memcpy(k.data(), key.data(), 16);
+      ::cvt::util::copy_bytes(k.data(), key.data(), 16);
     } else {
       for (std::uint8_t i = 0; i < 16; ++i) k[i] = i;  // the reference test key 00 01 .. 0f
     }

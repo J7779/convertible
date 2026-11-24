@@ -99,7 +99,7 @@ class Plotter {
   Result<Scene> run(std::string_view data) {
     data_ = data;
     while (pos_ < data_.size()) {
-      if ((++steps_ & 0x3FFF) == 0) CVT_TRY(ctx_.checkpoint(static_cast<double>(pos_) / data_.size()));
+      if ((++steps_ & 0x3FFF) == 0) CVT_TRY(ctx_.checkpoint(static_cast<double>(pos_) / static_cast<double>(data_.size())));
       const char c = data_[pos_];
       if (c == '\x1b') {
         skip_escape();
@@ -521,7 +521,7 @@ class Plotter {
       return false;
     };
     while (pos_ < data_.size()) {
-      if ((++steps_ & 0x3FFF) == 0) CVT_TRY(ctx_.checkpoint(static_cast<double>(pos_) / data_.size()));
+      if ((++steps_ & 0x3FFF) == 0) CVT_TRY(ctx_.checkpoint(static_cast<double>(pos_) / static_cast<double>(data_.size())));
       const char c = data_[pos_];
       if (c == ';') {
         ++pos_;

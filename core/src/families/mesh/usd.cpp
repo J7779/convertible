@@ -797,7 +797,7 @@ Result<std::string> usda_text(const ir::Mesh& source, WriteContext& ctx, std::ve
 
   const std::vector<ObjectPart> parts = split_objects(mesh, true);
   for (std::size_t p = 0; p < parts.size(); ++p) {
-    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / parts.size()));
+    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / static_cast<double>(parts.size())));
     const ir::Mesh& part = parts[p].mesh;
     if (part.indices.empty()) continue;
     const std::string name = usd_name(parts[p].name, "Object", used);

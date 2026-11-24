@@ -2,6 +2,7 @@
 // storage format (.amr, .awb) through the imported opencore-amr decoders and
 // encoders (AMR-WB encoding by vo-amrwbenc), and as registry codecs.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/audio_lossy/speech/speech.hpp"
 
 #include <algorithm>
@@ -59,7 +60,7 @@ class AmrDecoder {
   void decode(const std::uint8_t* frame, std::vector<float>& out) {
     std::array<std::uint8_t, 64> buffer{};
     const std::size_t size = (wide_ ? wb_sizes : nb_sizes)[(frame[0] >> 3) & 15];
-    std::memcpy(buffer.data(), frame, size);
+    ::cvt::util::copy_bytes(buffer.data(), frame, size);
     std::array<short, 320> pcm{};
     if (wide_) D_IF_decode(state_, buffer.data(), pcm.data(), 0);
     else Decoder_Interface_Decode(state_, buffer.data(), pcm.data(), 0);

@@ -175,7 +175,7 @@ Result<ir::Image> read_xpm(ReadContext& ctx) {
         damaged = true;
         continue;
       }
-      std::memcpy(frame.rgba.data() + frame.offset(x, y), it->second.data(), 4);
+      ::cvt::util::copy_bytes(frame.rgba.data() + frame.offset(x, y), it->second.data(), 4);
     }
   }
   if (damaged) ctx.warn("The XPM data is incomplete or uses undefined colours.");

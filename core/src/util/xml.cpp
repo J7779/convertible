@@ -9,6 +9,7 @@
 //   5. the parser
 //   6. the writer and deep_equal
 //   7. the public handle API
+#include "util/bytes.hpp"
 #include "util/xml.hpp"
 
 #include <algorithm>
@@ -104,7 +105,7 @@ class XmlArena {
   [[nodiscard]] const char* store(std::string_view text) {
     if (text.empty()) return "";
     char* const copy = static_cast<char*>(allocate(text.size(), 1));
-    std::memcpy(copy, text.data(), text.size());
+    ::cvt::util::copy_bytes(copy, text.data(), text.size());
     return copy;
   }
 
@@ -408,7 +409,7 @@ template <std::size_t N>
   while (p != end) {
     while (distance(p, end) >= 8) {
       std::uint64_t word = 0;
-      std::memcpy(&word, p, 8);
+      ::cvt::util::copy_bytes(&word, p, 8);
       // Any byte >= 0x80, or any byte < 0x20?
       if (((word & kHigh) | ((word - kLow) & ~word & kHigh)) != 0) break;
       p += 8;
@@ -846,7 +847,7 @@ void normalise_source(std::string& text, bool replace, BadText& bad) {
   for (;;) {
     const char* const stop = find_special(p, end, true);
     const std::size_t plain = distance(p, stop);
-    if (out != p) std::memmove(out, p, plain);
+    if (out != p) ::cvt::util::move_bytes(out, p, plain);
     out += plain;
     p = stop;
     if (p == end) break;
@@ -1587,7 +1588,7 @@ Parser::Decode Parser::decode_reference(char*& p, char*& out) {
     return Decode::Failed;
   }
   const std::size_t size = distance(p, ref.end);
-  std::memmove(out, p, size);
+  ::cvt::util::move_bytes(out, p, size);
   out += size;
   p += size;
   return Decode::Done;
@@ -1695,7 +1696,7 @@ bool Parser::parse_text(char*& p, char* start, std::string_view& value) {
     char* const plain = p;
     while ((kClass[byte_of(*p)] & kTextStop) == 0) ++p;
     const std::size_t size = distance(plain, p);
-    std::memmove(out, plain, size);
+    ::cvt::util::move_bytes(out, plain, size);
     out += size;
     if (*p != '&') break;
   }
@@ -1714,7 +1715,7 @@ bool Parser::parse_attribute_value(char*& p, char quote, std::string_view& value
     while ((kClass[byte_of(*p)] & stop) == 0) ++p;
     if (out != nullptr) {
       const std::size_t size = distance(plain, p);
-      std::memmove(out, plain, size);
+      ::cvt::util::move_bytes(out, plain, size);
       out += size;
     }
     const char c = *p;
@@ -2233,7 +2234,7 @@ void replace_string(Arena& arena, const char*& slot, std::size_t old_size, std::
   if (text.empty()) {
     slot = "";
   } else if (text.size() <= old_size) {
-    std::memmove(const_cast<char*>(slot), text.data(), text.size());
+    ::cvt::util::move_bytes(const_cast<char*>(slot), text.data(), text.size());
   } else {
     slot = arena.store(text);
   }

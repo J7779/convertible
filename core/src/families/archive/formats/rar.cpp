@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "families/archive/archive_common.hpp"
 #include "families/archive/crypto.hpp"
@@ -264,7 +265,7 @@ bool check_value_valid(ByteView check12) {
   util::Sha256 sha;
   sha.update(check12.first(8));
   const auto digest = sha.finish();
-  return std::memcmp(digest.data(), check12.data() + 8, 4) == 0;
+  return ::cvt::util::compare_bytes(digest.data(), check12.data() + 8, 4) == 0;
 }
 
 struct Rar5Header {
@@ -290,7 +291,7 @@ class Rar5Parser {
     if (encrypted_) {
       if (data_.size() - pos_ < 32) return fail(Status::Decode, "RAR 5 encrypted header is truncated");
       Aes::Block iv{};
-      std::memcpy(iv.data(), data_.data() + pos_, 16);
+      ::cvt::util::copy_bytes(iv.data(), data_.data() + pos_, 16);
       Bytes first(data_.begin() + static_cast<std::ptrdiff_t>(pos_ + 16), data_.begin() + static_cast<std::ptrdiff_t>(pos_ + 32));
       Aes::Block chain = iv;
       CVT_TRY(aes_cbc_decrypt(aes_, chain, std::span<std::byte>(first)));
@@ -355,7 +356,7 @@ class Rar5Parser {
     if (count > 24) return fail(Status::Decode, "RAR 5 key derivation count 2^{} is out of range", count);
     if (password.empty()) return fail(Status::Decode, "password required: the RAR archive has encrypted headers");
     const rar::Rar5Keys& keys = keys_.get(salt, count);
-    if (!check.empty() && check_value_valid(check) && std::memcmp(check.data(), keys.check.data(), 8) != 0) {
+    if (!check.empty() && check_value_valid(check) && ::cvt::util::compare_bytes(check.data(), keys.check.data(), 8) != 0) {
       return fail(Status::Decode, "wrong password for the RAR archive");
     }
     if (!aes_.set_key(std::span<const std::uint8_t>(keys.key.data(), keys.key.size()))) {
@@ -436,12 +437,12 @@ Result<Item> parse_rar5_file(const Rar5Header& h) {
         if (version != 0) return fail(Status::Decode, "'{}' uses RAR 5 encryption version {}, which is not supported", it.name, version);
         it.encrypted = true;
         it.salt.assign(salt.begin(), salt.end());
-        std::memcpy(it.iv.data(), iv.data(), 16);
+        ::cvt::util::copy_bytes(it.iv.data(), iv.data(), 16);
         if ((eflags & 1u) != 0) {
           const ByteView check = rec.bytes(12);
           if (rec.ok() && check_value_valid(check)) {
             it.has_check = true;
-            std::memcpy(it.check.data(), check.data(), 8);
+            ::cvt::util::copy_bytes(it.check.data(), check.data(), 8);
           }
         }
         it.use_mac = (eflags & 2u) != 0;
@@ -452,7 +453,7 @@ Result<Item> parse_rar5_file(const Rar5Header& h) {
         const ByteView digest = rec.bytes(32);
         if (rec.ok() && hash_type == 0) {
           it.has_blake = true;
-          std::memcpy(it.blake.data(), digest.data(), 32);
+          ::cvt::util::copy_bytes(it.blake.data(), digest.data(), 32);
         }
         break;
       }
@@ -505,7 +506,7 @@ Result<Bytes> unpack_rar5(Extractor& ex, const Item& it, ByteView packed, Rar5De
     if (ex.password.empty()) return fail(Status::Decode, "password required: '{}' is encrypted", it.name);
     if (it.kdf_count > 24) return fail(Status::Decode, "RAR 5 key derivation count of '{}' is out of range", it.name);
     k = &keys.get(it.salt, it.kdf_count);
-    if (it.has_check && std::memcmp(it.check.data(), k->check.data(), 8) != 0) {
+    if (it.has_check && ::cvt::util::compare_bytes(it.check.data(), k->check.data(), 8) != 0) {
       return fail(Status::Decode, "wrong password for '{}'", it.name);
     }
     if (packed.size() % 16 != 0) return fail(Status::Decode, "encrypted RAR data of '{}' is damaged", it.name);

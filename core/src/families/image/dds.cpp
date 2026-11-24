@@ -180,7 +180,7 @@ Result<ir::Image> read_dds(ReadContext& ctx) {
           for (std::uint32_t x = 0; x < 4; ++x) {
             const std::uint32_t X = bx * 4 + x;
             const std::uint32_t Y = by * 4 + y;
-            if (X < width && Y < height) std::memcpy(frame.rgba.data() + frame.offset(X, Y), px[y * 4 + x].data(), 4);
+            if (X < width && Y < height) ::cvt::util::copy_bytes(frame.rgba.data() + frame.offset(X, Y), px[y * 4 + x].data(), 4);
           }
         }
       }
@@ -259,7 +259,7 @@ void encode_colour(const Rgba* px, std::uint8_t* out, bool binary_alpha) {
   }
   if (n == 0) {
     // Fully transparent block: c0 <= c1 with every index 3.
-    std::memset(out, 0, 4);
+    ::cvt::util::fill_bytes(out, 0, 4);
     out[4] = out[5] = out[6] = out[7] = 0xFF;
     return;
   }
@@ -311,7 +311,7 @@ void encode_colour(const Rgba* px, std::uint8_t* out, bool binary_alpha) {
     out[1] = static_cast<std::uint8_t>(c0 >> 8);
     out[2] = static_cast<std::uint8_t>(c1);
     out[3] = static_cast<std::uint8_t>(c1 >> 8);
-    std::memset(out + 4, 0, 4);
+    ::cvt::util::fill_bytes(out + 4, 0, 4);
     return;
   }
   std::array<Rgba, 4> palette{};
@@ -440,7 +440,7 @@ Result<Bytes> write_dds(const ir::Image& source, WriteContext& ctx) {
           for (std::uint32_t x = 0; x < 4; ++x) {
             const std::uint32_t X = std::min(bx * 4 + x, level.width - 1);
             const std::uint32_t Y = std::min(by * 4 + y, level.height - 1);
-            std::memcpy(px[y * 4 + x].data(), level.rgba.data() + level.offset(X, Y), 4);
+            ::cvt::util::copy_bytes(px[y * 4 + x].data(), level.rgba.data() + level.offset(X, Y), 4);
           }
         }
         if (format == "bc1") {

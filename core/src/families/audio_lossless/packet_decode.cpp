@@ -33,7 +33,7 @@ Result<ir::Audio> decode_alac(const PacketTrack& track, const Context& ctx) {
   std::vector<std::int32_t> ints;
   ints.reserve(track.packets.size() * config.frame_length * config.channels);
   for (std::size_t i = 0; i < track.packets.size(); ++i) {
-    if ((i & 31) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / track.packets.size(), "Decoding"));
+    if ((i & 31) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(track.packets.size()), "Decoding"));
     CVT_TRY(decoder.decode(track.packets[i], ints));
   }
   const double scale = 1.0 / static_cast<double>(std::uint64_t{1} << (config.bit_depth - 1));
@@ -68,7 +68,7 @@ Result<ir::Audio> decode_track(const PacketTrack& track, const Context& ctx) {
     }
   };
   for (std::size_t i = 0; i < track.packets.size(); ++i) {
-    if ((i & 31) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / track.packets.size(), "Decoding"));
+    if ((i & 31) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(track.packets.size()), "Decoding"));
     codec::Packet packet;
     packet.bytes = to_bytes(track.packets[i]);
     packet.keyframe = true;

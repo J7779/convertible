@@ -7,6 +7,7 @@
 #include <format>
 #include <utility>
 
+#include "util/bytes.hpp"
 #include "families/vector/ps_internal.hpp"
 
 namespace cvt::vector::ps {
@@ -213,7 +214,7 @@ void Interpreter::string_write(const Object& str, std::size_t at, std::string_vi
     charge(bytes.size() + sizeof(Journal));
     journal_.push_back(std::move(j));
   }
-  std::memcpy(store.bytes.data() + pos, bytes.data(), bytes.size());
+  ::cvt::util::copy_bytes(store.bytes.data() + pos, bytes.data(), bytes.size());
 }
 
 DictStore& Interpreter::dict(const Object& d) {

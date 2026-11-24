@@ -367,7 +367,7 @@ Result<void> verify_check(std::uint8_t check, ByteView block, ByteView stored) {
       break;
     case 0x0A: {
       const auto digest = util::sha256(block);
-      if (std::memcmp(digest.data(), stored.data(), 32) != 0) return fail(Status::Decode, "xz block SHA-256 mismatch");
+      if (::cvt::util::compare_bytes(digest.data(), stored.data(), 32) != 0) return fail(Status::Decode, "xz block SHA-256 mismatch");
       break;
     }
     default: break;  // unknown check types are skipped, as xz does with a warning
@@ -378,7 +378,7 @@ Result<void> verify_check(std::uint8_t check, ByteView block, ByteView stored) {
 // Decode one xz stream starting at data[0]; returns the bytes it used.
 Result<std::size_t> xz_stream(ByteView data, Bytes& out, const DecodeOptions& o) {
   if (data.size() < 24) return fail(Status::Decode, "xz stream is truncated");
-  if (std::memcmp(data.data(), xz_magic.data(), 6) != 0) return fail(Status::Decode, "not an xz stream");
+  if (::cvt::util::compare_bytes(data.data(), xz_magic.data(), 6) != 0) return fail(Status::Decode, "not an xz stream");
   if (util::crc32(data.subspan(6, 2)) != le32(data, 8)) return fail(Status::Decode, "xz stream header CRC mismatch");
   if (std::to_integer<int>(data[6]) != 0 || (std::to_integer<int>(data[7]) & 0xF0) != 0) {
     return fail(Status::Decode, "xz stream flags are not supported");
@@ -619,7 +619,7 @@ Result<Bytes> encode_xz_full(ByteView data, const EncodeOptions& e) {
     payload = filtered;
   }
   Bytes out(xz_magic.size());
-  std::memcpy(out.data(), xz_magic.data(), xz_magic.size());
+  ::cvt::util::copy_bytes(out.data(), xz_magic.data(), xz_magic.size());
   const std::array<std::byte, 2> flags = {std::byte{0}, static_cast<std::byte>(check)};
   append(out, ByteView(flags));
   put32(out, util::crc32(ByteView(flags)));

@@ -17,6 +17,7 @@
 #include <cstring>
 #include <deque>
 
+#include "util/bytes.hpp"
 #include "codec/ids.hpp"
 #include "codec/registry.hpp"
 #include "families/video/builtin_codecs.hpp"
@@ -93,7 +94,7 @@ class RawVideoDecoder final : public codec::VideoDecoder {
       for (std::size_t p = 0; p < frame.planes.size(); ++p) {
         const std::size_t target = (layout_.swap_chroma && p > 0) ? 3 - p : p;
         const std::size_t bytes = frame.planes[target].data.size();
-        std::memcpy(frame.planes[target].data.data(), in + at, bytes);
+        ::cvt::util::copy_bytes(frame.planes[target].data.data(), in + at, bytes);
         at += bytes;
       }
     } else {

@@ -1,4 +1,5 @@
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/science/science_test.hpp"
 
 using namespace cvt;
@@ -131,6 +132,6 @@ TEST_CASE("science/fits: hostile input") {
   Bytes bomb = test::fixture("science/arrays/gray8.fits");
   // NAXIS1 = 99999999 on the fourth card.
   const std::string card = "NAXIS1  =             99999999";
-  std::memcpy(bomb.data() + 240, card.data(), card.size());
+  ::cvt::util::copy_bytes(bomb.data() + 240, card.data(), card.size());
   CHECK_STATUS(test::read_as<ir::Data>("fits", bomb), Status::Decode);
 }

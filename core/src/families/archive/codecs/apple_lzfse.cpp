@@ -19,6 +19,7 @@
 #include <span>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/archive/codecs/apple_codecs.hpp"
 
 namespace cvt::compression::detail {
@@ -77,7 +78,7 @@ std::uint32_t le32(const std::uint8_t* p) {
 std::uint16_t le16(const std::uint8_t* p) { return static_cast<std::uint16_t>(p[0] | (p[1] << 8)); }
 std::uint64_t le64(const std::uint8_t* p) {
   std::uint64_t v;
-  std::memcpy(&v, p, 8);
+  ::cvt::util::copy_bytes(&v, p, 8);
   if constexpr (std::endian::native == std::endian::big) {
     v = ((v & 0x00000000000000FFull) << 56) | ((v & 0x000000000000FF00ull) << 40) | ((v & 0x0000000000FF0000ull) << 24) |
         ((v & 0x00000000FF000000ull) << 8) | ((v & 0x000000FF00000000ull) >> 8) | ((v & 0x0000FF0000000000ull) >> 24) |
@@ -90,14 +91,14 @@ std::uint64_t le64(const std::uint8_t* p) {
 inline void copy_match(std::uint8_t* dst, std::size_t distance, std::size_t m) {
   const std::uint8_t* from = dst - distance;
   if (distance >= m) {
-    std::memcpy(dst, from, m);
+    ::cvt::util::copy_bytes(dst, from, m);
   } else if (distance == 1) {
-    std::memset(dst, *from, m);
+    ::cvt::util::fill_bytes(dst, *from, m);
   } else {
     // Repeat the period in non-overlapping pieces of `distance` bytes.
     for (std::size_t done = 0; done < m;) {
       const std::size_t n = std::min(distance, m - done);
-      std::memcpy(dst + done, from + done, n);
+      ::cvt::util::copy_bytes(dst + done, from + done, n);
       done += n;
     }
   }
@@ -400,16 +401,16 @@ Result<std::size_t> decode_fse_block(const BlockHeader& h, const std::uint8_t* i
     if (l > n_lit - lit || l > end - pos || m > end - pos - l) return fail(Status::Decode, "LZFSE match is out of range");
     if (end - pos >= l + 16) {
       // Wide copy: may write up to 15 bytes past the literals, inside the block.
-      for (std::size_t k = 0; k < l; k += 16) std::memcpy(dst + pos + k, sc.literals.data() + lit + k, 16);
+      for (std::size_t k = 0; k < l; k += 16) ::cvt::util::copy_bytes(dst + pos + k, sc.literals.data() + lit + k, 16);
     } else {
-      std::memcpy(dst + pos, sc.literals.data() + lit, l);
+      ::cvt::util::copy_bytes(dst + pos, sc.literals.data() + lit, l);
     }
     lit += l;
     pos += l;
     if (m != 0) {
       if (distance == 0 || distance > pos) return fail(Status::Decode, "LZFSE match distance is out of range");
       if (distance >= 16 && end - pos >= m + 16) {
-        for (std::size_t k = 0; k < m; k += 16) std::memcpy(dst + pos + k, dst + pos - distance + k, 16);
+        for (std::size_t k = 0; k < m; k += 16) ::cvt::util::copy_bytes(dst + pos + k, dst + pos - distance + k, 16);
       } else {
         copy_match(dst + pos, distance, m);
       }
@@ -486,7 +487,7 @@ Result<void> decode_lzvn(const std::uint8_t* src, std::size_t n, Bytes& out, std
     if (lit != 0) {
       if (lit > n - i) return fail(Status::Decode, "LZVN data is truncated");
       if (lit > end - pos) return bad();
-      std::memcpy(dst + pos, src + i, lit);
+      ::cvt::util::copy_bytes(dst + pos, src + i, lit);
       i += lit;
       pos += lit;
     }

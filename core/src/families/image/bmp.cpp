@@ -218,7 +218,7 @@ Result<ir::Image> bmp::decode_dib(ByteView data, std::size_t pixel_offset, const
     std::uint32_t row = 0;
     const auto set = [&](std::uint32_t px, Rgba c) {
       if (px >= w || row >= h) return;
-      std::memcpy(put_row(row) + static_cast<std::size_t>(px) * 4, c.data(), 4);
+      ::cvt::util::copy_bytes(put_row(row) + static_cast<std::size_t>(px) * 4, c.data(), 4);
     };
     while (row < h) {
       if ((row & 63) == 0 && x == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(row) / h));
@@ -300,7 +300,7 @@ Result<ir::Image> bmp::decode_dib(ByteView data, std::size_t pixel_offset, const
         if (bpp <= 8) {
           const std::uint8_t byte = src[bit / 8];
           const std::uint32_t index = (byte >> (8 - bpp - static_cast<int>(bit % 8))) & ((1u << bpp) - 1u);
-          std::memcpy(p, palette[index].data(), 4);
+          ::cvt::util::copy_bytes(p, palette[index].data(), 4);
         } else if (bpp == 24 && compression == 0) {
           p[0] = src[x * 3 + 2];
           p[1] = src[x * 3 + 1];

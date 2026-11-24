@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 
+#include "util/bytes.hpp"
 #include "codec/codec.hpp"
 #include "families/codec_vpx/vpx_bitstream.hpp"
 #include "families/codec_vpx/vpx_codecs.hpp"
@@ -71,7 +72,7 @@ struct SampleReader {
   [[nodiscard]] std::uint32_t at(const std::uint8_t* row, std::size_t x) const noexcept {
     if (!high) return row[x];
     std::uint16_t value = 0;
-    std::memcpy(&value, row + x * 2, 2);  // libvpx stores host-order (little-endian) words
+    ::cvt::util::copy_bytes(&value, row + x * 2, 2);  // libvpx stores host-order (little-endian) words
     if (shift == 0) return value;
     const std::uint32_t rounded = (std::uint32_t{value} + (1u << (shift - 1))) >> shift;
     return std::min<std::uint32_t>(rounded, 1023u);
@@ -159,9 +160,9 @@ Result<VideoFrame> image_to_frame(const vpx_image_t& image, Codec codec, const s
       const std::uint8_t* in = image.planes[p] + static_cast<std::ptrdiff_t>(source_row) * image.stride[p];
       std::uint8_t* out = plane.data.data() + y * plane.stride;
       if (!high && !out_wide) {
-        std::memcpy(out, in, cols);
+        ::cvt::util::copy_bytes(out, in, cols);
       } else if (high && out_wide && reader.shift == 0) {
-        std::memcpy(out, in, cols * 2);  // host order is little-endian (see the libvpx configuration)
+        ::cvt::util::copy_bytes(out, in, cols * 2);  // host order is little-endian (see the libvpx configuration)
       } else {
         for (std::size_t x = 0; x < cols; ++x) put_sample(out, x, reader.at(in, x), out_wide);
       }

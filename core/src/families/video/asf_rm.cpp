@@ -10,6 +10,7 @@
 #include <format>
 #include <map>
 
+#include "util/bytes.hpp"
 #include "codec/ids.hpp"
 #include "families/video/bitstream.hpp"
 #include "families/video/containers.hpp"
@@ -32,7 +33,7 @@ constexpr Guid spread_guid = {0x50, 0xCD, 0xC3, 0xBF, 0x8F, 0x61, 0xCF, 0x11, 0x
 constexpr Guid content_guid = {0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C};
 
 bool is_guid(ByteView data, const Guid& g) {
-  return data.size() >= 16 && std::memcmp(data.data(), g.data(), 16) == 0;
+  return data.size() >= 16 && ::cvt::util::compare_bytes(data.data(), g.data(), 16) == 0;
 }
 
 std::uint32_t read_by_type(util::ByteReader& r, int type) {
@@ -303,7 +304,7 @@ Result<std::shared_ptr<Demuxed>> demux_asf(ByteView input, const ReadSettings& s
           const std::size_t col = k % static_cast<std::size_t>(s.span);
           const std::size_t source = base + k * s.virtual_chunk;
           const std::size_t target = base + (col * chunks_per_packet + row) * s.virtual_chunk;
-          std::memcpy(plain.data() + target, data.data() + source, s.virtual_chunk);
+          ::cvt::util::copy_bytes(plain.data() + target, data.data() + source, s.virtual_chunk);
         }
       }
       PacketBuilder builder(*out);

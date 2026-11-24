@@ -6,6 +6,7 @@
 #include <string_view>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/common.hpp"
 #include "families/image/image_test_util.hpp"
 
@@ -42,7 +43,7 @@ ir::Frame parse_pam(const Bytes& data) {
     return {};
   }
   ir::Frame frame = ir::Frame::filled(width, height);
-  std::memcpy(frame.rgba.data(), text.data() + start, frame.rgba.size());
+  ::cvt::util::copy_bytes(frame.rgba.data(), text.data() + start, frame.rgba.size());
   return frame;
 }
 
@@ -86,7 +87,7 @@ bool visible_pixels_equal(const ir::Frame& a, const ir::Frame& b) {
   if (a.width != b.width || a.height != b.height) return false;
   for (std::size_t i = 0; i < a.rgba.size(); i += 4) {
     if (a.rgba[i + 3] != b.rgba[i + 3]) return false;
-    if (a.rgba[i + 3] != 0 && std::memcmp(&a.rgba[i], &b.rgba[i], 3) != 0) return false;
+    if (a.rgba[i + 3] != 0 && ::cvt::util::compare_bytes(&a.rgba[i], &b.rgba[i], 3) != 0) return false;
   }
   return true;
 }

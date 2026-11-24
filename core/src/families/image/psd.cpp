@@ -118,7 +118,7 @@ Result<ir::Image> read_psd(ReadContext& ctx) {
   if (compression == 0) {
     for (std::uint32_t c = 0; c < used; ++c) {
       const ByteView data = r.bytes(std::min<std::size_t>(static_cast<std::size_t>(plane_bytes), r.remaining()));
-      std::memcpy(planes[c].data(), data.data(), data.size());
+      ::cvt::util::copy_bytes(planes[c].data(), data.data(), data.size());
       if (data.size() < plane_bytes) {
         truncated = true;
         break;

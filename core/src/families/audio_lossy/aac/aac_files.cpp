@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossless/bits.hpp"
 #include "families/audio_lossless/common.hpp"
 #include "families/audio_lossless/mp4_boxes.hpp"
@@ -60,7 +61,7 @@ Result<Track> read_adts(ByteView data, const Context& ctx) {
   Track track;
   std::size_t pos = 0;
   // Skip a leading ID3v2 tag.
-  if (d.size() >= 10 && std::memcmp(d.data(), "ID3", 3) == 0) {
+  if (d.size() >= 10 && ::cvt::util::compare_bytes(d.data(), "ID3", 3) == 0) {
     pos = 10 + ((std::size_t{d[6] & 0x7Fu} << 21) | (std::size_t{d[7] & 0x7Fu} << 14) | (std::size_t{d[8] & 0x7Fu} << 7) |
                 (d[9] & 0x7Fu));
     audio::tags::parse_id3v2(data.first(std::min(pos, d.size())), track.tags);

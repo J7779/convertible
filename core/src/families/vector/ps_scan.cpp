@@ -7,6 +7,7 @@
 #include <limits>
 #include <utility>
 
+#include "util/bytes.hpp"
 #include "families/vector/ps_internal.hpp"
 #include "util/deflate.hpp"
 #include "util/text.hpp"
@@ -432,7 +433,7 @@ Bytes png_unpredict(const std::string& data, int predictor, int colors, int bpc,
       return out;
     }
     out.resize(data.size());
-    std::memcpy(out.data(), data.data(), data.size());
+    ::cvt::util::copy_bytes(out.data(), data.data(), data.size());
     return out;
   }
   const std::size_t bpp = std::max<std::size_t>(1, (static_cast<std::size_t>(colors) * static_cast<std::size_t>(bpc) + 7) / 8);
@@ -445,7 +446,7 @@ Bytes png_unpredict(const std::string& data, int predictor, int colors, int bpc,
     const int type = static_cast<unsigned char>(data[pos++]);
     const std::size_t take = std::min(row, data.size() - pos);
     std::fill(cur.begin(), cur.end(), 0);
-    std::memcpy(cur.data(), data.data() + pos, take);
+    ::cvt::util::copy_bytes(cur.data(), data.data() + pos, take);
     pos += take;
     for (std::size_t i = 0; i < row; ++i) {
       const int a = i >= bpp ? cur[i - bpp] : 0;

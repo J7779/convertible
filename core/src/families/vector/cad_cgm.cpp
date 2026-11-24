@@ -1066,7 +1066,7 @@ Result<Scene> read_clear_text(ReadContext& ctx) {
       ++pos;  // whitespace, commas, parentheses
     }
     if (!have_name) continue;
-    if ((++statements & 0xFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / text.size()));
+    if ((++statements & 0xFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / static_cast<double>(text.size())));
     for (const Name& n : clear_text_names) {
       if (n.name == name) {
         TextParams p(interp.prec, tokens);

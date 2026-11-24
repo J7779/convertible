@@ -12,6 +12,7 @@
 #include <cstring>
 #include <format>
 
+#include "util/bytes.hpp"
 #include "engine/standard_options.hpp"
 #include "families/science/arrays.hpp"
 #include "families/science/science.hpp"
@@ -231,7 +232,7 @@ class Mat5Reader {
             // Integers stored in a narrower type are widened exactly.
             if ((a.dtype.kind == ScalarKind::Int || a.dtype.kind == ScalarKind::UInt) && a.dtype.size == 8 &&
                 (real.dtype.kind == ScalarKind::Int || real.dtype.kind == ScalarKind::UInt) && real.dtype.size == 8) {
-              std::memcpy(a.data.data() + i * 8, real.element(i), 8);
+              ::cvt::util::copy_bytes(a.data.data() + i * 8, real.element(i), 8);
             } else {
               store_double(a.dtype, a.data.data() + i * a.dtype.size, real.number(i));
             }
@@ -688,8 +689,8 @@ class Mat5Writer {
       const std::uint32_t part = a.dtype.size / 2;
       Bytes re(static_cast<std::size_t>(n * part)), im(static_cast<std::size_t>(n * part));
       for (std::uint64_t i = 0; i < n; ++i) {
-        std::memcpy(re.data() + i * part, a.element(i), part);
-        std::memcpy(im.data() + i * part, a.element(i) + part, part);
+        ::cvt::util::copy_bytes(re.data() + i * part, a.element(i), part);
+        ::cvt::util::copy_bytes(im.data() + i * part, a.element(i) + part, part);
       }
       tag(body, class_mi(mx), re);
       tag(body, class_mi(mx), im);

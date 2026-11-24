@@ -3,6 +3,7 @@
 // Nothing may throw across this boundary: every entry point is wrapped so
 // that any exception becomes an error result or an empty answer.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "convertible/convertible.h"
 
 #include <algorithm>
@@ -67,7 +68,7 @@ const cvt_result& out_of_memory_result() {
 char* duplicate(std::string_view text) noexcept {
   char* out = static_cast<char*>(std::malloc(text.size() + 1));
   if (out == nullptr) return nullptr;
-  if (!text.empty()) std::memcpy(out, text.data(), text.size());
+  if (!text.empty()) ::cvt::util::copy_bytes(out, text.data(), text.size());
   out[text.size()] = '\0';
   return out;
 }

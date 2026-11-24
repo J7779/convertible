@@ -209,9 +209,9 @@ class ShadingSource final : public Source {
         else if (has_background) c = background;
       } else {
         // Radial: find the largest s with point on circle(s).
-        const double x0 = coords[0], y0 = coords[1], r0 = coords[2], x1 = coords[3], y1 = coords[4], r1 = coords[5];
-        const double cdx = x1 - x0, cdy = y1 - y0, dr = r1 - r0;
-        const double pdx = p.x - x0, pdy = p.y - y0;
+        const double cx0 = coords[0], cy0 = coords[1], r0 = coords[2], cx1 = coords[3], cy1 = coords[4], r1 = coords[5];
+        const double cdx = cx1 - cx0, cdy = cy1 - cy0, dr = r1 - r0;
+        const double pdx = p.x - cx0, pdy = p.y - cy0;
         const double a = cdx * cdx + cdy * cdy - dr * dr;
         const double b = pdx * cdx + pdy * cdy + r0 * dr;
         const double cc = pdx * pdx + pdy * pdy - r0 * r0;

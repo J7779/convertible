@@ -11,6 +11,7 @@
 #include <cstring>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/image_api.hpp"
 #include "families/image_modern/raw_ljpeg.hpp"
 #include "families/image_modern/raw_model.hpp"
@@ -84,7 +85,7 @@ void place_u16(Sensor& sensor, const Chunk& chunk, const std::uint16_t* rows, st
   const std::uint32_t h = std::min(chunk.height, sensor.height - chunk.y);
   for (std::uint32_t r = 0; r < h; ++r) {
     std::uint16_t* dst = sensor.u16.data() + (std::size_t{chunk.y + r} * sensor.width + chunk.x) * spp;
-    std::memcpy(dst, rows + std::size_t{r} * row_samples, std::size_t{w} * spp * sizeof(std::uint16_t));
+    ::cvt::util::copy_bytes(dst, rows + std::size_t{r} * row_samples, std::size_t{w} * spp * sizeof(std::uint16_t));
   }
 }
 
@@ -94,7 +95,7 @@ void place_f32(Sensor& sensor, const Chunk& chunk, const float* rows, std::size_
   const std::uint32_t h = std::min(chunk.height, sensor.height - chunk.y);
   for (std::uint32_t r = 0; r < h; ++r) {
     float* dst = sensor.f32.data() + (std::size_t{chunk.y + r} * sensor.width + chunk.x) * spp;
-    std::memcpy(dst, rows + std::size_t{r} * row_samples, std::size_t{w} * spp * sizeof(float));
+    ::cvt::util::copy_bytes(dst, rows + std::size_t{r} * row_samples, std::size_t{w} * spp * sizeof(float));
   }
 }
 
@@ -123,7 +124,7 @@ Result<void> undo_float_predictor(const Bytes& in, std::uint32_t width, std::uin
   if (predictor == 34895) distance *= 4;
   std::vector<std::uint8_t> row(row_bytes);
   for (std::uint32_t y = 0; y < height; ++y) {
-    std::memcpy(row.data(), in.data() + std::size_t{y} * row_bytes, row_bytes);
+    ::cvt::util::copy_bytes(row.data(), in.data() + std::size_t{y} * row_bytes, row_bytes);
     for (std::size_t i = distance; i < row_bytes; ++i) row[i] = static_cast<std::uint8_t>(row[i] + row[i - distance]);
     for (std::size_t i = 0; i < n; ++i) {
       std::uint32_t v = 0;

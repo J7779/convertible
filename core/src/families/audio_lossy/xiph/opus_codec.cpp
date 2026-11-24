@@ -136,7 +136,7 @@ std::optional<OpusHead> parse_opus_head(ByteView data) {
   const auto d = as_u8(data);
   OpusHead h;
   std::size_t map_at = 0;
-  if (d.size() >= 19 && std::memcmp(d.data(), "OpusHead", 8) == 0) {
+  if (d.size() >= 19 && ::cvt::util::compare_bytes(d.data(), "OpusHead", 8) == 0) {
     if ((d[8] & 0xF0) != 0) return std::nullopt;  // incompatible major version
     h.channels = d[9];
     h.pre_skip = le16(d.data() + 10);
@@ -202,7 +202,7 @@ Result<ir::Audio> read_ogg_opus(ByteView input, const Context& ctx) {
   audio.sample_rate = 48000;
   audio.channels = static_cast<std::uint16_t>(head->channels);
   std::size_t first_audio = 1;
-  if (stream.packets.size() > 1 && stream.packets[1].size() >= 8 && std::memcmp(stream.packets[1].data(), "OpusTags", 8) == 0) {
+  if (stream.packets.size() > 1 && stream.packets[1].size() >= 8 && ::cvt::util::compare_bytes(stream.packets[1].data(), "OpusTags", 8) == 0) {
     audio::tags::parse_vorbis_comment(ByteView(stream.packets[1]).subspan(8), audio.tags);
     first_audio = 2;
   }

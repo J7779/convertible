@@ -1,5 +1,6 @@
 // Convertible core - archive family: checksums (see checksums.hpp).
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/archive/checksums.hpp"
 
 #include <bit>
@@ -103,13 +104,13 @@ void Xxh32::update(ByteView data) noexcept {
   std::size_t n = data.size();
   total_ += n;
   if (buffered_ + n < 16) {
-    if (n != 0) std::memcpy(buffer_.data() + buffered_, p, n);
+    if (n != 0) ::cvt::util::copy_bytes(buffer_.data() + buffered_, p, n);
     buffered_ += n;
     return;
   }
   if (buffered_ != 0) {
     const std::size_t take = 16 - buffered_;
-    std::memcpy(buffer_.data() + buffered_, p, take);
+    ::cvt::util::copy_bytes(buffer_.data() + buffered_, p, take);
     for (int i = 0; i < 4; ++i) v_[i] = round32(v_[i], load32(buffer_.data() + 4 * i));
     p += take;
     n -= take;
@@ -120,7 +121,7 @@ void Xxh32::update(ByteView data) noexcept {
     p += 16;
     n -= 16;
   }
-  if (n != 0) std::memcpy(buffer_.data(), p, n);
+  if (n != 0) ::cvt::util::copy_bytes(buffer_.data(), p, n);
   buffered_ = n;
 }
 
@@ -165,13 +166,13 @@ void Xxh64::update(ByteView data) noexcept {
   std::size_t n = data.size();
   total_ += n;
   if (buffered_ + n < 32) {
-    if (n != 0) std::memcpy(buffer_.data() + buffered_, p, n);
+    if (n != 0) ::cvt::util::copy_bytes(buffer_.data() + buffered_, p, n);
     buffered_ += n;
     return;
   }
   if (buffered_ != 0) {
     const std::size_t take = 32 - buffered_;
-    std::memcpy(buffer_.data() + buffered_, p, take);
+    ::cvt::util::copy_bytes(buffer_.data() + buffered_, p, take);
     for (int i = 0; i < 4; ++i) v_[i] = round64(v_[i], load64(buffer_.data() + 8 * i));
     p += take;
     n -= take;
@@ -182,7 +183,7 @@ void Xxh64::update(ByteView data) noexcept {
     p += 32;
     n -= 32;
   }
-  if (n != 0) std::memcpy(buffer_.data(), p, n);
+  if (n != 0) ::cvt::util::copy_bytes(buffer_.data(), p, n);
   buffered_ = n;
 }
 

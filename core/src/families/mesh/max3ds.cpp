@@ -222,7 +222,7 @@ Result<AnyIR> read_3ds(ReadContext& ctx) {
     std::size_t done = 0;
     for (const Chunk& e : editor) {
       if (e.id != chunk_object) continue;
-      CVT_TRY(ctx.checkpoint(0.9 * static_cast<double>(++done) / (editor.size() + 1.0)));
+      CVT_TRY(ctx.checkpoint(0.9 * static_cast<double>(++done) / (static_cast<double>(editor.size()) + 1.0)));
       CVT_TRY(read_object(e.body, mesh, ctx));
     }
   }
@@ -361,7 +361,7 @@ Result<Bytes> write_3ds(const AnyIR& value, WriteContext& ctx) {
     // Pieces of at most 65535 vertices and faces.
     std::size_t f = 0;
     while (f < faces) {
-      CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(written) / (mesh.indices.size() / 3 + 1)));
+      CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(written) / static_cast<double>(mesh.indices.size() / 3 + 1)));
       std::unordered_map<std::uint32_t, std::uint16_t> local;
       std::vector<std::uint32_t> source;
       std::vector<std::array<std::uint16_t, 3>> tris;

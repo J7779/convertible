@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/common.hpp"
 #include "families/image/image_ops.hpp"
 #include "families/image/jpeg_codec.hpp"
@@ -911,7 +912,7 @@ Result<std::size_t> decode_scan(Decoder& d, const Scan& scan, std::size_t start)
     if (d.stored_coefs) {
       block = c.coefs.data() + (static_cast<std::size_t>(by) * c.blocks_w + bx) * 64;
     } else {
-      std::memset(local, 0, sizeof(local));
+      ::cvt::util::fill_bytes(local, 0, sizeof(local));
     }
     if (d.arithmetic) {
       if (arith_failed) return;
@@ -1221,12 +1222,12 @@ Result<Planes> decode_planes(ByteView data, const Context& ctx, const DecodeOpti
     if (d.precision == 8) {
       p.samples.resize(static_cast<std::size_t>(c.width) * c.height);
       for (std::uint32_t y = 0; y < c.height; ++y) {
-        std::memcpy(p.samples.data() + static_cast<std::size_t>(y) * c.width, c.plane.data() + y * stride, c.width);
+        ::cvt::util::copy_bytes(p.samples.data() + static_cast<std::size_t>(y) * c.width, c.plane.data() + y * stride, c.width);
       }
     } else {
       p.samples12.resize(static_cast<std::size_t>(c.width) * c.height);
       for (std::uint32_t y = 0; y < c.height; ++y) {
-        std::memcpy(p.samples12.data() + static_cast<std::size_t>(y) * c.width, c.plane12.data() + y * stride,
+        ::cvt::util::copy_bytes(p.samples12.data() + static_cast<std::size_t>(y) * c.width, c.plane12.data() + y * stride,
                     static_cast<std::size_t>(c.width) * 2);
       }
     }

@@ -1586,7 +1586,7 @@ Result<Scene> read_impl(ReadContext& ctx, bool for_mesh) {
   std::size_t done = 0;
   bool any = false;
   for (const Entity& e : doc.entities) {
-    if ((++done & 0xFFF) == 0) CVT_TRY(ctx.checkpoint(0.3 + 0.6 * static_cast<double>(done) / doc.entities.size()));
+    if ((++done & 0xFFF) == 0) CVT_TRY(ctx.checkpoint(0.3 + 0.6 * static_cast<double>(done) / static_cast<double>(doc.entities.size())));
     const bool in_paper = get_i(e.tags, 67, 0) == 1;
     if (in_paper == paper) any = true;
     CVT_TRY(drawer.draw_top(e, paper, filter));

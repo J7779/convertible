@@ -1,5 +1,6 @@
 // Convertible core - science family: n-dimensional array model.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/science/arrays.hpp"
 
 #include <algorithm>
@@ -306,9 +307,9 @@ void reorder(Array& array, bool to_c) {
     std::uint64_t f = 0;
     for (std::size_t d = rank; d-- > 0;) f = f * array.shape[d] + index[d];
     if (to_c) {
-      std::memcpy(out.data() + i * size, array.data.data() + f * size, size);
+      ::cvt::util::copy_bytes(out.data() + i * size, array.data.data() + f * size, size);
     } else {
-      std::memcpy(out.data() + f * size, array.data.data() + i * size, size);
+      ::cvt::util::copy_bytes(out.data() + f * size, array.data.data() + i * size, size);
     }
     for (std::size_t d = rank; d-- > 0;) {
       if (++index[d] < array.shape[d]) break;
@@ -426,12 +427,12 @@ Result<void> store_json(DType type, std::byte* p, const Json& v) {
   switch (type.kind) {
     case ScalarKind::Bytes: {
       const std::string s = v.is_string() ? v.as_string() : util::dump_json(v);
-      std::memcpy(p, s.data(), std::min<std::size_t>(s.size(), type.size));
+      ::cvt::util::copy_bytes(p, s.data(), std::min<std::size_t>(s.size(), type.size));
       return {};
     }
     case ScalarKind::Unicode: {
       const std::string s = utf32_le(v.is_string() ? v.as_string() : util::dump_json(v), type.size / 4);
-      std::memcpy(p, s.data(), s.size());
+      ::cvt::util::copy_bytes(p, s.data(), s.size());
       return {};
     }
     case ScalarKind::Complex: {
@@ -731,7 +732,7 @@ Result<Array> sheet_to_array(const ir::Sheet& sheet) {
       const ir::Cell* cell = c < sheet.rows[r].size() ? &sheet.rows[r][c] : nullptr;
       if (array.dtype.kind == ScalarKind::Unicode) {
         const std::string s = utf32_le(cell != nullptr ? cell->text : std::string(), array.dtype.size / 4);
-        std::memcpy(p, s.data(), s.size());
+        ::cvt::util::copy_bytes(p, s.data(), s.size());
         continue;
       }
       double v = std::numeric_limits<double>::quiet_NaN();

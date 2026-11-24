@@ -974,7 +974,7 @@ Result<AnyIR> read_vox(ReadContext& ctx) {
     } else if (id == "nTRN" || id == "nGRP" || id == "nSHP") {
       ++scene_nodes;
     }
-    CVT_TRY(ctx.checkpoint(0.3 * static_cast<double>(r.position()) / (ctx.input.size() + 1.0)));
+    CVT_TRY(ctx.checkpoint(0.3 * static_cast<double>(r.position()) / (static_cast<double>(ctx.input.size()) + 1.0)));
   }
   (void)custom_palette;
   if (models.empty()) return fail(Status::Decode, "the MagicaVoxel file contains no models");
@@ -987,7 +987,7 @@ Result<AnyIR> read_vox(ReadContext& ctx) {
   ir::Mesh mesh;
   float offset = 0;
   for (std::size_t m = 0; m < models.size(); ++m) {
-    CVT_TRY(ctx.checkpoint(0.3 + 0.6 * static_cast<double>(m) / models.size(), "Meshing"));
+    CVT_TRY(ctx.checkpoint(0.3 + 0.6 * static_cast<double>(m) / static_cast<double>(models.size()), "Meshing"));
     const std::size_t first = mesh.face_count();
     greedy_mesh(models[m], colors, offset, mesh);
     CVT_TRY(check_elements(ctx, mesh.positions.size(), "vertices"));

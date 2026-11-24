@@ -198,7 +198,7 @@ class VtkReader {
     while (!in_.at_end()) {
       const std::string_view key = in_.token();
       if (key.empty()) break;
-      if ((++sections_ & 0xFF) == 0) CVT_TRY(ctx_.checkpoint(0.8 * static_cast<double>(in_.position()) / (ctx_.input.size() + 1.0)));
+      if ((++sections_ & 0xFF) == 0) CVT_TRY(ctx_.checkpoint(0.8 * static_cast<double>(in_.position()) / (static_cast<double>(ctx_.input.size()) + 1.0)));
       const std::string rest(in_.line());
       std::vector<std::string_view> args = tokens(rest);
       const auto number = [&](std::size_t i) -> std::uint64_t {
@@ -569,7 +569,7 @@ Result<AnyIR> read_gmsh(ReadContext& ctx) {
   while (!in.at_end()) {
     const std::string_view section = in.token();
     if (section.empty()) break;
-    CVT_TRY(ctx.checkpoint(0.8 * static_cast<double>(in.position()) / (ctx.input.size() + 1.0)));
+    CVT_TRY(ctx.checkpoint(0.8 * static_cast<double>(in.position()) / (static_cast<double>(ctx.input.size()) + 1.0)));
     if (section == "$MeshFormat") {
       if (!parse_double(in.token(), version)) return fail(Status::Decode, "malformed Gmsh header");
       std::int64_t file_type = 0, size = 0;

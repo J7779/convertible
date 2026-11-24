@@ -9,6 +9,7 @@
 #include <string_view>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "convertible/convertible.h"
 #include "support/fixtures.hpp"
 #include "support/metrics.hpp"
@@ -48,7 +49,7 @@ inline CapiResult capi_convert(ByteView input, std::string_view filename, std::s
   if (const char* m = cvt_result_message(result)) out.message = m;
   const std::uint8_t* data = cvt_result_data(result);
   out.data.resize(cvt_result_size(result));
-  if (!out.data.empty() && data != nullptr) std::memcpy(out.data.data(), data, out.data.size());
+  if (!out.data.empty() && data != nullptr) ::cvt::util::copy_bytes(out.data.data(), data, out.data.size());
   if (const char* f = cvt_result_format(result)) out.format = f;
   if (const char* w = cvt_result_warnings_json(result)) out.warnings_json = w;
   cvt_result_free(result);
@@ -65,7 +66,7 @@ inline std::vector<ir::VideoFrame> reference_i420(std::string_view name, std::ui
     ir::VideoFrame f = ir::VideoFrame::allocate(ir::PixelFormat::I420, width, height);
     std::size_t offset = at;
     for (ir::Plane& p : f.planes) {
-      std::memcpy(p.data.data(), raw->data() + offset, p.data.size());
+      ::cvt::util::copy_bytes(p.data.data(), raw->data() + offset, p.data.size());
       offset += p.data.size();
     }
     frames.push_back(std::move(f));

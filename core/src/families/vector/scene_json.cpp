@@ -1,5 +1,6 @@
 // Convertible core - vector family: lossless JSON form of a scene.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/vector/scene_json.hpp"
 
 #include <algorithm>
@@ -594,7 +595,7 @@ struct Reader {
         frame->width = static_cast<std::uint32_t>(w);
         frame->height = static_cast<std::uint32_t>(h);
         frame->rgba.resize(rgba.size());
-        std::memcpy(frame->rgba.data(), rgba.data(), rgba.size());
+        ::cvt::util::copy_bytes(frame->rgba.data(), rgba.data(), rgba.size());
         p.pixels = std::move(frame);
       }
       return Node{std::move(p)};

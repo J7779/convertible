@@ -95,7 +95,7 @@ Result<ir::Image> read_tga(ReadContext& ctx) {
   bool truncated = false;
   if (!rle) {
     const ByteView data = r.bytes(std::min<std::size_t>(raw.size(), r.remaining()));
-    std::memcpy(raw.data(), data.data(), data.size());
+    ::cvt::util::copy_bytes(raw.data(), data.data(), data.size());
     truncated = data.size() < raw.size();
   } else {
     std::size_t at = 0;
@@ -113,7 +113,7 @@ Result<ir::Image> read_tga(ReadContext& ctx) {
           break;
         }
         for (std::size_t k = 0; k < count && at < raw.size(); ++k, at += static_cast<std::size_t>(pixel_bytes)) {
-          std::memcpy(raw.data() + at, value.data(), static_cast<std::size_t>(pixel_bytes));
+          ::cvt::util::copy_bytes(raw.data() + at, value.data(), static_cast<std::size_t>(pixel_bytes));
         }
       } else {
         const std::size_t n = std::min(count * static_cast<std::size_t>(pixel_bytes), raw.size() - at);
@@ -122,7 +122,7 @@ Result<ir::Image> read_tga(ReadContext& ctx) {
           truncated = true;
           break;
         }
-        std::memcpy(raw.data() + at, values.data(), n);
+        ::cvt::util::copy_bytes(raw.data() + at, values.data(), n);
         at += n;
       }
     }
@@ -151,7 +151,7 @@ Result<ir::Image> read_tga(ReadContext& ctx) {
       }
       if (!use_alpha && base != 1) c[3] = 255;
       if (c[3] != 0) any_alpha = true;
-      std::memcpy(frame.rgba.data() + frame.offset(x, y), c.data(), 4);
+      ::cvt::util::copy_bytes(frame.rgba.data() + frame.offset(x, y), c.data(), 4);
     }
   }
   // An all-zero alpha channel without an extension area is garbage, not transparency.
@@ -201,7 +201,7 @@ Result<Bytes> write_tga(const ir::Image& source, WriteContext& ctx) {
     // Packets never cross rows (TGA 2.0 recommendation).
     std::uint32_t x = 0;
     const auto same = [&](std::uint32_t a, std::uint32_t b) {
-      return std::memcmp(row.data() + std::size_t{a} * static_cast<std::size_t>(bytes),
+      return ::cvt::util::compare_bytes(row.data() + std::size_t{a} * static_cast<std::size_t>(bytes),
                          row.data() + std::size_t{b} * static_cast<std::size_t>(bytes), static_cast<std::size_t>(bytes)) == 0;
     };
     while (x < frame.width) {

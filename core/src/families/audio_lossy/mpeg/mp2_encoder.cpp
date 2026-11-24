@@ -13,6 +13,7 @@
 #include <numbers>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossless/bits.hpp"
 #include "families/audio_lossy/mpeg/mpeg_files.hpp"
 #include "families/audio_lossy/mpeg/mpeg_psy.hpp"
@@ -44,7 +45,7 @@ struct Analysis {
     }
   }
   void run(const double* samples, double* out) {
-    std::memmove(x.data() + 32, x.data(), sizeof(double) * 480);
+    ::cvt::util::move_bytes(x.data() + 32, x.data(), sizeof(double) * 480);
     for (std::size_t i = 0; i < 32; ++i) x[i] = samples[31 - i];
     std::array<double, 64> y{};
     for (std::size_t i = 0; i < 64; ++i) {

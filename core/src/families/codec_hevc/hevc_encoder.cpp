@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "cvt_kvazaar.h"
 
 #include "codec/codec.hpp"
@@ -122,7 +123,7 @@ struct VuiColour {
     for (std::uint32_t y = 0; y < dst_h; ++y) {
       const std::uint8_t* row = frame.planes[p].data.data() + std::size_t{std::min(y, src_h - 1)} * frame.planes[p].stride;
       std::uint8_t* dst = out.planes[p].data.data() + std::size_t{y} * out.planes[p].stride;
-      std::memcpy(dst, row, src_w);
+      ::cvt::util::copy_bytes(dst, row, src_w);
       for (std::uint32_t x = src_w; x < dst_w; ++x) dst[x] = row[src_w - 1];
     }
   }

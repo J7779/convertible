@@ -54,7 +54,7 @@ Result<std::vector<DxfTag>> tokenize_binary(ByteView data, const Context& ctx) {
   const bool wide = data.size() > 23 && static_cast<std::uint8_t>(data[23]) == 0;
   std::vector<DxfTag> tags;
   while (!reader.at_end()) {
-    if ((tags.size() & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(reader.position()) / data.size() * 0.3));
+    if ((tags.size() & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(reader.position()) / static_cast<double>(data.size()) * 0.3));
     int code = 0;
     if (wide) {
       code = reader.i16le();
@@ -115,7 +115,7 @@ Result<std::vector<DxfTag>> tokenize_ascii(ByteView data, const Context& ctx) {
   std::size_t pos = 0;
   std::size_t line_number = 0;
   while (true) {
-    if ((tags.size() & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / std::max<std::size_t>(text.size(), 1) * 0.3));
+    if ((tags.size() & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / static_cast<double>(std::max<std::size_t>(text.size(), 1)) * 0.3));
     const auto code_line = next_line(text, pos);
     if (!code_line) break;
     ++line_number;

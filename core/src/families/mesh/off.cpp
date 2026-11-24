@@ -220,7 +220,7 @@ Result<Bytes> write_off(const AnyIR& value, WriteContext& ctx) {
   out += "OFF\n";
   out += std::format("{} {} 0\n", mesh.positions.size(), mesh.face_count());
   for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
-    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.1 * static_cast<double>(i) / mesh.positions.size()));
+    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.1 * static_cast<double>(i) / static_cast<double>(mesh.positions.size())));
     const ir::Vec3& p = mesh.positions[i];
     append_number(out, p.x, precision);
     out += ' ';

@@ -279,7 +279,7 @@ Result<AnyIR> read_ply(ReadContext& ctx) {
     }
     scalars.assign(element.properties.size(), 0.0);
     for (std::uint64_t r = 0; r < element.count; ++r) {
-      if ((done++ & 0x3FFF) == 0) CVT_TRY(ctx.checkpoint(0.9 * static_cast<double>(done) / (total_records + 1)));
+      if ((done++ & 0x3FFF) == 0) CVT_TRY(ctx.checkpoint(0.9 * static_cast<double>(done) / static_cast<double>(total_records + 1)));
       for (std::size_t p = 0; p < element.properties.size(); ++p) {
         const PlyProperty& property = element.properties[p];
         if (!property.list) {
@@ -421,7 +421,7 @@ Result<Bytes> write_ply(const AnyIR& value, WriteContext& ctx) {
   out.text(header);
   std::string line;
   for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
-    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.1 * static_cast<double>(i) / mesh.positions.size()));
+    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.1 * static_cast<double>(i) / static_cast<double>(mesh.positions.size())));
     std::array<std::uint8_t, 4> rgba{};
     if (colors) rgba = color_to_srgb8(mesh.colors[i]);
     if (binary) {

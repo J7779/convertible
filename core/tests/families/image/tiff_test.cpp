@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/image_ops.hpp"
 #include "families/image/image_test_util.hpp"
 
@@ -26,7 +27,7 @@ ir::Frame bilevel() {
   for (std::uint32_t y = 0; y < 23; ++y) {
     for (std::uint32_t x = 0; x < 61; ++x) {
       const bool white = (((x / 4) + (y / 4)) % 2 == 0) != (x == y);
-      if (white) std::memset(f.rgba.data() + f.offset(x, y), 255, 3);
+      if (white) ::cvt::util::fill_bytes(f.rgba.data() + f.offset(x, y), 255, 3);
     }
   }
   return f;

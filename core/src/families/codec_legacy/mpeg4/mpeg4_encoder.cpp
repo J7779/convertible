@@ -19,6 +19,7 @@
 #include <optional>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/codec_legacy/common/bitstream.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
 #include "families/codec_legacy/common/dct.hpp"
@@ -115,7 +116,7 @@ class Mpeg4Encoder final : public codec::VideoEncoder {
     }
     fps_ = params.fps.value() > 0 ? params.fps.value() : 25.0;
     // VOP time resolution: the nominal frame rate (an integer), at least 1.
-    time_resolution_ = std::clamp(static_cast<int>(std::lround(params.fps.num > 0 && params.fps.den > 0 ? (params.fps.num % params.fps.den == 0 ? fps_ : params.fps.num) : 25)), 1, 65535);
+    time_resolution_ = std::clamp(static_cast<int>(std::lround(params.fps.num > 0 && params.fps.den > 0 ? (params.fps.num % params.fps.den == 0 ? fps_ : static_cast<double>(params.fps.num)) : 25)), 1, 65535);
     time_increment_ = params.fps.num > 0 && params.fps.den > 0 && params.fps.num % params.fps.den != 0
                           ? static_cast<int>(std::clamp<std::int64_t>(params.fps.den, 1, 65535))
                           : 1;
@@ -146,7 +147,7 @@ class Mpeg4Encoder final : public codec::VideoEncoder {
       for (int y = 0; y < source_.rows[static_cast<std::size_t>(p)]; ++y) {
         const std::uint8_t* s = src.data.data() + static_cast<std::size_t>(std::min(y, h - 1)) * src.stride;
         std::uint8_t* d = source_.at(p, 0, y);
-        std::memcpy(d, s, static_cast<std::size_t>(w));
+        ::cvt::util::copy_bytes(d, s, static_cast<std::size_t>(w));
         for (int x = w; x < source_.stride[static_cast<std::size_t>(p)]; ++x) d[x] = s[w - 1];
       }
     }
@@ -689,7 +690,7 @@ class Mpeg4Encoder final : public codec::VideoEncoder {
       }
       const std::uint8_t* pr = p == 0 ? pred.data() + (b >> 1) * 128 + (b & 1) * 8 : pred.data() + 256 + (p - 1) * 64;
       const int ps = p == 0 ? 16 : 8;
-      for (int y = 0; y < 8; ++y) std::memcpy(d + y * stride, pr + y * ps, 8);
+      for (int y = 0; y < 8; ++y) ::cvt::util::copy_bytes(d + y * stride, pr + y * ps, 8);
       if ((coded & (32 >> b)) != 0) idct8x8_add(recon[static_cast<std::size_t>(b)].data(), d, stride);
     }
   }

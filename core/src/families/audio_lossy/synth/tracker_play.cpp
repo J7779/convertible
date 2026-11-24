@@ -13,6 +13,7 @@
 #include <numbers>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossless/common.hpp"
 #include "families/audio_lossy/synth/synth.hpp"
 #include "families/audio_lossy/synth/tracker.hpp"
@@ -546,9 +547,9 @@ class Player {
 
 int sniff_module(ByteView data, std::string_view format) {
   const auto d = as_u8(data);
-  if (format == "xm") return d.size() >= 60 && std::memcmp(d.data(), "Extended Module: ", 17) == 0 ? 98 : 0;
-  if (format == "it") return d.size() >= 192 && std::memcmp(d.data(), "IMPM", 4) == 0 ? 96 : 0;
-  if (format == "s3m") return d.size() >= 96 && std::memcmp(d.data() + 44, "SCRM", 4) == 0 ? 96 : 0;
+  if (format == "xm") return d.size() >= 60 && ::cvt::util::compare_bytes(d.data(), "Extended Module: ", 17) == 0 ? 98 : 0;
+  if (format == "it") return d.size() >= 192 && ::cvt::util::compare_bytes(d.data(), "IMPM", 4) == 0 ? 96 : 0;
+  if (format == "s3m") return d.size() >= 96 && ::cvt::util::compare_bytes(d.data() + 44, "SCRM", 4) == 0 ? 96 : 0;
   if (format == "mod" && d.size() >= 1084) {
     const std::string_view sig(reinterpret_cast<const char*>(d.data() + 1080), 4);
     if (sig == "M.K." || sig == "M!K!" || sig == "FLT4" || sig == "FLT8" || sig == "4CHN" || sig == "6CHN" || sig == "8CHN" ||

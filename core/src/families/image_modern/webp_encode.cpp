@@ -103,7 +103,7 @@ struct OwnedData {
 
 Bytes to_bytes_copy(const std::uint8_t* data, std::size_t size) {
   Bytes out(size);
-  if (size > 0) std::memcpy(out.data(), data, size);
+  if (size > 0) ::cvt::util::copy_bytes(out.data(), data, size);
   return out;
 }
 

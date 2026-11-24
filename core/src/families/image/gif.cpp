@@ -245,7 +245,7 @@ Result<ir::Image> read_gif(ReadContext& ctx) {
     CVT_TRY(ctx.limits.check_pixels(width, height, frame_count));
     CVT_TRY(check_plausible(std::uint64_t{fw} * fh, lzw.size(), 4096));
     if (frame_count > ctx.limits.max_archive_entries) return fail(Status::Limit, "the GIF has too many frames");
-    CVT_TRY(ctx.checkpoint(std::min(0.99, static_cast<double>(reader.position()) / ctx.input.size()), "Decoding"));
+    CVT_TRY(ctx.checkpoint(std::min(0.99, static_cast<double>(reader.position()) / static_cast<double>(ctx.input.size())), "Decoding"));
     if (fw == 0 || fh == 0) {
       // An empty frame still shows the canvas for its delay.
     }
@@ -263,7 +263,7 @@ Result<ir::Image> read_gif(ReadContext& ctx) {
       const std::uint32_t steps[4] = {8, 8, 4, 2};
       for (int pass = 0; pass < 4; ++pass) {
         for (std::uint32_t y = starts[pass]; y < fh; y += steps[pass], ++row) {
-          std::memcpy(ordered.data() + static_cast<std::size_t>(y) * fw, indices.data() + static_cast<std::size_t>(row) * fw, fw);
+          ::cvt::util::copy_bytes(ordered.data() + static_cast<std::size_t>(y) * fw, indices.data() + static_cast<std::size_t>(row) * fw, fw);
         }
       }
       indices = std::move(ordered);
@@ -279,7 +279,7 @@ Result<ir::Image> read_gif(ReadContext& ctx) {
         if (static_cast<int>(index) == transparent) continue;
         std::uint8_t* p = canvas.data() + (static_cast<std::size_t>(cy) * width + cx) * 4;
         if (index < palette.size()) {
-          std::memcpy(p, palette[index].data(), 4);
+          ::cvt::util::copy_bytes(p, palette[index].data(), 4);
         } else {
           p[0] = p[1] = p[2] = 0;
           p[3] = 255;
@@ -295,7 +295,7 @@ Result<ir::Image> read_gif(ReadContext& ctx) {
     if (disposal == 2) {
       for (std::uint32_t y = top; y < std::min(height, top + fh); ++y) {
         if (left >= width) break;
-        std::memset(canvas.data() + (static_cast<std::size_t>(y) * width + left) * 4, 0,
+        ::cvt::util::fill_bytes(canvas.data() + (static_cast<std::size_t>(y) * width + left) * 4, 0,
                     static_cast<std::size_t>(std::min(width - left, fw)) * 4);
       }
     } else if (disposal == 3 && !saved.empty()) {
@@ -516,7 +516,7 @@ Result<Bytes> write_gif(const ir::Image& source, WriteContext& ctx) {
   std::vector<std::uint8_t> screen(static_cast<std::size_t>(width) * height * 4, 0);
   std::vector<std::uint8_t> previous_full;  // palette indices of the previous frame, whole canvas
   for (std::size_t n = 0; n < frames.size(); ++n) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(n) / frames.size(), "Encoding"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(n) / static_cast<double>(frames.size()), "Encoding"));
     const ir::Frame& frame = frames[n];
     std::vector<Rgba> palette = global;
     int clear = global_clear;
@@ -533,7 +533,7 @@ Result<Bytes> write_gif(const ir::Image& source, WriteContext& ctx) {
     CVT_TRY_ASSIGN(Quantized q, remap(frame, palette, mapping));
     // What this frame shows, as colours.
     std::vector<std::uint8_t> shown(screen.size());
-    for (std::size_t i = 0; i < q.indices.size(); ++i) std::memcpy(shown.data() + i * 4, palette[q.indices[i]].data(), 4);
+    for (std::size_t i = 0; i < q.indices.size(); ++i) ::cvt::util::copy_bytes(shown.data() + i * 4, palette[q.indices[i]].data(), 4);
     EncodedFrame ef;
     ef.delay_cs = (frame.delay_ms + 5) / 10;
     ef.transparent = clear;
@@ -579,7 +579,7 @@ Result<Bytes> write_gif(const ir::Image& source, WriteContext& ctx) {
                                                 static_cast<std::uint8_t>(std::max(prev.clear, 0)));
         if (prev.clear < 0) grown_indices = previous_full;
         for (std::uint32_t y = 0; y < prev.rect.h; ++y) {
-          std::memcpy(grown_indices.data() + static_cast<std::size_t>(prev.rect.y + y - grown.y) * grown.w +
+          ::cvt::util::copy_bytes(grown_indices.data() + static_cast<std::size_t>(prev.rect.y + y - grown.y) * grown.w +
                           (prev.rect.x - grown.x),
                       prev.indices.data() + static_cast<std::size_t>(y) * prev.rect.w, prev.rect.w);
         }
@@ -588,7 +588,7 @@ Result<Bytes> write_gif(const ir::Image& source, WriteContext& ctx) {
         if (prev.clear >= 0) prev.transparent = prev.clear;
         prev.disposal = 2;
         for (std::uint32_t y = prev.rect.y; y < prev.rect.y + prev.rect.h; ++y) {
-          std::memset(screen.data() + (static_cast<std::size_t>(y) * width + prev.rect.x) * 4, 0,
+          ::cvt::util::fill_bytes(screen.data() + (static_cast<std::size_t>(y) * width + prev.rect.x) * 4, 0,
                       static_cast<std::size_t>(prev.rect.w) * 4);
         }
       }
@@ -596,7 +596,7 @@ Result<Bytes> write_gif(const ir::Image& source, WriteContext& ctx) {
       for (std::uint32_t y = 0; y < height; ++y) {
         for (std::uint32_t x = 0; x < width; ++x) {
           const std::size_t i = static_cast<std::size_t>(y) * width + x;
-          if (std::memcmp(shown.data() + i * 4, screen.data() + i * 4, 4) != 0) {
+          if (::cvt::util::compare_bytes(shown.data() + i * 4, screen.data() + i * 4, 4) != 0) {
             x0 = std::min(x0, x);
             x1 = std::max(x1, x);
             y0 = std::min(y0, y);
@@ -613,7 +613,7 @@ Result<Bytes> write_gif(const ir::Image& source, WriteContext& ctx) {
         const std::size_t i = static_cast<std::size_t>(rect.y + y) * width + rect.x + x;
         std::uint8_t index = q.indices[i];
         // Unchanged pixels become transparent: long runs compress far better.
-        if (n > 0 && clear >= 0 && std::memcmp(shown.data() + i * 4, screen.data() + i * 4, 4) == 0) {
+        if (n > 0 && clear >= 0 && ::cvt::util::compare_bytes(shown.data() + i * 4, screen.data() + i * 4, 4) == 0) {
           index = static_cast<std::uint8_t>(clear);
         }
         ef.indices[static_cast<std::size_t>(y) * rect.w + x] = index;
@@ -625,7 +625,7 @@ Result<Bytes> write_gif(const ir::Image& source, WriteContext& ctx) {
         const std::size_t i = static_cast<std::size_t>(rect.y + y) * width + rect.x + x;
         const std::uint8_t index = ef.indices[static_cast<std::size_t>(y) * rect.w + x];
         if (static_cast<int>(index) == clear) continue;
-        std::memcpy(screen.data() + i * 4, palette[index].data(), 4);
+        ::cvt::util::copy_bytes(screen.data() + i * 4, palette[index].data(), 4);
       }
     }
     if (ef.transparent >= 0) {

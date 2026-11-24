@@ -348,7 +348,7 @@ class Writer {
         for (int k = 1; jused.contains(j); ++k) {
           const std::string suffix = std::format("~{}", k);
           std::u16string t = j.substr(0, 64 - suffix.size());
-          for (const char c : suffix) t.push_back(static_cast<char16_t>(c));
+          for (const char ch : suffix) t.push_back(static_cast<char16_t>(ch));
           j = std::move(t);
         }
         jused.insert(j);

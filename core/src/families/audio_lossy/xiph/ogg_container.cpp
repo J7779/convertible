@@ -1,6 +1,7 @@
 // Convertible core - audio_lossy family: in-house Ogg page demultiplexer and
 // multiplexer.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/audio_lossy/xiph/ogg_container.hpp"
 
 #include <algorithm>
@@ -34,7 +35,7 @@ Result<std::vector<OggLogicalStream>> ogg_demux(ByteView input, const Context& c
   std::size_t pos = 0;
   std::size_t pages = 0;
   while (pos + 27 <= d.size()) {
-    if (std::memcmp(d.data() + pos, "OggS", 4) != 0 || d[pos + 4] != 0) {
+    if (::cvt::util::compare_bytes(d.data() + pos, "OggS", 4) != 0 || d[pos + 4] != 0) {
       // Resynchronise on the next capture pattern.
       const std::size_t found = as_chars(input).find("OggS", pos + 1);
       if (found == std::string_view::npos) break;
@@ -133,7 +134,7 @@ Result<OggLogicalStream> ogg_find_stream(ByteView input, std::string_view magic,
   for (auto& s : streams) {
     if (s.packets.empty()) continue;
     const Bytes& first = s.packets.front();
-    if (first.size() >= magic.size() && std::memcmp(first.data(), magic.data(), magic.size()) == 0) return std::move(s);
+    if (first.size() >= magic.size() && ::cvt::util::compare_bytes(first.data(), magic.data(), magic.size()) == 0) return std::move(s);
   }
   return fail(Status::Decode, "the Ogg file holds no stream of the expected kind");
 }
@@ -169,7 +170,7 @@ void OggWriter::emit(bool last) {
   // then continues that packet.
   const bool ends_packet = !lacing_.empty() && lacing_.back() < 255;
   std::vector<std::uint8_t> page(27 + lacing_.size());
-  std::memcpy(page.data(), "OggS", 4);
+  ::cvt::util::copy_bytes(page.data(), "OggS", 4);
   page[4] = 0;
   std::uint8_t type = 0;
   if (continued_) type |= 1;

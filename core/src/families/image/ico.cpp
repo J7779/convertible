@@ -68,7 +68,7 @@ void apply_and_mask(ByteView dib, ir::Frame& frame) {
     const auto* bits = reinterpret_cast<const std::uint8_t*>(dib.data()) + start + mask_stride * row;
     for (std::uint32_t x = 0; x < w; ++x) {
       if ((bits[x / 8] >> (7 - x % 8)) & 1u) {
-        std::memset(frame.rgba.data() + frame.offset(x, y), 0, 4);
+        ::cvt::util::fill_bytes(frame.rgba.data() + frame.offset(x, y), 0, 4);
       }
     }
   }
@@ -160,7 +160,7 @@ Result<ir::Frame> square(const ir::Frame& source, std::uint32_t size) {
   const std::uint32_t x0 = (size - w) / 2;
   const std::uint32_t y0 = (size - h) / 2;
   for (std::uint32_t y = 0; y < h; ++y) {
-    std::memcpy(out.rgba.data() + out.offset(x0, y0 + y), scaled.rgba.data() + scaled.offset(0, y), std::size_t{w} * 4);
+    ::cvt::util::copy_bytes(out.rgba.data() + out.offset(x0, y0 + y), scaled.rgba.data() + scaled.offset(0, y), std::size_t{w} * 4);
   }
   return out;
 }
@@ -204,7 +204,7 @@ Result<Bytes> write_icon(const ir::Image& source, WriteContext& ctx) {
   const int hotspot_y = static_cast<int>(ctx.options.get_int("hotspot_y", 0, 0, 255));
   std::vector<Bytes> blobs;
   for (const std::uint32_t size : sizes) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(blobs.size()) / sizes.size(), "Encoding"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(blobs.size()) / static_cast<double>(sizes.size()), "Encoding"));
     CVT_TRY_ASSIGN(const ir::Frame icon, square(frame, size));
     const bool as_png = encoding == "png" || (encoding == "auto" && size >= 64);
     if (as_png) {

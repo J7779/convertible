@@ -135,7 +135,7 @@ class MjpegDecoder final : public codec::VideoDecoder {
           const std::uint32_t cols = ir::plane_width(format, p, planes.width);
           for (std::uint32_t y = 0; y < rows; ++y) {
             const std::uint32_t sy = std::min(y, src.height - 1);
-            std::memcpy(frame.planes[p].data.data() + y * frame.planes[p].stride,
+            ::cvt::util::copy_bytes(frame.planes[p].data.data() + y * frame.planes[p].stride,
                         src.samples.data() + static_cast<std::size_t>(sy) * src.width, std::min(cols, src.width));
           }
         }
@@ -147,7 +147,7 @@ class MjpegDecoder final : public codec::VideoDecoder {
       frame.color = jpeg_color;
       const jpeg::Plane& src = comps[0];
       for (std::uint32_t y = 0; y < planes.height; ++y) {
-        std::memcpy(frame.planes[0].data.data() + y * frame.planes[0].stride,
+        ::cvt::util::copy_bytes(frame.planes[0].data.data() + y * frame.planes[0].stride,
                     src.samples.data() + static_cast<std::size_t>(y) * src.width, planes.width);
       }
       std::fill(frame.planes[1].data.begin(), frame.planes[1].data.end(), std::uint8_t{128});

@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossless/common.hpp"
 #include "families/audio_lossless/tags.hpp"
 #include "families/audio_lossy/mpeg/mpeg_audio.hpp"
@@ -84,7 +85,7 @@ TagScan scan_tags(ByteView data) {
   const auto d = as_u8(data);
   std::size_t pos = 0;
   // Leading ID3v2 tags (there may be more than one).
-  while (d.size() - pos >= 10 && std::memcmp(d.data() + pos, "ID3", 3) == 0 && d[pos + 3] < 5) {
+  while (d.size() - pos >= 10 && ::cvt::util::compare_bytes(d.data() + pos, "ID3", 3) == 0 && d[pos + 3] < 5) {
     const auto size_bytes = d.subspan(pos + 6, 4);
     if ((size_bytes[0] | size_bytes[1] | size_bytes[2] | size_bytes[3]) & 0x80) break;
     std::size_t total = 10 + syncsafe(size_bytes) + ((d[pos + 5] & 0x10) != 0 ? 10 : 0);
@@ -97,7 +98,7 @@ TagScan scan_tags(ByteView data) {
   std::map<std::string, std::string> trailing;
   // ID3v1 at the very end.
   bool v1 = false;
-  if (end - pos >= 128 && std::memcmp(d.data() + end - 128, "TAG", 3) == 0) {
+  if (end - pos >= 128 && ::cvt::util::compare_bytes(d.data() + end - 128, "TAG", 3) == 0) {
     v1 = true;
     const auto t = d.subspan(end - 128, 128);
     audio::tags::put(trailing, "title", id3v1_text(t.subspan(3, 30)));
@@ -118,7 +119,7 @@ TagScan scan_tags(ByteView data) {
   const std::size_t ape_size = audio::tags::parse_apev2(data.first(end + (v1 ? 128 : 0)), ape);
   if (ape_size > 0 && ape_size <= end - pos) end -= ape_size;
   // Lyrics3v2: "...<6-digit size>LYRICS200" before the ID3v1 tag.
-  if (end - pos >= 15 && std::memcmp(d.data() + end - 9, "LYRICS200", 9) == 0) {
+  if (end - pos >= 15 && ::cvt::util::compare_bytes(d.data() + end - 9, "LYRICS200", 9) == 0) {
     const auto size = util::parse_int(as_chars(data.subspan(end - 15, 6)));
     if (size && *size >= 0 && static_cast<std::uint64_t>(*size) + 15 <= end - pos) {
       end -= static_cast<std::size_t>(*size) + 15;

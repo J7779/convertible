@@ -12,6 +12,7 @@
 #include <limits>
 #include <map>
 
+#include "util/bytes.hpp"
 #include "families/science/arrays.hpp"
 #include "families/science/science.hpp"
 #include "util/text.hpp"
@@ -213,12 +214,12 @@ Result<Collection> read_netcdf(ReadContext& ctx) {
       for (std::uint64_t r = 0; r < numrecs; ++r) {
         const std::uint64_t at = v.begin + r * stride;
         if (at > input.size() || per_record > input.size() - at) return fail(Status::Decode, "NetCDF record data is truncated");
-        std::memcpy(a.data.data() + r * per_record, input.data() + at, static_cast<std::size_t>(per_record));
+        ::cvt::util::copy_bytes(a.data.data() + r * per_record, input.data() + at, static_cast<std::size_t>(per_record));
       }
     } else {
       const std::uint64_t bytes = n * a.dtype.size;
       if (v.begin > input.size() || bytes > input.size() - v.begin) return fail(Status::Decode, "NetCDF variable '{}' is truncated", v.name);
-      std::memcpy(a.data.data(), input.data() + v.begin, static_cast<std::size_t>(bytes));
+      ::cvt::util::copy_bytes(a.data.data(), input.data() + v.begin, static_cast<std::size_t>(bytes));
     }
     swap_elements(a);
     if (a.dtype.kind == ScalarKind::Bytes && !a.shape.empty()) {
@@ -282,7 +283,7 @@ Bytes encode_values(const Array& a, std::uint32_t type) {
   tmp.data.resize(target.size);
   for (std::uint64_t i = 0; i < n; ++i) {
     if (target == a.dtype) {
-      std::memcpy(tmp.data.data(), a.element(i), target.size);
+      ::cvt::util::copy_bytes(tmp.data.data(), a.element(i), target.size);
     } else {
       store_double(target, tmp.data.data(), a.number(i));
     }

@@ -47,7 +47,7 @@ Result<ir::Image> read_qoi(ReadContext& ctx) {
   int run = 0;
   bool truncated = false;
   for (std::size_t i = 0; i < total; ++i) {
-    if ((i & 0xFFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / total));
+    if ((i & 0xFFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(total)));
     if (run > 0) {
       --run;
     } else if (pos < end) {
@@ -66,10 +66,10 @@ Result<ir::Image> read_qoi(ReadContext& ctx) {
           truncated = true;
           break;
         }
-        std::memcpy(px, data + pos, 4);
+        ::cvt::util::copy_bytes(px, data + pos, 4);
         pos += 4;
       } else if ((b & 0xC0) == op_index) {
-        std::memcpy(px, seen[b].data(), 4);
+        ::cvt::util::copy_bytes(px, seen[b].data(), 4);
       } else if ((b & 0xC0) == op_diff) {
         px[0] = static_cast<std::uint8_t>(px[0] + ((b >> 4) & 3) - 2);
         px[1] = static_cast<std::uint8_t>(px[1] + ((b >> 2) & 3) - 2);
@@ -87,12 +87,12 @@ Result<ir::Image> read_qoi(ReadContext& ctx) {
       } else {
         run = b & 0x3F;
       }
-      std::memcpy(seen[hash(px)].data(), px, 4);
+      ::cvt::util::copy_bytes(seen[hash(px)].data(), px, 4);
     } else {
       truncated = true;
       break;
     }
-    std::memcpy(frame.rgba.data() + i * 4, px, 4);
+    ::cvt::util::copy_bytes(frame.rgba.data() + i * 4, px, 4);
   }
   if (truncated) ctx.warn("The QOI file is truncated; missing pixels were left black.");
   ir::Image image;
@@ -112,9 +112,9 @@ Result<Bytes> write_qoi(const ir::Image& source, WriteContext& ctx) {
   int run = 0;
   const std::size_t total = static_cast<std::size_t>(frame.width) * frame.height;
   for (std::size_t i = 0; i < total; ++i) {
-    if ((i & 0xFFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / total));
+    if ((i & 0xFFFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(total)));
     const std::uint8_t* px = frame.rgba.data() + i * 4;
-    if (std::memcmp(px, prev, 4) == 0) {
+    if (::cvt::util::compare_bytes(px, prev, 4) == 0) {
       ++run;
       if (run == 62 || i + 1 == total) {
         out.u8(static_cast<std::uint8_t>(op_run | (run - 1)));
@@ -127,10 +127,10 @@ Result<Bytes> write_qoi(const ir::Image& source, WriteContext& ctx) {
       run = 0;
     }
     const std::size_t h = hash(px);
-    if (std::memcmp(seen[h].data(), px, 4) == 0) {
+    if (::cvt::util::compare_bytes(seen[h].data(), px, 4) == 0) {
       out.u8(static_cast<std::uint8_t>(op_index | h));
     } else {
-      std::memcpy(seen[h].data(), px, 4);
+      ::cvt::util::copy_bytes(seen[h].data(), px, 4);
       if (px[3] == prev[3]) {
         const int vr = static_cast<std::int8_t>(px[0] - prev[0]);
         const int vg = static_cast<std::int8_t>(px[1] - prev[1]);
@@ -149,7 +149,7 @@ Result<Bytes> write_qoi(const ir::Image& source, WriteContext& ctx) {
         out.u8(op_rgba).u8(px[0]).u8(px[1]).u8(px[2]).u8(px[3]);
       }
     }
-    std::memcpy(prev, px, 4);
+    ::cvt::util::copy_bytes(prev, px, 4);
   }
   out.zeros(7).u8(1);
   return out.take();

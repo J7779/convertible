@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/image_ops.hpp"
 #include "families/image/image_test_util.hpp"
 
@@ -37,7 +38,7 @@ ir::Frame checker() {
   ir::Frame f = ir::Frame::filled(32, 24, {0, 0, 0, 255});
   for (std::uint32_t y = 0; y < 24; ++y) {
     for (std::uint32_t x = 0; x < 32; ++x) {
-      if (((x / 4) + (y / 4)) % 2 != 0) std::memset(f.rgba.data() + f.offset(x, y), 255, 3);
+      if (((x / 4) + (y / 4)) % 2 != 0) ::cvt::util::fill_bytes(f.rgba.data() + f.offset(x, y), 255, 3);
     }
   }
   return f;

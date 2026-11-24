@@ -13,6 +13,7 @@
 #include <optional>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/archive/codec_impl.hpp"
 #include "families/archive/codecs/brotli_internal.hpp"
 #include "families/archive/codecs/huffman.hpp"
@@ -65,7 +66,7 @@ class Bits {
       over_ += 1;
       return false;
     }
-    if (copy != 0) std::memcpy(out, data_ + byte, copy);
+    if (copy != 0) ::cvt::util::copy_bytes(out, data_ + byte, copy);
     pos_ = static_cast<std::size_t>(byte + n);
     over_ = 0;
     buffer_ = 0;
@@ -541,7 +542,7 @@ class Engine {
         if (n > mlen - produced) return fail(corrupt("dictionary word exceeds the meta-block"));
         const std::size_t room = end - w;
         ensure(std::min(n, room));
-        std::memcpy(o + w, tmp.data(), std::min(n, room));
+        ::cvt::util::copy_bytes(o + w, tmp.data(), std::min(n, room));
         if (n >= room && cap < mlen) {
           w += room;
           stop_here();
@@ -563,7 +564,7 @@ class Engine {
         ensure(n);
         const std::size_t from = w - static_cast<std::size_t>(distance);
         if (distance >= n) {
-          std::memcpy(o + w, o + from, n);
+          ::cvt::util::copy_bytes(o + w, o + from, n);
         } else {
           for (std::size_t k = 0; k < n; ++k) o[w + k] = o[from + k];
         }

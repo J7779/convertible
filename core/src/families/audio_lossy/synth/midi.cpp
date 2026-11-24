@@ -13,6 +13,7 @@
 #include <numbers>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossless/common.hpp"
 #include "families/audio_lossy/synth/synth.hpp"
 #include "util/text.hpp"
@@ -31,12 +32,12 @@ std::uint32_t be32(std::span<const std::uint8_t> d, std::size_t at) {
 /// The SMF inside a RIFF RMID wrapper, or the data itself.
 ByteView unwrap_rmid(ByteView data) {
   const auto d = as_u8(data);
-  if (d.size() >= 20 && std::memcmp(d.data(), "RIFF", 4) == 0 && std::memcmp(d.data() + 8, "RMID", 4) == 0) {
+  if (d.size() >= 20 && ::cvt::util::compare_bytes(d.data(), "RIFF", 4) == 0 && ::cvt::util::compare_bytes(d.data() + 8, "RMID", 4) == 0) {
     std::size_t pos = 12;
     while (pos + 8 <= d.size()) {
       const std::size_t size = d[pos + 4] | (std::size_t{d[pos + 5]} << 8) | (std::size_t{d[pos + 6]} << 16) |
                                (std::size_t{d[pos + 7]} << 24);
-      if (std::memcmp(d.data() + pos, "data", 4) == 0) return data.subspan(pos + 8, std::min(size, d.size() - pos - 8));
+      if (::cvt::util::compare_bytes(d.data() + pos, "data", 4) == 0) return data.subspan(pos + 8, std::min(size, d.size() - pos - 8));
       pos += 8 + size + (size & 1);
     }
   }
@@ -47,13 +48,13 @@ ByteView unwrap_rmid(ByteView data) {
 
 bool looks_like_midi(ByteView data) {
   const ByteView smf = unwrap_rmid(data);
-  return smf.size() >= 14 && std::memcmp(smf.data(), "MThd", 4) == 0;
+  return smf.size() >= 14 && ::cvt::util::compare_bytes(smf.data(), "MThd", 4) == 0;
 }
 
 Result<MidiFile> parse_midi(ByteView input, const Context& ctx) {
   const ByteView data = unwrap_rmid(input);
   const auto d = as_u8(data);
-  if (d.size() < 14 || std::memcmp(d.data(), "MThd", 4) != 0) return fail(Status::Decode, "not a Standard MIDI File");
+  if (d.size() < 14 || ::cvt::util::compare_bytes(d.data(), "MThd", 4) != 0) return fail(Status::Decode, "not a Standard MIDI File");
   const std::uint32_t header = be32(d, 4);
   if (header < 6 || 8 + std::uint64_t{header} > d.size()) return fail(Status::Decode, "invalid MIDI header");
   MidiFile midi;
@@ -67,7 +68,7 @@ Result<MidiFile> parse_midi(ByteView input, const Context& ctx) {
   std::uint64_t type2_offset = 0;  // type 2: tracks play one after another
   while (pos + 8 <= d.size() && track < 65535) {
     const std::uint32_t size = be32(d, pos + 4);
-    const bool is_track = std::memcmp(d.data() + pos, "MTrk", 4) == 0;
+    const bool is_track = ::cvt::util::compare_bytes(d.data() + pos, "MTrk", 4) == 0;
     const std::size_t start = pos + 8;
     const std::size_t end = static_cast<std::size_t>(std::min<std::uint64_t>(d.size(), std::uint64_t{start} + size));
     pos = end;

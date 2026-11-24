@@ -1,6 +1,7 @@
 // Convertible core - pdf family: RC4, AES and SHA-2 (384/512) for the
 // standard security handler.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/pdf/crypto.hpp"
 
 #include <cstring>
@@ -133,14 +134,14 @@ void Aes::encrypt_block(const std::uint8_t in[16], std::uint8_t out[16]) const n
         s[c * 4 + 3] = static_cast<std::uint8_t>((xtime(a0) ^ a0) ^ a1 ^ a2 ^ xtime(a3));
       }
     } else {
-      std::memcpy(s, t, 16);
+      ::cvt::util::copy_bytes(s, t, 16);
     }
     for (int c = 0; c < 4; ++c) {
       const std::uint32_t w = enc_[static_cast<std::size_t>(round * 4 + c)];
       for (int r = 0; r < 4; ++r) s[c * 4 + r] = static_cast<std::uint8_t>(s[c * 4 + r] ^ (w >> (24 - 8 * r)));
     }
   }
-  std::memcpy(out, s, 16);
+  ::cvt::util::copy_bytes(out, s, 16);
 }
 
 void Aes::decrypt_block(const std::uint8_t in[16], std::uint8_t out[16]) const noexcept {
@@ -168,10 +169,10 @@ void Aes::decrypt_block(const std::uint8_t in[16], std::uint8_t out[16]) const n
         s[c * 4 + 3] = static_cast<std::uint8_t>(kMul.m11[a0] ^ kMul.m13[a1] ^ kMul.m9[a2] ^ kMul.m14[a3]);
       }
     } else {
-      std::memcpy(s, t, 16);
+      ::cvt::util::copy_bytes(s, t, 16);
     }
   }
-  std::memcpy(out, s, 16);
+  ::cvt::util::copy_bytes(out, s, 16);
 }
 
 ByteVec aes_cbc_decrypt_pdf(std::span<const std::uint8_t> key, std::span<const std::uint8_t> data) {
@@ -179,7 +180,7 @@ ByteVec aes_cbc_decrypt_pdf(std::span<const std::uint8_t> key, std::span<const s
   ByteVec out;
   if (!aes.ok() || data.size() < 32) return out;
   std::uint8_t iv[16];
-  std::memcpy(iv, data.data(), 16);
+  ::cvt::util::copy_bytes(iv, data.data(), 16);
   const std::size_t blocks = (data.size() - 16) / 16;
   out.resize(blocks * 16);
   for (std::size_t b = 0; b < blocks; ++b) {
@@ -187,7 +188,7 @@ ByteVec aes_cbc_decrypt_pdf(std::span<const std::uint8_t> key, std::span<const s
     std::uint8_t plain[16];
     aes.decrypt_block(in, plain);
     for (int i = 0; i < 16; ++i) out[b * 16 + static_cast<std::size_t>(i)] = static_cast<std::uint8_t>(plain[i] ^ iv[i]);
-    std::memcpy(iv, in, 16);
+    ::cvt::util::copy_bytes(iv, in, 16);
   }
   if (!out.empty()) {
     const std::uint8_t pad = out.back();
@@ -206,14 +207,14 @@ ByteVec aes_cbc_encrypt_nopad(std::span<const std::uint8_t> key, std::span<const
   ByteVec out;
   if (!aes.ok() || iv_in.size() < 16) return out;
   std::uint8_t iv[16];
-  std::memcpy(iv, iv_in.data(), 16);
+  ::cvt::util::copy_bytes(iv, iv_in.data(), 16);
   const std::size_t blocks = data.size() / 16;
   out.resize(blocks * 16);
   for (std::size_t b = 0; b < blocks; ++b) {
     std::uint8_t block[16];
     for (int i = 0; i < 16; ++i) block[i] = static_cast<std::uint8_t>(data[b * 16 + static_cast<std::size_t>(i)] ^ iv[i]);
     aes.encrypt_block(block, out.data() + b * 16);
-    std::memcpy(iv, out.data() + b * 16, 16);
+    ::cvt::util::copy_bytes(iv, out.data() + b * 16, 16);
   }
   return out;
 }
@@ -237,7 +238,7 @@ ByteVec aes_cbc_decrypt_zero_iv(std::span<const std::uint8_t> key, std::span<con
     std::uint8_t plain[16];
     aes.decrypt_block(data.data() + b * 16, plain);
     for (int i = 0; i < 16; ++i) out[b * 16 + static_cast<std::size_t>(i)] = static_cast<std::uint8_t>(plain[i] ^ iv[i]);
-    std::memcpy(iv, data.data() + b * 16, 16);
+    ::cvt::util::copy_bytes(iv, data.data() + b * 16, 16);
   }
   return out;
 }

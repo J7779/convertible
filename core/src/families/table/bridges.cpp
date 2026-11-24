@@ -195,7 +195,7 @@ Result<AnyIR> table_to_archive(AnyIR value, Context& ctx) {
     CVT_TRY_ASSIGN(Bytes bytes, writer->write(AnyIR(std::move(single)), write));
     std::string stem = safe_file_stem(names[i]);
     std::string file = stem + "." + extension;
-    for (int n = 2; used.contains(util::to_lower(file)); ++n) file = std::format("{} ({}).{}", stem, n, extension);
+    for (int copy = 2; used.contains(util::to_lower(file)); ++copy) file = std::format("{} ({}).{}", stem, copy, extension);
     used.insert(util::to_lower(file));
     ir::ArchiveEntry entry;
     entry.path = std::move(file);

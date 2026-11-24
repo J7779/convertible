@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "families/archive/archive_common.hpp"
 #include "families/archive/compression.hpp"
@@ -209,7 +210,7 @@ RockRidge parse_system_use(ByteView image, ByteView area, std::size_t skip, bool
 // zisofs (version 1) transparently compressed file.
 Result<Bytes> unzisofs(ByteView data, std::uint64_t budget) {
   static constexpr std::uint8_t magic[8] = {0x37, 0xE4, 0x53, 0x96, 0xC9, 0xDB, 0xD6, 0x07};
-  if (data.size() < 16 || std::memcmp(data.data(), magic, 8) != 0) {
+  if (data.size() < 16 || ::cvt::util::compare_bytes(data.data(), magic, 8) != 0) {
     return fail(Status::Decode, "ISO zisofs file header is damaged");
   }
   const std::uint64_t size = le32(data, 8);

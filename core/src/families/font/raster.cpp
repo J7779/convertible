@@ -361,7 +361,7 @@ Result<ir::Image> render_specimen(const ir::Font& font, const SpecimenOptions& o
   double y = margin;
   std::size_t step = 0;
   for (const Block& b : blocks) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(step++) / (blocks.size() + 1), "Rendering specimen"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(step++) / static_cast<double>(blocks.size() + 1), "Rendering specimen"));
     for (const std::u32string& line : b.lines) {
       const double baseline = y + m.ascender / m.upm * b.size;
       double x = margin;

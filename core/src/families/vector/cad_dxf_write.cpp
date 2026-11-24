@@ -988,7 +988,7 @@ Result<Bytes> write_mesh_dxf(const ir::Mesh& mesh, const Context& ctx) {
   std::size_t base = 0;
   const std::size_t faces = mesh.face_count();
   for (std::size_t f = 0; f < faces; ++f) {
-    if ((f & 0xFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(f) / faces));
+    if ((f & 0xFFF) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(f) / static_cast<double>(faces)));
     const std::size_t size = mesh.face_sizes.empty() ? 3 : mesh.face_sizes[f];
     std::vector<std::uint32_t> poly(mesh.indices.begin() + static_cast<std::ptrdiff_t>(base),
                                     mesh.indices.begin() + static_cast<std::ptrdiff_t>(base + size));

@@ -140,7 +140,7 @@ Result<ir::BitmapFont> read_bdf(ByteView data, const Context& ctx) {
       }
       font.glyphs.push_back(std::move(glyph));
       if (font.glyphs.size() > max_bitmap_glyphs) return fail(Status::Decode, "the BDF font has too many glyphs");
-      if ((font.glyphs.size() & 255) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / lines.size(), "Reading BDF"));
+      if ((font.glyphs.size() & 255) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(lines.size()), "Reading BDF"));
     } else if (key == "SIZE") {
       const std::vector<std::string_view> parts = util::split(value, ' ', false);
       if (!parts.empty() && font.pixel_size == 0) {
@@ -1123,7 +1123,7 @@ Result<ir::Font> outline_font_from_bitmap(const ir::BitmapFont& bitmap, bool cff
   std::set<std::string> used{".notdef"};
   std::size_t index = 0;
   for (const ir::BitmapGlyph& g : bitmap.glyphs) {
-    if ((index++ & 255) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(index) / bitmap.glyphs.size(), "Tracing pixels"));
+    if ((index++ & 255) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(index) / static_cast<double>(bitmap.glyphs.size()), "Tracing pixels"));
     if (g.codepoint < 0 || spec.cmap.contains(static_cast<std::uint32_t>(g.codepoint))) continue;
     if (spec.glyph_names.size() >= 65535) break;
     Path path;

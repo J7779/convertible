@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "engine/standard_options.hpp"
 #include "families/audio_lossless/audio_api.hpp"
@@ -73,7 +74,7 @@ Result<WaveFormat> parse_wave_format(ByteView body) {
     f.valid_bits = e.u16le();
     f.channel_mask = e.u32le();
     const ByteView guid = e.bytes(16);
-    if (std::memcmp(guid.data() + 2, ksdataformat_tail.data(), ksdataformat_tail.size()) != 0) {
+    if (::cvt::util::compare_bytes(guid.data() + 2, ksdataformat_tail.data(), ksdataformat_tail.size()) != 0) {
       return fail(Status::Decode, "unsupported WAVE_FORMAT_EXTENSIBLE sub-format");
     }
     f.tag = static_cast<std::uint16_t>(std::to_integer<std::uint16_t>(guid[0]) |
@@ -262,8 +263,8 @@ Result<ChunkScan> scan_w64(ByteView input, ReadContext& ctx) {
   const ByteView riff = r.bytes(16);
   r.skip(8);
   const ByteView wave = r.bytes(16);
-  if (!r.ok() || std::memcmp(riff.data(), w64_riff.data(), 16) != 0 || as_chars(wave.first(4)) != "wave" ||
-      std::memcmp(wave.data() + 4, w64_tail.data(), 12) != 0) {
+  if (!r.ok() || ::cvt::util::compare_bytes(riff.data(), w64_riff.data(), 16) != 0 || as_chars(wave.first(4)) != "wave" ||
+      ::cvt::util::compare_bytes(wave.data() + 4, w64_tail.data(), 12) != 0) {
     return fail(Status::Decode, "not a Wave64 file");
   }
   ChunkScan scan;

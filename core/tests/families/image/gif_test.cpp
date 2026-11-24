@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/image_ops.hpp"
 #include "families/image/image_test_util.hpp"
 
@@ -32,7 +33,7 @@ ir::Frame palette_pattern() {
 
 void fill(ir::Frame& f, std::uint32_t x0, std::uint32_t y0, std::uint32_t w, std::uint32_t h, image::Rgba c) {
   for (std::uint32_t y = y0; y < y0 + h; ++y) {
-    for (std::uint32_t x = x0; x < x0 + w; ++x) std::memcpy(f.rgba.data() + f.offset(x, y), c.data(), 4);
+    for (std::uint32_t x = x0; x < x0 + w; ++x) ::cvt::util::copy_bytes(f.rgba.data() + f.offset(x, y), c.data(), 4);
   }
 }
 
@@ -53,7 +54,7 @@ TEST_CASE("image/gif: decodes palette, interlaced, 87a and transparent files exa
   for (std::uint32_t y = 0; y < 24; ++y) {
     for (std::uint32_t x = 0; x < 32; ++x) {
       const std::uint32_t i = (x / 8) % 4;
-      if (i < 3) std::memcpy(t.rgba.data() + t.offset(x, y), colours[i].data(), 4);
+      if (i < 3) ::cvt::util::copy_bytes(t.rgba.data() + t.offset(x, y), colours[i].data(), 4);
     }
   }
   CHECK(test::pixels_equal(tr.frames[0], t));

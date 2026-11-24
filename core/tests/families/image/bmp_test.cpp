@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/image_ops.hpp"
 #include "families/image/image_test_util.hpp"
 
@@ -79,7 +80,7 @@ TEST_CASE("image/bmp: RLE4 with deltas and absolute runs") {
   const int rows[3][8] = {{0, 1, 0, 1, 0, 1, 0, 1}, {2, 2, 2, 2, 3, 4, 5, 6}, {7, 8, 9, 10, 11, 12, 13, 14}};
   ir::Frame expected = ir::Frame::filled(8, 4, {0, 0, 0, 0});
   for (std::uint32_t y = 0; y < 3; ++y) {
-    for (std::uint32_t x = 0; x < 8; ++x) std::memcpy(expected.rgba.data() + expected.offset(x, y), entry(rows[y][x]).data(), 4);
+    for (std::uint32_t x = 0; x < 8; ++x) ::cvt::util::copy_bytes(expected.rgba.data() + expected.offset(x, y), entry(rows[y][x]).data(), 4);
   }
   CHECK(test::pixels_equal(image.frames[0], expected));
 }

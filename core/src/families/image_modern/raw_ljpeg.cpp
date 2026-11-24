@@ -2,6 +2,7 @@
 // Written from ITU-T T.81 Annex C (Huffman tables), Annex F.2.2 (decoding
 // procedures) and Annex H (lossless mode).
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/image_modern/raw_ljpeg.hpp"
 
 #include <array>
@@ -29,7 +30,7 @@ struct Huffman {
 bool build_huffman(Huffman& h, const std::array<std::uint8_t, 16>& counts, const std::uint8_t* values, int total) {
   h = Huffman{};
   if (total > 256) return false;
-  std::memcpy(h.values.data(), values, static_cast<std::size_t>(total));
+  ::cvt::util::copy_bytes(h.values.data(), values, static_cast<std::size_t>(total));
   std::int32_t code = 0;
   int k = 0;
   for (int length = 1; length <= 16; ++length) {

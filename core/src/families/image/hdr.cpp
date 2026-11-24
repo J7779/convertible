@@ -101,11 +101,11 @@ bool read_scanline(util::ByteReader& r, std::uint32_t width, std::uint8_t* out) 
       if (x == 0) return false;
       const std::uint64_t count = std::uint64_t{q[3]} << shift;
       if (count > width - x) return false;
-      for (std::uint64_t k = 0; k < count; ++k, ++x) std::memcpy(out + std::size_t{x} * 4, out + std::size_t{x - 1} * 4, 4);
+      for (std::uint64_t k = 0; k < count; ++k, ++x) ::cvt::util::copy_bytes(out + std::size_t{x} * 4, out + std::size_t{x - 1} * 4, 4);
       shift += 8;
       if (shift > 24) return false;
     } else {
-      std::memcpy(out + std::size_t{x} * 4, q, 4);
+      ::cvt::util::copy_bytes(out + std::size_t{x} * 4, q, 4);
       ++x;
       shift = 0;
     }

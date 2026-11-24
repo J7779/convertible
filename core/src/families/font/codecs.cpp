@@ -114,7 +114,7 @@ Result<ir::Font> prepare_font(const ir::Font& font, OutlineTarget target, bool k
   const bool same_format = !ctx.source_format_id.empty() && ctx.source_format_id == ctx.format_id;
   std::vector<ir::Font> prepared;
   for (std::size_t i = 0; i < faces.size(); ++i) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(i) / faces.size(), "Preparing font"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(faces.size()), "Preparing font"));
     ir::Font face;
     if (faces[i]->bitmap && !has_outlines(*faces[i])) {
       CVT_TRY_ASSIGN(face, outline_font_from_bitmap(*faces[i]->bitmap, target == OutlineTarget::Cff, ctx));
@@ -211,7 +211,7 @@ Result<AnyIR> read_cff_codec(ReadContext& ctx) {
   }
   const std::vector<std::string> names = cff_glyph_names(ctx.input, static_cast<std::uint32_t>(cff.charstrings.size()));
   for (std::uint32_t g = 0; g < cff.charstrings.size(); ++g) {
-    if ((g & 127) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / cff.charstrings.size(), "Reading CFF"));
+    if ((g & 127) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / static_cast<double>(cff.charstrings.size()), "Reading CFF"));
     CVT_TRY_ASSIGN(CffGlyph glyph, cff_glyph(cff, g));
     std::string name = g < names.size() && !names[g].empty() ? names[g] : std::format("glyph{:05}", g);
     if (g == 0) name = ".notdef";

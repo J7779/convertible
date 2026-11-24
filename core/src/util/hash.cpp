@@ -1,4 +1,5 @@
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "util/hash.hpp"
 
 #include <bit>
@@ -35,7 +36,7 @@ void absorb(std::array<std::uint8_t, 64>& buffer, std::uint64_t& length, ByteVie
   length += remaining;
   if (filled > 0) {
     const std::size_t take = remaining < 64 - filled ? remaining : 64 - filled;
-    std::memcpy(buffer.data() + filled, input, take);
+    ::cvt::util::copy_bytes(buffer.data() + filled, input, take);
     filled += take;
     input += take;
     remaining -= take;
@@ -47,7 +48,7 @@ void absorb(std::array<std::uint8_t, 64>& buffer, std::uint64_t& length, ByteVie
     input += 64;
     remaining -= 64;
   }
-  if (remaining > 0) std::memcpy(buffer.data(), input, remaining);
+  if (remaining > 0) ::cvt::util::copy_bytes(buffer.data(), input, remaining);
 }
 
 // Appends the 0x80 terminator, zero padding and the 64-bit message bit length.
@@ -57,11 +58,11 @@ void pad(std::array<std::uint8_t, 64>& buffer, std::uint64_t length, bool big_en
   std::size_t filled = static_cast<std::size_t>(length % 64);
   buffer[filled++] = 0x80;
   if (filled > 56) {
-    std::memset(buffer.data() + filled, 0, 64 - filled);
+    ::cvt::util::fill_bytes(buffer.data() + filled, 0, 64 - filled);
     transform(buffer.data());
     filled = 0;
   }
-  std::memset(buffer.data() + filled, 0, 56 - filled);
+  ::cvt::util::fill_bytes(buffer.data() + filled, 0, 56 - filled);
   const std::uint64_t bit_length = length * 8;
   for (int i = 0; i < 8; ++i) {
     const int shift = big_endian_length ? 8 * (7 - i) : 8 * i;

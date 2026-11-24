@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "families/table/common.hpp"
 #include "families/table/table.hpp"
@@ -347,7 +348,7 @@ bool valid_bit(const Bytes& validity, std::int64_t index) {
 template <class T>
 T load(const Bytes& data, std::size_t index) {
   T value{};
-  if ((index + 1) * sizeof(T) <= data.size()) std::memcpy(&value, data.data() + index * sizeof(T), sizeof(T));
+  if ((index + 1) * sizeof(T) <= data.size()) ::cvt::util::copy_bytes(&value, data.data() + index * sizeof(T), sizeof(T));
   if constexpr (std::endian::native == std::endian::big && sizeof(T) > 1) {
     if constexpr (std::is_integral_v<T>) value = std::byteswap(value);
   }

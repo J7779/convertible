@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "support/test_support.hpp"
 #include "util/json.hpp"
 #include "util/text.hpp"
@@ -909,7 +910,7 @@ TEST_CASE("json: doubles are written in their shortest round-trip form") {
     bits ^= bits << 17;
     double value = 0;
     static_assert(sizeof(value) == sizeof(bits));
-    std::memcpy(&value, &bits, sizeof(value));
+    ::cvt::util::copy_bytes(&value, &bits, sizeof(value));
     if (!std::isfinite(value)) continue;
     const auto back = parse_json(dump_json(Json(value)));
     round_trips = round_trips && back && back->is_float() && back->as_double() == value;

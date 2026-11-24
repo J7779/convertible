@@ -1268,8 +1268,8 @@ class OpmlWriter {
         if (entry.empty()) continue;
         std::size_t first = 0;
         ir::Inlines text;
-        if (const auto* p = entry.front().get_if<ir::Paragraph>()) {
-          text = p->content;
+        if (const auto* para = entry.front().get_if<ir::Paragraph>()) {
+          text = para->content;
           first = 1;
         }
         item(parent, text, {});

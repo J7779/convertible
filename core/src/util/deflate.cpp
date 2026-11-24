@@ -25,6 +25,7 @@
 // symbol statistics change; each block is written as the cheapest of stored,
 // fixed-Huffman and dynamic-Huffman, with optimal length-limited codes from
 // the package-merge algorithm.
+#include "util/bytes.hpp"
 #include "util/deflate.hpp"
 
 #include <algorithm>
@@ -101,7 +102,7 @@ constexpr std::array<u8, 32> fixed_dist_lengths = make_fixed_dist_lengths();
 [[nodiscard]] inline u64 load64le(const u8* p) noexcept {
   if constexpr (std::endian::native == std::endian::little) {
     u64 value;
-    std::memcpy(&value, p, sizeof value);
+    ::cvt::util::copy_bytes(&value, p, sizeof value);
     return value;
   } else {
     u64 value = 0;
@@ -112,7 +113,7 @@ constexpr std::array<u8, 32> fixed_dist_lengths = make_fixed_dist_lengths();
 
 inline void store64le(u8* p, u64 value) noexcept {
   if constexpr (std::endian::native == std::endian::little) {
-    std::memcpy(p, &value, sizeof value);
+    ::cvt::util::copy_bytes(p, &value, sizeof value);
   } else {
     for (unsigned i = 0; i < 8; ++i) p[i] = static_cast<u8>(value >> (8 * i));
   }
@@ -452,14 +453,14 @@ struct Inflater::Impl {
     if (window.empty()) window.resize(window_size);
     const u8* const src = c.data() + c.base;
     if (produced >= window_size) {
-      std::memcpy(window.data(), src + (produced - window_size), window_size);
+      ::cvt::util::copy_bytes(window.data(), src + (produced - window_size), window_size);
       window_pos = 0;
       window_fill = window_size;
       return;
     }
     const std::size_t first = std::min(produced, window_size - window_pos);
-    std::memcpy(window.data() + window_pos, src, first);
-    if (produced > first) std::memcpy(window.data(), src + first, produced - first);
+    ::cvt::util::copy_bytes(window.data() + window_pos, src, first);
+    if (produced > first) ::cvt::util::copy_bytes(window.data(), src + first, produced - first);
     window_pos = (window_pos + produced) & (window_size - 1);
     window_fill = std::min(window_size, window_fill + produced);
   }
@@ -642,7 +643,7 @@ Inflater::Impl::Outcome Inflater::Impl::run(InflateCursor& c) {
           const std::size_t take = std::min<std::size_t>(stored_left, static_cast<std::size_t>(c.in_end - c.in));
           if (take == 0) return Outcome::NeedInput;
           if (!c.reserve(take)) return over_limit(c);
-          std::memcpy(c.data() + c.pos, c.in, take);
+          ::cvt::util::copy_bytes(c.data() + c.pos, c.in, take);
           c.pos += take;
           c.in += take;
           stored_left -= static_cast<u32>(take);
@@ -935,12 +936,12 @@ Inflater::Impl::Outcome Inflater::Impl::decode_fast(InflateCursor& c) {
       // Non-overlapping 8-byte steps; may write up to 7 bytes past the match,
       // inside the output margin, which later output overwrites.
       do {
-        std::memcpy(dst, src, 8);
+        ::cvt::util::copy_bytes(dst, src, 8);
         dst += 8;
         src += 8;
       } while (dst < out);
     } else if (distance == 1) {
-      std::memset(dst, *src, length);
+      ::cvt::util::fill_bytes(dst, *src, length);
     } else {
       // A short period: copy bytes until a multiple of the period that is at
       // least 8 has been written, then continue in 8-byte steps from there.
@@ -950,7 +951,7 @@ Inflater::Impl::Outcome Inflater::Impl::decode_fast(InflateCursor& c) {
       dst += head;
       src = dst - period;
       while (dst < out) {
-        std::memcpy(dst, src, 8);
+        ::cvt::util::copy_bytes(dst, src, 8);
         dst += 8;
         src += 8;
       }
@@ -1514,7 +1515,7 @@ void Deflater::Impl::emit_stored(BitWriter& writer, const u8* data, std::size_t 
     writer.put_flush(final && last ? 1u : 0u, 3);
     writer.align();
     writer.put_flush(static_cast<u32>(take) | ((static_cast<u32>(take) ^ 0xFFFFu) << 16), 32);
-    if (take > 0) std::memcpy(writer.cursor(), data, take);
+    if (take > 0) ::cvt::util::copy_bytes(writer.cursor(), data, take);
     writer.pos += take;
     data += take;
     size -= take;
@@ -1586,7 +1587,7 @@ void Deflater::Impl::slide() {
   // The shift is a multiple of the window size, so `position & chain_mask`
   // is unchanged and only the absolute positions in `head` need adjusting.
   const std::size_t shift = buf.size() - window_size;
-  std::memmove(buf.data(), buf.data() + shift, window_size);
+  ::cvt::util::move_bytes(buf.data(), buf.data() + shift, window_size);
   buf.resize(window_size);
   history = window_size;
   next_insert -= shift;

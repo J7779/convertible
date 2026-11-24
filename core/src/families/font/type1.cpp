@@ -675,7 +675,7 @@ Result<ir::Font> read_type1(ByteView data, const Context& ctx) {
   }
   Bounds bbox;
   for (std::size_t k = 0; k < order.size(); ++k) {
-    if ((k & 127) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(k) / order.size(), "Converting Type 1 outlines"));
+    if ((k & 127) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(k) / static_cast<double>(order.size()), "Converting Type 1 outlines"));
     const auto& [name, code] = font.charstrings[order[k]];
     Type1Interpreter interpreter(font, index);
     CVT_TRY_ASSIGN(Type1Glyph glyph, interpreter.run(order[k], 0));

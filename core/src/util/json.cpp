@@ -1,4 +1,5 @@
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "util/json.hpp"
 
 #include <algorithm>
@@ -89,7 +90,7 @@ std::uint32_t hash_key(std::string_view key) noexcept {
   std::size_t left = key.size();
   for (; left >= 8; data += 8, left -= 8) {
     std::uint64_t word = 0;
-    std::memcpy(&word, data, 8);
+    ::cvt::util::copy_bytes(&word, data, 8);
     v3 ^= word;
     round();
     v0 ^= word;

@@ -561,7 +561,7 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
   // JPEG: every chunk is a JPEG stream that decodes straight to colour.
   if (p.compression == 7) {
     for (std::uint64_t i = 0; i < needed; ++i) {
-      CVT_TRY(ctx.checkpoint(static_cast<double>(i) / needed, "Decoding"));
+      CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(needed), "Decoding"));
       const std::uint64_t start = p.offsets[i];
       const std::uint64_t count = p.counts[i];
       if (!f.has(start, count) || count == 0) continue;
@@ -579,7 +579,7 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
       const std::uint32_t y0 = static_cast<std::uint32_t>(i / across) * p.chunk_h;
       for (std::uint32_t y = 0; y < tile.height && y0 + y < h; ++y) {
         const std::uint32_t n = std::min(tile.width, w - std::min(w, x0));
-        std::memcpy(frame.rgba.data() + frame.offset(x0, y0 + y), tile.rgba.data() + static_cast<std::size_t>(y) * tile.width * 4,
+        ::cvt::util::copy_bytes(frame.rgba.data() + frame.offset(x0, y0 + y), tile.rgba.data() + static_cast<std::size_t>(y) * tile.width * 4,
                     static_cast<std::size_t>(n) * 4);
       }
     }
@@ -602,7 +602,7 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
   std::vector<std::uint8_t> chunk(static_cast<std::size_t>(chunk_size));
   bool damaged = false;
   for (std::uint64_t i = 0; i < needed; ++i) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(i) / needed, "Decoding"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(needed), "Decoding"));
     const std::uint64_t plane = i / per_plane;
     const std::uint64_t index = i % per_plane;
     const std::uint32_t x0 = static_cast<std::uint32_t>(index % across) * p.chunk_w;
@@ -625,7 +625,7 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
     }
     switch (p.compression) {
       case 1:
-        std::memcpy(chunk.data(), src.data(), std::min<std::size_t>(src.size(), expected));
+        ::cvt::util::copy_bytes(chunk.data(), src.data(), std::min<std::size_t>(src.size(), expected));
         if (src.size() < expected) damaged = true;
         break;
       case 32773: CVT_TRY(unpack_bits(src, chunk.data(), expected)); break;
@@ -640,8 +640,7 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
         Bytes inflated;
         const auto progress = inflater.feed(src, inflated, expected);
         if (!progress && progress.error().code != Status::Limit) damaged = true;
-        // An empty result has a null data pointer, which memcpy must not be given.
-        if (!inflated.empty()) std::memcpy(chunk.data(), inflated.data(), std::min(inflated.size(), expected));
+        ::cvt::util::copy_bytes(chunk.data(), inflated.data(), std::min(inflated.size(), expected));
         if (inflated.size() < expected) damaged = true;
         break;
       }
@@ -676,7 +675,7 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
       const std::uint64_t dst_offset = plane * plane_bytes + (y0 + y) * raw_row + row_bytes(x0, chunk_spp, p.bps);
       const std::uint64_t columns = std::min<std::uint64_t>(p.chunk_w, w - x0);
       const std::uint64_t n = row_bytes(columns, chunk_spp, p.bps);
-      std::memcpy(raw.data() + dst_offset, row, static_cast<std::size_t>(n));
+      ::cvt::util::copy_bytes(raw.data() + dst_offset, row, static_cast<std::size_t>(n));
     }
   }
   if (damaged) ctx.warn("Parts of the TIFF image data are missing or damaged.");
@@ -735,14 +734,14 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
       std::vector<std::uint8_t> data(static_cast<std::size_t>(unit_row * ((strip_rows + p.sub_v - 1) / p.sub_v)));
       ByteView src = f.data().subspan(static_cast<std::size_t>(start), static_cast<std::size_t>(count));
       if (p.compression == 1) {
-        std::memcpy(data.data(), src.data(), std::min(src.size(), data.size()));
+        ::cvt::util::copy_bytes(data.data(), src.data(), std::min(src.size(), data.size()));
       } else if (p.compression == 5) {
         (void)lzw_decode(src, data.data(), data.size());
       } else if (p.compression == 32773) {
         CVT_TRY(unpack_bits(src, data.data(), data.size()));
       } else if (p.compression == 8 || p.compression == 32946) {
         auto inflated = util::zlib_decompress(src, data.size());
-        if (inflated) std::memcpy(data.data(), inflated->data(), std::min(inflated->size(), data.size()));
+        if (inflated) ::cvt::util::copy_bytes(data.data(), inflated->data(), std::min(inflated->size(), data.size()));
       }
       const std::uint64_t y_base = i * strip_rows;
       for (std::uint64_t uy = 0; uy * p.sub_v < strip_rows; ++uy) {
@@ -1161,7 +1160,7 @@ Result<Bytes> write_tiff(const ir::Image& source, WriteContext& ctx) {
   std::size_t previous_next_field = 4;
   const auto pages = static_cast<std::uint16_t>(std::min<std::size_t>(image.frames.size(), 65535));
   for (std::size_t n = 0; n < image.frames.size(); ++n) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(n) / image.frames.size(), "Encoding"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(n) / static_cast<double>(image.frames.size()), "Encoding"));
     ir::Frame frame = image.frames[n];
     const std::uint32_t w = frame.width;
     const std::uint32_t h = frame.height;

@@ -105,20 +105,20 @@ class PathParser {
           break;
         }
         case 'Q': case 'T': {
-          Point c{};
+          Point control{};
           if (std::toupper(static_cast<unsigned char>(command)) == 'T') {
             const bool quad_before = previous == 'Q' || previous == 'T';
-            c = quad_before ? Point{2 * current.x - last_control.x, 2 * current.y - last_control.y} : current;
+            control = quad_before ? Point{2 * current.x - last_control.x, 2 * current.y - last_control.y} : current;
           } else {
             CVT_TRY_ASSIGN(const double x1, number());
             CVT_TRY_ASSIGN(const double y1, number());
-            c = pt(x1, y1);
+            control = pt(x1, y1);
           }
           CVT_TRY_ASSIGN(const double x, number());
           CVT_TRY_ASSIGN(const double y, number());
           const Point p = pt(x, y);
-          path.quad_to(c, p);
-          last_control = c;
+          path.quad_to(control, p);
+          last_control = control;
           current = p;
           break;
         }

@@ -6,6 +6,7 @@
 #include <memory>
 #include <thread>
 
+#include "util/bytes.hpp"
 #include "convertible/convertible.h"
 #include "support/test_support.hpp"
 #include "util/fs.hpp"
@@ -333,7 +334,7 @@ TEST_CASE("capi: conversions run concurrently from many threads") {
         cvt_result* decoded = cvt_convert(cvt_result_data(encoded), cvt_result_size(encoded), nullptr,
                                           cvt_result_format(encoded), "bin", nullptr, nullptr, nullptr);
         const bool same = cvt_result_status(decoded) == CVT_OK && cvt_result_size(decoded) == data.size() &&
-                          std::memcmp(cvt_result_data(decoded), data.data(), data.size()) == 0;
+                          ::cvt::util::compare_bytes(cvt_result_data(decoded), data.data(), data.size()) == 0;
         if (!same) ++failures;
         cvt_result_free(encoded);
         cvt_result_free(decoded);

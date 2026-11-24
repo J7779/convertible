@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "families/archive/archive_common.hpp"
 #include "families/archive/compression.hpp"
@@ -335,7 +336,7 @@ class Wim {
     }
     if (out.size() != b.res.usize) return fail(Status::Decode, "WIM resource has the wrong size");
     const auto digest = util::sha1(out);
-    if (std::memcmp(digest.data(), b.hash.data(), 20) != 0) {
+    if (::cvt::util::compare_bytes(digest.data(), b.hash.data(), 20) != 0) {
       return fail(Status::Decode, "WIM {} fails its SHA-1 check", metadata ? "metadata" : "file data");
     }
     return out;

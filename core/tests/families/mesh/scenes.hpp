@@ -133,8 +133,8 @@ inline ir::Mesh point_grid() {
   m.point_cloud = true;
   for (int y = 0; y < 10; ++y) {
     for (int x = 0; x < 10; ++x) {
-      const float fx = 0.1f * x;
-      const float fy = 0.1f * y;
+      const float fx = 0.1f * static_cast<float>(x);
+      const float fy = 0.1f * static_cast<float>(y);
       m.positions.push_back({fx, fy, 0.1f * (fx + fy)});
       m.colors.push_back(mesh::color_from_srgb(std::round(255.0 * x / 9.0), std::round(255.0 * y / 9.0), 128.0));
     }

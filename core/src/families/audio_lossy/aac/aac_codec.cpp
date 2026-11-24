@@ -9,6 +9,7 @@
 #include <cstring>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossless/bits.hpp"
 #include "families/audio_lossy/aac/aac.hpp"
 
@@ -157,7 +158,7 @@ Result<void> Decoder::configure(ByteView given) {
                 config->channel_config == 0 ? std::string("program-defined") : std::to_string(config->channel_config));
   }
   m.memory.assign(PVMP4AudioDecoderGetMemRequirements(), 0);
-  std::memset(&m.ext, 0, sizeof(m.ext));
+  ::cvt::util::fill_bytes(&m.ext, 0, sizeof(m.ext));
   m.ext.outputFormat = OUTPUTFORMAT_16PCM_INTERLEAVED;
   m.ext.aacPlusEnabled = true;
   // Parametric stereo is not built (it crashes this decoder on 64-bit
@@ -170,7 +171,7 @@ Result<void> Decoder::configure(ByteView given) {
   // their backward-compatible AAC-LC form.
   const Bytes plain = make_lc_config(config->sample_rate, config->channel_config);
   m.input.assign(plain.size() + 16, 0);
-  std::memcpy(m.input.data(), plain.data(), plain.size());
+  ::cvt::util::copy_bytes(m.input.data(), plain.data(), plain.size());
   m.ext.pInputBuffer = m.input.data();
   m.ext.inputBufferCurrentLength = static_cast<Int>(plain.size());
   m.ext.inputBufferMaxLength = 0;
@@ -189,7 +190,7 @@ Result<std::uint32_t> Decoder::decode(ByteView unit, std::vector<float>& out) {
   if (unit.size() > 8192) return fail(Status::Decode, "AAC access unit is too large");
   // The decoder may read a few bytes ahead: give it a padded copy.
   m.input.assign(unit.size() + 4096, 0);  // damaged data elements may claim up to 510 more bytes
-  std::memcpy(m.input.data(), unit.data(), unit.size());
+  ::cvt::util::copy_bytes(m.input.data(), unit.data(), unit.size());
   m.ext.pInputBuffer = m.input.data();
   m.ext.inputBufferCurrentLength = static_cast<Int>(unit.size());
   m.ext.inputBufferMaxLength = 0;

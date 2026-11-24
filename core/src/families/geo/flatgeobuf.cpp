@@ -321,7 +321,7 @@ std::vector<Column> columns_of(const Table& t, int field) {
 Result<ir::Geo> read_fgb(ReadContext& ctx) {
   util::ByteReader r(ctx.input);
   const ByteView head = r.bytes(8);
-  if (!r.ok() || std::memcmp(head.data(), magic, 3) != 0 || std::to_integer<std::uint8_t>(head[3]) != 3) {
+  if (!r.ok() || ::cvt::util::compare_bytes(head.data(), magic, 3) != 0 || std::to_integer<std::uint8_t>(head[3]) != 3) {
     return fail(Status::Decode, "not a FlatGeobuf file");
   }
   const std::uint32_t header_size = r.u32le();

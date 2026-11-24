@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 
+#include "util/bytes.hpp"
 #include "families/encoding/hashes.hpp"
 #include "util/hash.hpp"
 
@@ -56,7 +57,7 @@ class BlockBuffer {
     total_ += n;
     if (filled_ > 0) {
       const std::size_t take = std::min(n, Block - filled_);
-      std::memcpy(buffer_.data() + filled_, p, take);
+      ::cvt::util::copy_bytes(buffer_.data() + filled_, p, take);
       filled_ += take;
       p += take;
       n -= take;
@@ -69,7 +70,7 @@ class BlockBuffer {
       p += Block;
       n -= Block;
     }
-    if (n > 0) std::memcpy(buffer_.data(), p, n);
+    if (n > 0) ::cvt::util::copy_bytes(buffer_.data(), p, n);
     filled_ = n;
   }
 
@@ -138,7 +139,7 @@ class Md2 final : public Hasher {
     const std::array<std::uint8_t, 16> checksum = checksum_;
     update(as_bytes(std::span<const std::uint8_t>(checksum.data(), checksum.size())));
     Bytes out(16);
-    std::memcpy(out.data(), state_.data(), 16);
+    ::cvt::util::copy_bytes(out.data(), state_.data(), 16);
     return out;
   }
 
@@ -224,7 +225,7 @@ class UtilHasher final : public Hasher {
   Bytes finish() override {
     const auto digest = impl_.finish();
     Bytes out(digest.size());
-    std::memcpy(out.data(), digest.data(), digest.size());
+    ::cvt::util::copy_bytes(out.data(), digest.data(), digest.size());
     return out;
   }
 

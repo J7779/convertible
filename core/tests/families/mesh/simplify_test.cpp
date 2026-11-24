@@ -72,7 +72,7 @@ ir::Mesh grid(int n) {
   ir::Mesh m;
   for (int y = 0; y <= n; ++y) {
     for (int x = 0; x <= n; ++x) {
-      const float fx = static_cast<float>(x) / n, fy = static_cast<float>(y) / n;
+      const float fx = static_cast<float>(x) / static_cast<float>(n), fy = static_cast<float>(y) / static_cast<float>(n);
       m.positions.push_back({fx, 0.05f * std::sin(6.0f * fx) * std::cos(5.0f * fy), fy});
       m.texcoords.push_back({fx, fy});
     }

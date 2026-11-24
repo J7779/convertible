@@ -25,6 +25,7 @@
 #include <string_view>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/codec_legacy/common/bitstream.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
 #include "families/codec_legacy/common/dct.hpp"
@@ -612,9 +613,9 @@ class Mpeg4Decoder final : public codec::VideoDecoder {
           for (int y = 0; y < n; ++y) {
             std::uint8_t* d = cur.at(p, mx * n, my * n + y);
             if (ref >= 0) {
-              std::memcpy(d, pictures_[static_cast<std::size_t>(ref)].at(p, mx * n, my * n + y), static_cast<std::size_t>(n));
+              ::cvt::util::copy_bytes(d, pictures_[static_cast<std::size_t>(ref)].at(p, mx * n, my * n + y), static_cast<std::size_t>(n));
             } else {
-              std::memset(d, p == 0 ? 16 : 128, static_cast<std::size_t>(n));
+              ::cvt::util::fill_bytes(d, p == 0 ? 16 : 128, static_cast<std::size_t>(n));
             }
           }
         }
@@ -628,7 +629,7 @@ class Mpeg4Decoder final : public codec::VideoDecoder {
       const std::size_t row = ir::plane_row_bytes(PixelFormat::I420, p, width_);
       const std::size_t rows = ir::plane_height(PixelFormat::I420, p, height_);
       for (std::size_t y = 0; y < rows; ++y) {
-        std::memcpy(frame.planes[p].data.data() + y * frame.planes[p].stride,
+        ::cvt::util::copy_bytes(frame.planes[p].data.data() + y * frame.planes[p].stride,
                     pic.plane[p].data() + y * static_cast<std::size_t>(pic.stride[p]), row);
       }
     }

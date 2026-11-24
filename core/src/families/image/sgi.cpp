@@ -102,7 +102,7 @@ Result<ir::Image> read_sgi(ReadContext& ctx) {
       }
       std::uint8_t* d = frame.rgba.data() + frame.offset(x, y);
       for (int c = 0; c < 4; ++c) d[c] = scale_max_to_8(rgba[c], max);
-      if (bpc == 2) std::memcpy(wide.data() + (std::size_t{y} * xsize + x) * 4, rgba, sizeof(rgba));
+      if (bpc == 2) ::cvt::util::copy_bytes(wide.data() + (std::size_t{y} * xsize + x) * 4, rgba, sizeof(rgba));
     }
   }
   ir::Image image;

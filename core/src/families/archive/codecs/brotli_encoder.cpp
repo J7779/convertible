@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/archive/codec_impl.hpp"
 #include "families/archive/codecs/brotli_internal.hpp"
 #include "families/archive/codecs/huffman.hpp"
@@ -718,8 +719,8 @@ inline std::size_t match_length(const std::uint8_t* a, const std::uint8_t* b, st
   while (n + 8 <= limit) {
     std::uint64_t x;
     std::uint64_t y;
-    std::memcpy(&x, a + n, 8);
-    std::memcpy(&y, b + n, 8);
+    ::cvt::util::copy_bytes(&x, a + n, 8);
+    ::cvt::util::copy_bytes(&y, b + n, 8);
     if (x != y) {
       if constexpr (std::endian::native == std::endian::little) {
         return n + static_cast<std::size_t>(std::countr_zero(x ^ y) / 8);
@@ -923,10 +924,10 @@ class Matcher {
     const auto dict = br::dictionary();
     for (const DictionaryIndex::Group& g : dict_->groups()) {
       const std::size_t pre = g.prefix.size();
-      if (avail < pre + 4 || std::memcmp(here, g.prefix.data(), pre) != 0) continue;
+      if (avail < pre + 4 || ::cvt::util::compare_bytes(here, g.prefix.data(), pre) != 0) continue;
       const std::uint8_t* at = here + pre;
       std::array<std::uint8_t, 4> key{};
-      std::memcpy(key.data(), at, 4);
+      ::cvt::util::copy_bytes(key.data(), at, 4);
       if (g.upper_first) {
         if (key[0] < 'A' || key[0] > 'Z') continue;
         key[0] ^= 32u;
@@ -936,11 +937,11 @@ class Matcher {
         const std::size_t len = entry.len;
         if (pre + len > avail) continue;
         const std::uint8_t* word = dict.data() + br::dictionary_offset[len] + std::size_t{entry.index} * len;
-        if (word[0] != key[0] || std::memcmp(word + 1, at + 1, len - 1) != 0) continue;
+        if (word[0] != key[0] || ::cvt::util::compare_bytes(word + 1, at + 1, len - 1) != 0) continue;
         if (g.upper_first && (word[0] < 'a' || word[0] > 'z')) continue;
         for (const auto& [id, suffix] : g.suffixes) {
           const std::size_t n = pre + len + suffix.size();
-          if (n > avail || std::memcmp(at + len, suffix.data(), suffix.size()) != 0) continue;
+          if (n > avail || ::cvt::util::compare_bytes(at + len, suffix.data(), suffix.size()) != 0) continue;
           const std::uint64_t word_id = (std::uint64_t{id} << br::ndbits[len]) + entry.index;
           f(static_cast<std::uint32_t>(n), static_cast<std::uint32_t>(reach + 1 + word_id), static_cast<std::uint32_t>(len));
         }

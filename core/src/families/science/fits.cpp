@@ -15,6 +15,7 @@
 #include <cstring>
 #include <format>
 
+#include "util/bytes.hpp"
 #include "engine/standard_options.hpp"
 #include "families/science/arrays.hpp"
 #include "families/science/imaging.hpp"
@@ -308,7 +309,7 @@ Result<Array> table_array(const Json& header, ByteView raw, bool ascii, const Co
         const std::string_view text = as_chars(ByteView(row + col.offset, col.format.width));
         if (col.out.kind == ScalarKind::Bytes) {
           const std::string_view trimmed = util::trim_right(text);
-          std::memcpy(dst, trimmed.data(), std::min<std::size_t>(trimmed.size(), col.out.size));
+          ::cvt::util::copy_bytes(dst, trimmed.data(), std::min<std::size_t>(trimmed.size(), col.out.size));
         } else {
           std::string normalized(util::trim(text));
           std::replace(normalized.begin(), normalized.end(), 'D', 'E');
@@ -321,7 +322,7 @@ Result<Array> table_array(const Json& header, ByteView raw, bool ascii, const Co
       if (code == 'A') {
         const std::uint64_t w = col.format.repeat;
         if (col.offset + w > row_bytes) return fail(Status::Decode, "FITS column outside the row");
-        std::memcpy(dst, row + col.offset, static_cast<std::size_t>(std::min<std::uint64_t>(w, col.out.size)));
+        ::cvt::util::copy_bytes(dst, row + col.offset, static_cast<std::size_t>(std::min<std::uint64_t>(w, col.out.size)));
         continue;
       }
       if (code == 'X') {
@@ -372,9 +373,9 @@ Result<Array> table_array(const Json& header, ByteView raw, bool ascii, const Co
       if (raw_type.kind == ScalarKind::Bool) {
         dst[0] = static_cast<char>(tmp.data[0]) == 'T' ? std::byte{1} : std::byte{0};
       } else if (col.out == raw_type) {
-        std::memcpy(dst, tmp.data.data(), raw_type.size);
+        ::cvt::util::copy_bytes(dst, tmp.data.data(), raw_type.size);
       } else if (col.out.kind == ScalarKind::UInt && raw_type.kind == ScalarKind::Int) {
-        std::memcpy(dst, tmp.data.data(), raw_type.size);
+        ::cvt::util::copy_bytes(dst, tmp.data.data(), raw_type.size);
         dst[raw_type.size - 1] ^= std::byte{0x80};
       } else {
         store_double(col.out, dst, col.zero + col.scale * tmp.number(0));
@@ -599,12 +600,12 @@ Result<void> append_image_hdu(Bytes& out, const Array& source, bool primary, con
   for (std::uint64_t i = 0; i < a.count(); ++i) {
     std::byte* p = s.data.data() + i * stored.size;
     if (a.dtype.kind == ScalarKind::UInt && a.dtype.size > 1) {
-      std::memcpy(p, a.element(i), stored.size);
+      ::cvt::util::copy_bytes(p, a.element(i), stored.size);
       p[stored.size - 1] ^= std::byte{0x80};
     } else if (a.dtype.kind == ScalarKind::Int && a.dtype.size == 1) {
       p[0] = a.element(i)[0] ^ std::byte{0x80};
     } else if (stored == a.dtype) {
-      std::memcpy(p, a.element(i), stored.size);
+      ::cvt::util::copy_bytes(p, a.element(i), stored.size);
     } else {
       store_double(stored, p, a.number(i));
     }
@@ -706,7 +707,7 @@ Result<void> append_table_hdu(Bytes& out, const Array& a, const Json& extra, boo
         tmp.dtype = t;
         tmp.shape = {1};
         tmp.data.resize(t.size);
-        if (t == f.type) std::memcpy(tmp.data.data(), p, t.size);
+        if (t == f.type) ::cvt::util::copy_bytes(tmp.data.data(), p, t.size);
         else store_double(t, tmp.data.data(), scalar_double(f.type, p));
         swap_elements(tmp);
         data.bytes(tmp.data);

@@ -1,5 +1,6 @@
 // Convertible core - office family: shared building blocks.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/office/office_common.hpp"
 
 #include <algorithm>
@@ -600,12 +601,12 @@ std::optional<PixelSize> sniff_image_size(ByteView data) {
     }
     return std::nullopt;
   }
-  if (n >= 30 && std::memcmp(u8.data(), "RIFF", 4) == 0 && std::memcmp(u8.data() + 8, "WEBP", 4) == 0) {
-    if (std::memcmp(u8.data() + 12, "VP8X", 4) == 0) {
+  if (n >= 30 && ::cvt::util::compare_bytes(u8.data(), "RIFF", 4) == 0 && ::cvt::util::compare_bytes(u8.data() + 8, "WEBP", 4) == 0) {
+    if (::cvt::util::compare_bytes(u8.data() + 12, "VP8X", 4) == 0) {
       return PixelSize{1 + (le32(24) & 0xFFFFFF), 1 + (le32(27) & 0xFFFFFF)};
     }
-    if (std::memcmp(u8.data() + 12, "VP8 ", 4) == 0) return PixelSize{le16(26) & 0x3FFF, le16(28) & 0x3FFF};
-    if (std::memcmp(u8.data() + 12, "VP8L", 4) == 0) {
+    if (::cvt::util::compare_bytes(u8.data() + 12, "VP8 ", 4) == 0) return PixelSize{le16(26) & 0x3FFF, le16(28) & 0x3FFF};
+    if (::cvt::util::compare_bytes(u8.data() + 12, "VP8L", 4) == 0) {
       const std::uint32_t bits = le32(21);
       return PixelSize{1 + (bits & 0x3FFF), 1 + ((bits >> 14) & 0x3FFF)};
     }

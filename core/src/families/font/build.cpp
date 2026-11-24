@@ -262,7 +262,7 @@ Result<ir::Font> to_truetype(const ir::Font& font, double tolerance, const Conte
   std::vector<Bytes> glyphs;
   glyphs.reserve(outlines.paths.size());
   for (std::size_t g = 0; g < outlines.paths.size(); ++g) {
-    if ((g & 63) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / outlines.paths.size(), "Converting outlines"));
+    if ((g & 63) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / static_cast<double>(outlines.paths.size()), "Converting outlines"));
     TtGlyph glyph;
     const Path quadratic = outlines.paths[g].to_quadratic(tolerance).reversed();
     path_to_contours(quadratic, glyph.points, glyph.end_points);
@@ -305,7 +305,7 @@ Result<ir::Font> to_cff(const ir::Font& font, bool round_coordinates, const Cont
   const bool reverse = !font.find("CFF2");  // TrueType sources wind the other way
   input.outlines.reserve(outlines.paths.size());
   for (std::size_t g = 0; g < outlines.paths.size(); ++g) {
-    if ((g & 63) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / outlines.paths.size(), "Converting outlines"));
+    if ((g & 63) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / static_cast<double>(outlines.paths.size()), "Converting outlines"));
     Path cubic = outlines.paths[g].to_cubic();
     input.outlines.push_back(reverse ? cubic.reversed() : std::move(cubic));
   }
@@ -419,7 +419,7 @@ Result<ir::Font> build_font(const FontSpec& spec, bool cff, const Context& ctx) 
   std::vector<Path> paths;
   paths.reserve(count);
   for (std::size_t g = 0; g < count; ++g) {
-    if ((g & 63) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / count, "Building outlines"));
+    if ((g & 63) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(g) / static_cast<double>(count), "Building outlines"));
     const bool reverse = cff ? !spec.postscript_winding : spec.postscript_winding;
     paths.push_back(reverse ? spec.paths[g].reversed() : spec.paths[g]);
   }

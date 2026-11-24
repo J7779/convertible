@@ -264,7 +264,7 @@ void expand_row(const DecodeState& state, const std::uint8_t* row, std::uint32_t
           put(i, sample16(i * 4), sample16(i * 4 + 1), sample16(i * 4 + 2), sample16(i * 4 + 3));
         }
       } else if (dx == 1 && x0 == 0) {
-        std::memcpy(dst8, row, static_cast<std::size_t>(count) * 4);
+        ::cvt::util::copy_bytes(dst8, row, static_cast<std::size_t>(count) * 4);
       } else {
         for (std::uint32_t i = 0; i < count; ++i) put(i, row[i * 4], row[i * 4 + 1], row[i * 4 + 2], row[i * 4 + 3]);
       }
@@ -375,7 +375,7 @@ Result<std::vector<ir::Frame>> composite(const DecodeState& state, std::vector<F
   DecodeState frame_state = state;
   frame_state.want16 = false;
   for (std::size_t n = 0; n < controls.size(); ++n) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(n) / controls.size(), "Decoding animation"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(n) / static_cast<double>(controls.size()), "Decoding animation"));
     FrameControl& fc = controls[n];
     if (fc.width == 0 || fc.height == 0 || fc.x > h.width || fc.y > h.height || fc.width > h.width - fc.x ||
         fc.height > h.height - fc.y) {
@@ -389,13 +389,13 @@ Result<std::vector<ir::Frame>> composite(const DecodeState& state, std::vector<F
       std::uint8_t* dst = canvas.data() + (static_cast<std::size_t>(fc.y + y) * h.width + fc.x) * 4;
       const std::uint8_t* src = region.rgba8.data() + static_cast<std::size_t>(y) * fc.width * 4;
       if (fc.blend == 0) {
-        std::memcpy(dst, src, static_cast<std::size_t>(fc.width) * 4);
+        ::cvt::util::copy_bytes(dst, src, static_cast<std::size_t>(fc.width) * 4);
         continue;
       }
       for (std::uint32_t x = 0; x < fc.width; ++x, dst += 4, src += 4) {
         const std::uint32_t sa = src[3];
         if (sa == 255) {
-          std::memcpy(dst, src, 4);
+          ::cvt::util::copy_bytes(dst, src, 4);
         } else if (sa != 0) {
           const std::uint32_t da = dst[3];
           const std::uint32_t out_a = sa * 255 + da * (255 - sa);  // scaled by 255
@@ -416,7 +416,7 @@ Result<std::vector<ir::Frame>> composite(const DecodeState& state, std::vector<F
     frames.push_back(std::move(frame));
     if (dispose == 1) {
       for (std::uint32_t y = 0; y < fc.height; ++y) {
-        std::memset(canvas.data() + (static_cast<std::size_t>(fc.y + y) * h.width + fc.x) * 4, 0,
+        ::cvt::util::fill_bytes(canvas.data() + (static_cast<std::size_t>(fc.y + y) * h.width + fc.x) * 4, 0,
                     static_cast<std::size_t>(fc.width) * 4);
       }
     } else if (dispose == 2) {
@@ -756,7 +756,7 @@ void pack_row(const Plan& plan, const Source& src, std::uint32_t y, std::uint32_
       return;
     }
     const int per_byte = 8 / depth;
-    std::memset(out, 0, (count + static_cast<std::uint32_t>(per_byte) - 1) / static_cast<std::uint32_t>(per_byte));
+    ::cvt::util::fill_bytes(out, 0, (count + static_cast<std::uint32_t>(per_byte) - 1) / static_cast<std::uint32_t>(per_byte));
     for (std::uint32_t i = 0; i < count; ++i) {
       out[i / static_cast<std::uint32_t>(per_byte)] |= static_cast<std::uint8_t>(
           idx[x0 + i * dx] << (8 - depth - static_cast<int>(i % static_cast<std::uint32_t>(per_byte)) * depth));
@@ -798,7 +798,7 @@ void pack_row(const Plan& plan, const Source& src, std::uint32_t y, std::uint32_
         return;
       }
       const int per_byte = 8 / depth;
-      std::memset(out, 0, (count + static_cast<std::uint32_t>(per_byte) - 1) / static_cast<std::uint32_t>(per_byte));
+      ::cvt::util::fill_bytes(out, 0, (count + static_cast<std::uint32_t>(per_byte) - 1) / static_cast<std::uint32_t>(per_byte));
       for (std::uint32_t i = 0; i < count; ++i) {
         const std::uint8_t* q = p + static_cast<std::size_t>(x0 + i * dx) * 4;
         const std::uint32_t level = q[3] == 0 && plan.use_key ? plan.key[0] : static_cast<std::uint32_t>(q[0] >> (8 - depth));
@@ -830,10 +830,10 @@ void pack_row(const Plan& plan, const Source& src, std::uint32_t y, std::uint32_
       return;
     default:
       if (dx == 1) {
-        std::memcpy(out, p + static_cast<std::size_t>(x0) * 4, static_cast<std::size_t>(count) * 4);
+        ::cvt::util::copy_bytes(out, p + static_cast<std::size_t>(x0) * 4, static_cast<std::size_t>(count) * 4);
         return;
       }
-      for (std::uint32_t i = 0; i < count; ++i) std::memcpy(out + i * 4, p + static_cast<std::size_t>(x0 + i * dx) * 4, 4);
+      for (std::uint32_t i = 0; i < count; ++i) ::cvt::util::copy_bytes(out + i * 4, p + static_cast<std::size_t>(x0 + i * dx) * 4, 4);
       return;
   }
 }
@@ -845,7 +845,7 @@ void filter_row(FilterStrategy strategy, const std::uint8_t* row, const std::uin
                 std::size_t bpp, std::uint8_t* out, std::vector<std::uint8_t>& scratch) {
   if (strategy == FilterStrategy::None) {
     out[0] = 0;
-    std::memcpy(out + 1, row, length);
+    ::cvt::util::copy_bytes(out + 1, row, length);
     return;
   }
   scratch.resize(length * 5);
@@ -870,7 +870,7 @@ void filter_row(FilterStrategy strategy, const std::uint8_t* row, const std::uin
     if (cost[k] < cost[best]) best = k;
   }
   out[0] = static_cast<std::uint8_t>(best);
-  std::memcpy(out + 1, f[best], length);
+  ::cvt::util::copy_bytes(out + 1, f[best], length);
 }
 
 Result<Bytes> filtered_data(const Plan& plan, const Source& src, bool interlace, FilterStrategy strategy,
@@ -1169,9 +1169,9 @@ Rect changed_rect(const ir::Frame& a, const ir::Frame& b) {
   for (std::uint32_t y = 0; y < a.height; ++y) {
     const std::uint8_t* pa = a.rgba.data() + static_cast<std::size_t>(y) * a.width * 4;
     const std::uint8_t* pb = b.rgba.data() + static_cast<std::size_t>(y) * a.width * 4;
-    if (std::memcmp(pa, pb, static_cast<std::size_t>(a.width) * 4) == 0) continue;
+    if (::cvt::util::compare_bytes(pa, pb, static_cast<std::size_t>(a.width) * 4) == 0) continue;
     for (std::uint32_t x = 0; x < a.width; ++x) {
-      if (std::memcmp(pa + x * 4, pb + x * 4, 4) != 0) {
+      if (::cvt::util::compare_bytes(pa + x * 4, pb + x * 4, 4) != 0) {
         any = true;
         x0 = std::min(x0, x);
         x1 = std::max(x1, x);
@@ -1333,7 +1333,7 @@ Result<Bytes> encode_impl(const ir::Image& image, const EncodeOptions& options, 
   } else {
     std::uint32_t sequence = 0;
     for (std::size_t n = 0; n < image.frames.size(); ++n) {
-      CVT_TRY(ctx.checkpoint(static_cast<double>(n) / image.frames.size(), "Encoding animation"));
+      CVT_TRY(ctx.checkpoint(static_cast<double>(n) / static_cast<double>(image.frames.size()), "Encoding animation"));
       Rect rect{0, 0, width, height};
       if (n > 0) rect = changed_rect(image.frames[n - 1], image.frames[n]);
       util::ByteWriter fctl;
@@ -1477,7 +1477,7 @@ class PngVideoEncoder final : public codec::VideoEncoder {
     f.height = rgba.height;
     f.rgba.resize(static_cast<std::size_t>(rgba.width) * rgba.height * 4);
     for (std::uint32_t y = 0; y < rgba.height; ++y) {
-      std::memcpy(f.rgba.data() + static_cast<std::size_t>(y) * rgba.width * 4,
+      ::cvt::util::copy_bytes(f.rgba.data() + static_cast<std::size_t>(y) * rgba.width * 4,
                   rgba.planes[0].data.data() + y * rgba.planes[0].stride, static_cast<std::size_t>(rgba.width) * 4);
     }
     image.frames.push_back(std::move(f));

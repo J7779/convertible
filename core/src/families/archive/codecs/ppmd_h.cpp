@@ -15,6 +15,7 @@
 #include <cstring>
 #include <limits>
 
+#include "util/bytes.hpp"
 #include "families/archive/codecs/ppmd.hpp"
 
 namespace cvt::compression::detail {
@@ -264,19 +265,19 @@ class ModelH {
   // ---- raw field access
   [[nodiscard]] std::uint16_t ld16(std::uint32_t at) const {
     std::uint16_t v;
-    std::memcpy(&v, b_ + at, 2);
+    ::cvt::util::copy_bytes(&v, b_ + at, 2);
     return v;
   }
   void st16(std::uint32_t at, unsigned v) {
     const auto x = static_cast<std::uint16_t>(v);
-    std::memcpy(b_ + at, &x, 2);
+    ::cvt::util::copy_bytes(b_ + at, &x, 2);
   }
   [[nodiscard]] std::uint32_t ld32(std::uint32_t at) const {
     std::uint32_t v;
-    std::memcpy(&v, b_ + at, 4);
+    ::cvt::util::copy_bytes(&v, b_ + at, 4);
     return v;
   }
-  void st32(std::uint32_t at, std::uint32_t v) { std::memcpy(b_ + at, &v, 4); }
+  void st32(std::uint32_t at, std::uint32_t v) { ::cvt::util::copy_bytes(b_ + at, &v, 4); }
 
   // context fields
   [[nodiscard]] unsigned num_stats(std::uint32_t c) const { return ld16(c); }
@@ -295,12 +296,12 @@ class ModelH {
   void set_freq(std::uint32_t s, unsigned v) { b_[s + 1] = static_cast<std::uint8_t>(v); }
   [[nodiscard]] std::uint32_t succ(std::uint32_t s) const { return ld32(s + 2); }
   void set_succ(std::uint32_t s, std::uint32_t v) { st32(s + 2, v); }
-  void copy_state(std::uint32_t to, std::uint32_t from) { std::memmove(b_ + to, b_ + from, 6); }
+  void copy_state(std::uint32_t to, std::uint32_t from) { ::cvt::util::move_bytes(b_ + to, b_ + from, 6); }
   void swap_states(std::uint32_t a, std::uint32_t c) {
     std::uint8_t t[6];
-    std::memcpy(t, b_ + a, 6);
-    std::memcpy(b_ + a, b_ + c, 6);
-    std::memcpy(b_ + c, t, 6);
+    ::cvt::util::copy_bytes(t, b_ + a, 6);
+    ::cvt::util::copy_bytes(b_ + a, b_ + c, 6);
+    ::cvt::util::copy_bytes(b_ + c, t, 6);
   }
 
   // ---- sub-allocator
@@ -430,7 +431,7 @@ class ModelH {
     if (i0 == i1) return old_ptr;
     if (free_list_[i1] != 0) {
       const std::uint32_t ptr = remove_node(i1);
-      std::memmove(b_ + ptr, b_ + old_ptr, u2b(new_nu));
+      ::cvt::util::move_bytes(b_ + ptr, b_ + old_ptr, u2b(new_nu));
       insert_node(old_ptr, i0);
       return ptr;
     }
@@ -510,7 +511,7 @@ class ModelH {
     std::uint8_t up_state[6];
     up_state[0] = b_[up_branch];
     const std::uint32_t up_succ = up_branch + 1;
-    std::memcpy(up_state + 2, &up_succ, 4);
+    ::cvt::util::copy_bytes(up_state + 2, &up_succ, 4);
     if (num_stats(c) == 1) {
       up_state[1] = static_cast<std::uint8_t>(freq(one_state(c)));
     } else {
@@ -525,7 +526,7 @@ class ModelH {
       const std::uint32_t c1 = alloc_context();
       if (c1 == 0) return 0;
       set_num_stats(c1, 1);
-      std::memcpy(b_ + one_state(c1), up_state, 6);
+      ::cvt::util::copy_bytes(b_ + one_state(c1), up_state, 6);
       set_suffix(c1, c);
       set_succ(ps[--num_ps], c1);
       c = c1;
@@ -611,7 +612,7 @@ class ModelH {
               return;
             }
             const std::uint32_t old_ptr = stats(c);
-            std::memmove(b_ + ptr, b_ + old_ptr, u2b(old_nu));
+            ::cvt::util::move_bytes(b_ + ptr, b_ + old_ptr, u2b(old_nu));
             insert_node(old_ptr, i);
             set_stats(c, ptr);
           }
@@ -659,9 +660,9 @@ class ModelH {
     std::uint32_t s = found_;
     if (s != st) {
       std::uint8_t tmp[6];
-      std::memcpy(tmp, b_ + s, 6);
+      ::cvt::util::copy_bytes(tmp, b_ + s, 6);
       for (; s != st; s -= 6) copy_state(s, s - 6);
-      std::memcpy(b_ + s, tmp, 6);
+      ::cvt::util::copy_bytes(b_ + s, tmp, 6);
     }
     unsigned esc_freq = summ_freq(min_ctx_) - freq(s);
     const unsigned adder = order_fall_ != 0 ? 1u : 0u;
@@ -676,12 +677,12 @@ class ModelH {
       if (freq(s) > freq(s - 6)) {
         std::uint32_t s1 = s;
         std::uint8_t tmp[6];
-        std::memcpy(tmp, b_ + s1, 6);
+        ::cvt::util::copy_bytes(tmp, b_ + s1, 6);
         do {
           copy_state(s1, s1 - 6);
           s1 -= 6;
         } while (s1 != st && tmp[1] > freq(s1 - 6));
-        std::memcpy(b_ + s1, tmp, 6);
+        ::cvt::util::copy_bytes(b_ + s1, tmp, 6);
       }
     } while (--i != 0);
 
@@ -696,14 +697,14 @@ class ModelH {
       set_num_stats(min_ctx_, num_stats_old - i);
       if (num_stats(min_ctx_) == 1) {
         std::uint8_t tmp[6];
-        std::memcpy(tmp, b_ + st, 6);
+        ::cvt::util::copy_bytes(tmp, b_ + st, 6);
         do {
           tmp[1] = static_cast<std::uint8_t>(tmp[1] - (tmp[1] >> 1));
           esc_freq >>= 1;
         } while (esc_freq > 1);
         insert_node(st, u2i((num_stats_old + 1) >> 1));
         found_ = one_state(min_ctx_);
-        std::memcpy(b_ + found_, tmp, 6);
+        ::cvt::util::copy_bytes(b_ + found_, tmp, 6);
         return;
       }
       const unsigned n0 = (num_stats_old + 1) >> 1;

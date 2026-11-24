@@ -154,7 +154,7 @@ class ThreeMfReader {
     if (!build) return fail(Status::Decode, "the 3MF model has no build");
     std::size_t item_index = 0;
     for (const util::XmlNode& item : build.children_local("item")) {
-      CVT_TRY(ctx_.checkpoint(0.2 + 0.7 * static_cast<double>(item_index++) / (objects_.size() + 1.0)));
+      CVT_TRY(ctx_.checkpoint(0.2 + 0.7 * static_cast<double>(item_index++) / (static_cast<double>(objects_.size()) + 1.0)));
       ir::Mat4 transform;
       if (const auto t = item.attribute("transform")) {
         bool ok = false;
@@ -397,7 +397,7 @@ Result<Bytes> write_3mf(const AnyIR& value, WriteContext& ctx) {
   const std::vector<ObjectPart> parts = split_objects(mesh, true);
   std::vector<std::pair<int, ir::Mat4>> build;
   for (std::size_t p = 0; p < parts.size(); ++p) {
-    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / parts.size()));
+    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / static_cast<double>(parts.size())));
     const ir::Mesh& part = parts[p].mesh;
     if (part.indices.empty()) continue;
     int color_id = 0;

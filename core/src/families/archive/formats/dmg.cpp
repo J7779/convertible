@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "engine/sniffers.hpp"
 #include "families/archive/archive_common.hpp"
@@ -59,7 +60,7 @@ std::uint64_t le64(ByteView d, std::size_t at) {
   return static_cast<std::uint64_t>(le32(d, at)) | (static_cast<std::uint64_t>(le32(d, at + 4)) << 32);
 }
 bool starts(ByteView d, std::size_t at, std::string_view magic) {
-  return d.size() >= at + magic.size() && std::memcmp(d.data() + at, magic.data(), magic.size()) == 0;
+  return d.size() >= at + magic.size() && ::cvt::util::compare_bytes(d.data() + at, magic.data(), magic.size()) == 0;
 }
 
 bool has_koly(ByteView d) { return d.size() >= koly_size && starts(d, d.size() - koly_size, "koly"); }
@@ -96,7 +97,7 @@ class RawDisk final : public hfs::Device {
   [[nodiscard]] std::uint64_t size() const noexcept override { return data_.size(); }
   [[nodiscard]] Result<void> read(std::uint64_t offset, std::span<std::byte> out) override {
     if (offset > data_.size() || out.size() > data_.size() - offset) return fail(Status::Decode, "read beyond the end of the disk image");
-    std::memcpy(out.data(), data_.data() + static_cast<std::size_t>(offset), out.size());
+    ::cvt::util::copy_bytes(out.data(), data_.data() + static_cast<std::size_t>(offset), out.size());
     return {};
   }
 
@@ -154,11 +155,11 @@ class UdifDisk final : public hfs::Device {
           // A raw chunk shorter than its sectors reads as zeros at the end.
           const std::uint64_t have = chunk->length > within ? chunk->length - within : 0;
           const std::size_t copy = static_cast<std::size_t>(std::min<std::uint64_t>(have, n));
-          std::memcpy(dst.data(), file_.data() + static_cast<std::size_t>(chunk->offset + within), copy);
+          ::cvt::util::copy_bytes(dst.data(), file_.data() + static_cast<std::size_t>(chunk->offset + within), copy);
           std::fill(dst.begin() + static_cast<std::ptrdiff_t>(copy), dst.end(), std::byte{0});
         } else {
           CVT_TRY_ASSIGN(const Bytes* plain, decoded(*chunk));
-          std::memcpy(dst.data(), plain->data() + static_cast<std::size_t>(within), n);
+          ::cvt::util::copy_bytes(dst.data(), plain->data() + static_cast<std::size_t>(within), n);
         }
       }
       done += n;
@@ -362,8 +363,8 @@ Result<std::optional<Volume>> find_volume(hfs::Device& disk, bool& apfs) {
         const std::uint64_t last = le64(e, 40);
         if (last < first || first > disk.size() / sector) continue;
         const std::uint64_t size = std::min<std::uint64_t>((last - first + 1) * sector, disk.size() - first * sector);
-        if (std::memcmp(e.data(), apfs_guid, 16) == 0) apfs = true;
-        if (std::memcmp(e.data(), hfs_guid, 16) == 0) {
+        if (::cvt::util::compare_bytes(e.data(), apfs_guid, 16) == 0) apfs = true;
+        if (::cvt::util::compare_bytes(e.data(), hfs_guid, 16) == 0) {
           CVT_TRY_ASSIGN(const bool ok, probe(first * sector, size));
           if (ok) return std::optional<Volume>(Volume{first * sector, size});
         }

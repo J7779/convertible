@@ -1103,11 +1103,11 @@ Result<AnyIR> read_flat_word(ReadContext& ctx) {
       for (XmlNode c : data.elements()) text += util::xml_to_string(c, options);
       bytes = to_bytes(text);
     } else if (XmlNode bin = child(part, "binaryData")) {
-      std::string data;
+      std::string encoded;
       for (char c : bin.text()) {
-        if (!util::is_ascii_space(c)) data.push_back(c);
+        if (!util::is_ascii_space(c)) encoded.push_back(c);
       }
-      auto decoded = util::base64_decode(data);
+      auto decoded = util::base64_decode(encoded);
       if (!decoded) continue;
       bytes = std::move(*decoded);
     }

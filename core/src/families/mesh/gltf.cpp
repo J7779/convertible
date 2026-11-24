@@ -476,7 +476,7 @@ Result<AnyIR> read_gltf(ReadContext& ctx) {
     if (node_name.empty()) node_name = gmesh["name"].as_string();
     const std::size_t object_first = mesh.face_count();
     for (const Json& primitive : gmesh["primitives"].elements()) {
-      CVT_TRY(ctx.checkpoint(0.1 + 0.8 * static_cast<double>(visited_nodes) / (nodes.size() + 1.0)));
+      CVT_TRY(ctx.checkpoint(0.1 + 0.8 * static_cast<double>(visited_nodes) / (static_cast<double>(nodes.size()) + 1.0)));
       const std::int64_t mode = primitive.contains("mode") ? primitive["mode"].as_int64(4) : 4;
       const Json& attributes = primitive["attributes"];
       const std::int64_t pos_accessor = ref(attributes, "POSITION");
@@ -714,7 +714,7 @@ Result<Bytes> write_gltf(const AnyIR& value, WriteContext& ctx) {
   Json meshes = Json::array(), nodes = Json::array(), scene_nodes = Json::array();
   const std::vector<ObjectPart> parts = split_objects(mesh, true);
   for (std::size_t p = 0; p < parts.size(); ++p) {
-    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / parts.size()));
+    CVT_TRY(ctx.checkpoint(0.8 + 0.15 * static_cast<double>(p) / static_cast<double>(parts.size())));
     const ir::Mesh& part = parts[p].mesh;
     if (part.positions.empty()) continue;
     const std::size_t n = part.positions.size();

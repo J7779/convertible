@@ -47,7 +47,7 @@ struct SpeexHeader {
 
 std::optional<SpeexHeader> parse_header(ByteView data) {
   const auto d = as_u8(data);
-  if (d.size() < 80 || std::memcmp(d.data(), "Speex   ", 8) != 0) return std::nullopt;
+  if (d.size() < 80 || ::cvt::util::compare_bytes(d.data(), "Speex   ", 8) != 0) return std::nullopt;
   SpeexHeader h;
   h.rate = le32s(d.data() + 36);
   h.mode = le32s(d.data() + 40);
@@ -192,7 +192,7 @@ Result<Bytes> write_ogg_speex(const ir::Audio& audio, const SpeexSettings& setti
   util::ByteWriter head;
   head.text("Speex   ");
   std::array<char, 20> version{};
-  std::memcpy(version.data(), "1.2.1", 5);
+  ::cvt::util::copy_bytes(version.data(), "1.2.1", 5);
   head.bytes(as_bytes(std::string_view(version.data(), version.size())));
   head.u32le(1);   // version id
   head.u32le(80);  // header size

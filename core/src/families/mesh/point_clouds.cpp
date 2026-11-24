@@ -88,7 +88,7 @@ Bytes lzf_compress(ByteView input) {
       const std::size_t candidate = table[slot];
       table[slot] = i;
       if (candidate != std::numeric_limits<std::size_t>::max() && i - candidate <= 8192 && i > candidate &&
-          std::memcmp(in + candidate, in + i, 3) == 0) {
+          ::cvt::util::compare_bytes(in + candidate, in + i, 3) == 0) {
         std::size_t length = 3;
         const std::size_t max_length = std::min<std::size_t>(264, n - i);
         while (length < max_length && in[candidate + length] == in[i + length]) ++length;
@@ -207,7 +207,7 @@ Result<AnyIR> read_xyz(ReadContext& ctx) {
   bool first = true;
   while (lines.next(line)) {
     if ((lines.line_number() & 0x3FFF) == 0) {
-      CVT_TRY(ctx.checkpoint(static_cast<double>(lines.position()) / (text.size() + 1.0)));
+      CVT_TRY(ctx.checkpoint(static_cast<double>(lines.position()) / (static_cast<double>(text.size()) + 1.0)));
     }
     if (comment_line(line)) continue;
     std::vector<std::string_view> parts = tokens(line, ",;");
@@ -256,7 +256,7 @@ Result<Bytes> write_xyz(const AnyIR& value, WriteContext& ctx) {
   std::string out;
   out.reserve(mesh.positions.size() * 48);
   for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
-    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(i) / mesh.positions.size()));
+    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(i) / static_cast<double>(mesh.positions.size())));
     const ir::Vec3& p = mesh.positions[i];
     append_number(out, p.x, precision);
     out += ' ';
@@ -747,7 +747,7 @@ Result<Bytes> write_las(const AnyIR& value, WriteContext& ctx) {
     out.u64le(0).u64le(0).u32le(0).u64le(n).u64le(n).zeros(14 * 8);
   }
   for (std::size_t i = 0; i < n; ++i) {
-    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(i) / n));
+    if ((i & 0xFFFF) == 0) CVT_TRY(ctx.checkpoint(0.8 + 0.2 * static_cast<double>(i) / static_cast<double>(n)));
     const ir::Vec3& p = mesh.positions[i];
     out.i32le(static_cast<std::int32_t>(std::llround((p.x - offset[0]) / scale)));
     out.i32le(static_cast<std::int32_t>(std::llround((p.y - offset[1]) / scale)));

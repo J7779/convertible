@@ -18,6 +18,7 @@
 #include <optional>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/codec_legacy/common/bitstream.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
 #include "families/codec_legacy/common/dct.hpp"
@@ -163,7 +164,7 @@ class Mpeg12Encoder final : public codec::VideoEncoder {
       for (int y = 0; y < in.planes.rows[static_cast<std::size_t>(p)]; ++y) {
         const std::uint8_t* s = src.data.data() + static_cast<std::size_t>(std::min(y, h - 1)) * src.stride;
         std::uint8_t* d = in.planes.at(p, 0, y);
-        std::memcpy(d, s, static_cast<std::size_t>(w));
+        ::cvt::util::copy_bytes(d, s, static_cast<std::size_t>(w));
         for (int x = w; x < in.planes.stride[static_cast<std::size_t>(p)]; ++x) d[x] = s[w - 1];  // edge replication
       }
     }
@@ -677,7 +678,7 @@ class Mpeg12Encoder final : public codec::VideoEncoder {
           std::uint8_t a[256];
           std::uint8_t b[256];
           predict(a, 16, ref_fwd_.ref(0), mx * 32 + fwd.x, my * 32 + fwd.y, 16, 16, false);
-          std::memcpy(b, a, sizeof(a));
+          ::cvt::util::copy_bytes(b, a, sizeof(a));
           predict(b, 16, ref_bwd_.ref(0), mx * 32 + bwd.x, my * 32 + bwd.y, 16, 16, true);
           const int bisad = sad_block(src.at(0, mx * 16, my * 16), src.stride[0], b, 16, 16, 16);
           choice.fwd = fwd;
@@ -797,7 +798,7 @@ class Mpeg12Encoder final : public codec::VideoEncoder {
       }
       const std::uint8_t* pr = p == 0 ? pred.data() + (b >> 1) * 8 * 16 + (b & 1) * 8 : pred.data() + 256 + (p - 1) * 64;
       const int pstride = p == 0 ? 16 : 8;
-      for (int y = 0; y < 8; ++y) std::memcpy(d + y * stride, pr + y * pstride, 8);
+      for (int y = 0; y < 8; ++y) ::cvt::util::copy_bytes(d + y * stride, pr + y * pstride, 8);
       if ((coded & (1 << (5 - b))) != 0) idct8x8_add(recon[static_cast<std::size_t>(b)].data(), d, stride);
     }
   }

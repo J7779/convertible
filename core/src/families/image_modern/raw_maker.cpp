@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image_modern/raw_readers.hpp"
 #include "util/text.hpp"
 
@@ -434,7 +435,7 @@ Result<Sensor> unslice_cr2(const LjpegFrame& frame, std::span<const std::uint64_
     const std::uint64_t sw = slice < n ? slice_w : last_w;
     const std::uint64_t x0 = slice * slice_w;
     for (std::uint64_t y = 0; y < height; ++y) {
-      std::memcpy(&s.u16[static_cast<std::size_t>(y * width + x0)], in + k, static_cast<std::size_t>(sw) * sizeof(std::uint16_t));
+      ::cvt::util::copy_bytes(&s.u16[static_cast<std::size_t>(y * width + x0)], in + k, static_cast<std::size_t>(sw) * sizeof(std::uint16_t));
       k += sw;
     }
   }

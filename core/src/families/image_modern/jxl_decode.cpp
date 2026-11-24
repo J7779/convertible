@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image/common.hpp"
 #include "families/image/image_ops.hpp"
 #include "families/image_modern/jxl_codec.hpp"
@@ -67,7 +68,7 @@ struct BoxCollector {
   }
 };
 
-bool is_type(const JxlBoxType type, const char (&name)[5]) { return std::memcmp(type, name, 4) == 0; }
+bool is_type(const JxlBoxType type, const char (&name)[5]) { return ::cvt::util::compare_bytes(type, name, 4) == 0; }
 
 /// The scale that makes linear 1.0 SDR white for PQ/HLG content.
 float hdr_scale(const JxlColorEncoding& original, const JxlBasicInfo& info) {
@@ -88,7 +89,7 @@ void store_exif(ir::Image& image, const std::vector<std::uint8_t>& box, const Re
     return;
   }
   Bytes exif(box.size() - 4 - offset);
-  std::memcpy(exif.data(), box.data() + 4 + offset, exif.size());
+  ::cvt::util::copy_bytes(exif.data(), box.data() + 4 + offset, exif.size());
   const auto parsed = image::parse_exif(exif);
   if (!parsed) {
     ctx.warn("The JPEG XL file's EXIF data is malformed and was ignored.");
@@ -236,7 +237,7 @@ Result<ir::Image> read(ReadContext& ctx) {
             if (JxlDecoderGetColorAsICCProfile(dec, JXL_COLOR_PROFILE_TARGET_DATA, icc.data(), icc.size()) ==
                 JXL_DEC_SUCCESS) {
               image.icc_profile.resize(icc.size());
-              std::memcpy(image.icc_profile.data(), icc.data(), icc.size());
+              ::cvt::util::copy_bytes(image.icc_profile.data(), icc.data(), icc.size());
             }
           }
         }

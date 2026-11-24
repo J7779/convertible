@@ -1,5 +1,6 @@
 // Convertible core - Compound File Binary format reader and writer ([MS-CFB]).
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/table/cfb.hpp"
 
 #include <algorithm>
@@ -76,7 +77,7 @@ Result<std::vector<std::uint32_t>> CfbReader::chain(std::uint32_t start, const s
 
 Result<CfbReader> CfbReader::open(ByteView data, const Limits& limits) {
   if (data.size() < header_size) return fail(Status::Decode, "too small to be a compound file");
-  if (std::memcmp(data.data(), signature.data(), signature.size()) != 0) {
+  if (::cvt::util::compare_bytes(data.data(), signature.data(), signature.size()) != 0) {
     return fail(Status::Decode, "not a compound file (OLE2 signature missing)");
   }
   util::ByteReader header(data.first(header_size));

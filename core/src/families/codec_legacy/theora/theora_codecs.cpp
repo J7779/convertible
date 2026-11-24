@@ -19,6 +19,7 @@
 #include <optional>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "codec/ids.hpp"
 #include "families/codec_legacy/codecs.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
@@ -179,7 +180,7 @@ class TheoraDecoder final : public codec::VideoDecoder {
       const std::size_t rows = ir::plane_height(format, p, info_.pic_height);
       for (std::size_t y = 0; y < rows; ++y) {
         const unsigned char* src = buffer[p].data + static_cast<std::ptrdiff_t>(y0 + y) * buffer[p].stride + x0;
-        std::memcpy(f.planes[p].data.data() + y * f.planes[p].stride, src, row_bytes);
+        ::cvt::util::copy_bytes(f.planes[p].data.data() + y * f.planes[p].stride, src, row_bytes);
       }
     }
     f.color = {ir::ColorMatrix::BT601, ir::ColorRange::Limited, ir::ChromaSiting::Center};
@@ -297,7 +298,7 @@ class TheoraEncoder final : public SimpleEncoder {
       for (std::uint32_t y = 0; y < ph; ++y) {
         const std::uint8_t* src = f.planes[p].data.data() + static_cast<std::size_t>(std::min(y, sh - 1)) * f.planes[p].stride;
         std::uint8_t* dst = planes_[p].data() + static_cast<std::size_t>(y) * pw;
-        std::memcpy(dst, src, sw);
+        ::cvt::util::copy_bytes(dst, src, sw);
         std::fill(dst + sw, dst + pw, src[sw - 1]);  // edge replication into the padding
       }
       buffer[p].width = static_cast<int>(pw);

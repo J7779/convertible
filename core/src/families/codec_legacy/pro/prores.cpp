@@ -20,6 +20,7 @@
 #include <cstring>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/codec_legacy/common/bitstream.hpp"
 #include "families/codec_legacy/common/codec_base.hpp"
 #include "families/codec_legacy/common/dct.hpp"
@@ -112,7 +113,7 @@ class ProresDecoder final : public SimpleDecoder {
  protected:
   Result<VideoFrame> decode(const Packet& packet) override {
     const auto data = as_u8(ByteView(packet.bytes));
-    if (data.size() < 28 || std::memcmp(data.data() + 4, "icpf", 4) != 0) return fail(Status::Decode, "not a ProRes frame");
+    if (data.size() < 28 || ::cvt::util::compare_bytes(data.data() + 4, "icpf", 4) != 0) return fail(Status::Decode, "not a ProRes frame");
     const std::uint32_t frame_size = static_cast<std::uint32_t>(data[0]) << 24 | static_cast<std::uint32_t>(data[1]) << 16 |
                                      static_cast<std::uint32_t>(data[2]) << 8 | data[3];
     const auto frame = data.subspan(8, std::min<std::size_t>(data.size(), std::max<std::size_t>(frame_size, 8)) - 8);

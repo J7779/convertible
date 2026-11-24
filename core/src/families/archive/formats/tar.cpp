@@ -8,6 +8,7 @@
 // entry fits, pax records only for what ustar cannot hold, owner 0 with no
 // owner names, and no access or change times.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/archive/formats/tar.hpp"
 
 #include <algorithm>
@@ -140,7 +141,7 @@ Result<Bytes> expand_sparse(ByteView stored, const Sparse& sparse, std::uint64_t
         length > sparse.real_size - offset) {
       return fail(Status::Decode, "tar sparse map does not match the data");
     }
-    std::memcpy(out.data() + offset, stored.data() + at, static_cast<std::size_t>(length));
+    ::cvt::util::copy_bytes(out.data() + offset, stored.data() + at, static_cast<std::size_t>(length));
     at += length;
   }
   return out;
@@ -375,14 +376,14 @@ void put_octal(Bytes& h, std::size_t at, std::size_t len, std::uint64_t v) {
     digits[i] = static_cast<char>('0' + (v & 7u));
     v >>= 3;
   }
-  std::memcpy(h.data() + at, digits.data(), digits.size());
+  ::cvt::util::copy_bytes(h.data() + at, digits.data(), digits.size());
   h[at + len - 1] = std::byte{0};
 }
 
 bool fits_octal(std::uint64_t v, std::size_t len) { return len - 1 >= 22 || v < (std::uint64_t{1} << (3 * (len - 1))); }
 
 void put_text(Bytes& h, std::size_t at, std::size_t len, std::string_view s) {
-  std::memcpy(h.data() + at, s.data(), std::min(len, s.size()));
+  ::cvt::util::copy_bytes(h.data() + at, s.data(), std::min(len, s.size()));
 }
 
 bool is_ascii(std::string_view s) {

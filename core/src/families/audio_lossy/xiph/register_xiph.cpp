@@ -8,6 +8,7 @@
 #include <string_view>
 #include <utility>
 
+#include "util/bytes.hpp"
 #include "codec/ids.hpp"
 #include "codec/registry.hpp"
 #include "engine/registry.hpp"
@@ -24,15 +25,15 @@ namespace {
 /// The kind of the first logical stream of an Ogg file.
 std::string_view ogg_kind(ByteView data) {
   const auto d = as_u8(data);
-  if (d.size() < 28 + 8 || std::memcmp(d.data(), "OggS", 4) != 0) return {};
+  if (d.size() < 28 + 8 || ::cvt::util::compare_bytes(d.data(), "OggS", 4) != 0) return {};
   const std::size_t segments = d[26];
   const std::size_t body = 27 + segments;
   if (d.size() < body + 8) return {};
   const auto* p = d.data() + body;
-  if (std::memcmp(p, "OpusHead", 8) == 0) return "opus";
-  if (std::memcmp(p, "\x01vorbis", 7) == 0) return "vorbis";
-  if (std::memcmp(p, "Speex   ", 8) == 0) return "speex";
-  if (std::memcmp(p, "\x7F" "FLAC", 5) == 0) return "flac";
+  if (::cvt::util::compare_bytes(p, "OpusHead", 8) == 0) return "opus";
+  if (::cvt::util::compare_bytes(p, "\x01vorbis", 7) == 0) return "vorbis";
+  if (::cvt::util::compare_bytes(p, "Speex   ", 8) == 0) return "speex";
+  if (::cvt::util::compare_bytes(p, "\x7F" "FLAC", 5) == 0) return "flac";
   return "other";
 }
 

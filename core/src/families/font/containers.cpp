@@ -105,7 +105,7 @@ Result<Bytes> write_woff(const ir::Font& font, int level, bool keep_private, con
   std::vector<Packed> packed;
   std::size_t i = 0;
   for (const DirectoryEntry& entry : sorted) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(i++) / sorted.size(), "Compressing tables"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(i++) / static_cast<double>(sorted.size()), "Compressing tables"));
     const ByteView original = ByteView(sfnt).subspan(entry.offset, entry.length);
     Bytes stored(original.begin(), original.end());
     if (level > 0 && !original.empty()) {

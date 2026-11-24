@@ -14,6 +14,7 @@
 #include <cstring>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/image_modern/exr_internal.hpp"
 #include "util/deflate.hpp"
 
@@ -365,7 +366,7 @@ Result<Bytes> b44_decompress(const ChunkLayout& layout, ByteView packed) {
       if (!ChunkLayout::has_line(channel, std::int64_t{layout.y0} + line)) continue;
       const std::size_t row_bytes = static_cast<std::size_t>(channel.width) * pixel_size(channel.type);
       if (row_bytes == 0) continue;
-      std::memcpy(out.data() + write, planes[c].data() + rows[c] * row_bytes, row_bytes);
+      ::cvt::util::copy_bytes(out.data() + write, planes[c].data() + rows[c] * row_bytes, row_bytes);
       write += row_bytes;
       ++rows[c];
     }

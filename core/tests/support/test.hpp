@@ -191,6 +191,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "util/bytes.hpp"
 #include "engine/errors.hpp"
 
 namespace cvt::test {
@@ -2161,11 +2162,11 @@ void append_quoted_wide(std::string& out, const void* data, std::size_t count, s
   const auto unit = [&](std::size_t i) -> char32_t {
     if (unit_size == 2) {
       char16_t value = 0;
-      std::memcpy(&value, static_cast<const char*>(data) + i * 2, 2);
+      ::cvt::util::copy_bytes(&value, static_cast<const char*>(data) + i * 2, 2);
       return value;
     }
     char32_t value = 0;
-    std::memcpy(&value, static_cast<const char*>(data) + i * 4, 4);
+    ::cvt::util::copy_bytes(&value, static_cast<const char*>(data) + i * 4, 4);
     return value;
   };
   for (std::size_t i = 0; i < count; ++i) {

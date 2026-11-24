@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "engine/registry.hpp"
 #include "families/table/codepages.hpp"
 #include "families/table/common.hpp"
@@ -422,7 +423,7 @@ Result<AnyIR> read_spss(ReadContext& ctx) {
     if (compression == 0) {
       const ByteView raw = d.bytes(8);
       if (!d.ok()) return false;
-      std::memcpy(slot.data(), raw.data(), 8);
+      ::cvt::util::copy_bytes(slot.data(), raw.data(), 8);
       return true;
     }
     while (true) {
@@ -440,7 +441,7 @@ Result<AnyIR> read_spss(ReadContext& ctx) {
         case 253: {
           const ByteView raw = d.bytes(8);
           if (!d.ok()) return false;
-          std::memcpy(slot.data(), raw.data(), 8);
+          ::cvt::util::copy_bytes(slot.data(), raw.data(), 8);
           return true;
         }
         case 254: slot.assign(8, std::byte{' '}); return true;

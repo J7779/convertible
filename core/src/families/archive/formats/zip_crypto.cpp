@@ -13,6 +13,7 @@
 #include <cstring>
 #include <format>
 
+#include "util/bytes.hpp"
 #include "families/archive/crypto.hpp"
 #include "families/archive/formats/zip_internal.hpp"
 #include "util/crc.hpp"
@@ -176,7 +177,7 @@ Result<Bytes> aes_decrypt(ByteView payload, std::string_view password, std::uint
   mac.update(body);
   const auto code = mac.finish();
   secure_zero(std::span<std::byte>(keys.mac_key));
-  if (std::memcmp(code.data(), payload.last(aes_mac_size).data(), aes_mac_size) != 0) {
+  if (::cvt::util::compare_bytes(code.data(), payload.last(aes_mac_size).data(), aes_mac_size) != 0) {
     return fail(Status::Decode, "ZIP AES authentication failed: wrong password or damaged data");
   }
   Bytes out(body.begin(), body.end());

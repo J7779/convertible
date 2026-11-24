@@ -78,7 +78,7 @@ Result<ir::Image> read_sun(ReadContext& ctx) {
     }
   } else {
     const ByteView raw = r.bytes(std::min<std::size_t>(data.size(), r.remaining()));
-    std::memcpy(data.data(), raw.data(), raw.size());
+    ::cvt::util::copy_bytes(data.data(), raw.data(), raw.size());
     truncated = raw.size() < data.size();
   }
   if (truncated) ctx.warn("The Sun raster file is truncated; missing rows were left black.");
@@ -91,11 +91,11 @@ Result<ir::Image> read_sun(ReadContext& ctx) {
       if (depth == 1) {
         const bool set = (row[x / 8] >> (7 - x % 8)) & 1u;
         const Rgba c = palette.size() >= 2 ? palette[set ? 1 : 0] : (set ? Rgba{0, 0, 0, 255} : Rgba{255, 255, 255, 255});
-        std::memcpy(d, c.data(), 4);
+        ::cvt::util::copy_bytes(d, c.data(), 4);
       } else if (depth == 8) {
         const std::uint8_t i = row[x];
         const Rgba c = !palette.empty() ? (i < palette.size() ? palette[i] : Rgba{0, 0, 0, 255}) : Rgba{i, i, i, 255};
-        std::memcpy(d, c.data(), 4);
+        ::cvt::util::copy_bytes(d, c.data(), 4);
       } else {
         const std::size_t step = depth / 8;
         const std::uint8_t* p = row + std::size_t{x} * step + (depth == 32 ? 1 : 0);

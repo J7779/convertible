@@ -122,7 +122,7 @@ TEST_CASE("font/woff2: our encoder round trips, transforms help and the size is 
   CHECK_LT(transformed->size(), woff->size());
   const std::size_t google = test::fixture("font/inter_subset.woff2").size();
   MESSAGE("WOFF2 size: ours ", transformed->size(), " bytes, Google woff2_compress ", google, " bytes");
-  CHECK_LT(static_cast<double>(transformed->size()), google * 1.06);
+  CHECK_LT(static_cast<double>(transformed->size()), static_cast<double>(google) * 1.06);
   auto fast = test::write_from("woff2", original, R"({"compression_level":1})");
   REQUIRE_OK(fast);
   CHECK_GE(fast->size(), transformed->size());

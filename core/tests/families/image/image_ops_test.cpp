@@ -14,13 +14,13 @@ namespace {
 double mean_channel(const ir::Frame& frame, std::size_t channel) {
   double sum = 0;
   for (std::size_t i = channel; i < frame.rgba.size(); i += 4) sum += frame.rgba[i];
-  return sum / (frame.rgba.size() / 4.0);
+  return sum / (static_cast<double>(frame.rgba.size()) / 4.0);
 }
 
 double mean_linear(const ir::Frame& frame) {
   double sum = 0;
   for (std::size_t i = 0; i < frame.rgba.size(); i += 4) sum += image::srgb_to_linear(frame.rgba[i]);
-  return sum / (frame.rgba.size() / 4.0);
+  return sum / (static_cast<double>(frame.rgba.size()) / 4.0);
 }
 
 }  // namespace

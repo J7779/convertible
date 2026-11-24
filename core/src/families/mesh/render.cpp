@@ -300,7 +300,7 @@ Result<ir::Image> render_mesh(const ir::Mesh& source, const RenderOptions& optio
         const auto z = static_cast<float>(1.0 / p.inv_z);
         for (std::int64_t y = std::max<std::int64_t>(y0, 0); y <= std::min<std::int64_t>(y1, width - 1); ++y) {
           for (std::int64_t x = std::max<std::int64_t>(x0, 0); x <= std::min<std::int64_t>(x1, width - 1); ++x) {
-            const double dx = x + 0.5 - p.sx, dy = y + 0.5 - p.sy;
+            const double dx = static_cast<double>(x) + 0.5 - p.sx, dy = static_cast<double>(y) + 0.5 - p.sy;
             if (dx * dx + dy * dy > r * r) continue;
             const std::size_t at = static_cast<std::size_t>(y) * width + static_cast<std::size_t>(x);
             if (z >= depth[at]) continue;
@@ -315,7 +315,7 @@ Result<ir::Image> render_mesh(const ir::Mesh& source, const RenderOptions& optio
       const std::size_t faces = mesh.indices.size() / 3;
       for (std::size_t f = 0; f < faces; ++f) {
         if ((f & 0x3FFF) == 0) {
-          CVT_TRY(ctx.checkpoint((frame_index + 0.9 * static_cast<double>(f) / faces) / frames, "Rendering"));
+          CVT_TRY(ctx.checkpoint((frame_index + 0.9 * static_cast<double>(f) / static_cast<double>(faces)) / frames, "Rendering"));
         }
         const std::uint32_t ia = mesh.indices[f * 3], ib = mesh.indices[f * 3 + 1], ic = mesh.indices[f * 3 + 2];
         const Projected &a = projected[ia], &b = projected[ib], &c = projected[ic];
@@ -341,9 +341,9 @@ Result<ir::Image> render_mesh(const ir::Mesh& source, const RenderOptions& optio
         }
         const double inv_area = 1.0 / area;
         for (std::int64_t y = y0; y <= y1; ++y) {
-          const double py = y + 0.5;
+          const double py = static_cast<double>(y) + 0.5;
           for (std::int64_t x = x0; x <= x1; ++x) {
-            const double px = x + 0.5;
+            const double px = static_cast<double>(x) + 0.5;
             double w0 = ((b.sx - px) * (c.sy - py) - (b.sy - py) * (c.sx - px)) * inv_area;
             double w1 = ((c.sx - px) * (a.sy - py) - (c.sy - py) * (a.sx - px)) * inv_area;
             double w2 = 1.0 - w0 - w1;

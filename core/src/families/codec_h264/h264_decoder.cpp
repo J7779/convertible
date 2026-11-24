@@ -11,6 +11,7 @@
 #include <span>
 #include <utility>
 
+#include "util/bytes.hpp"
 #include "codec/ids.hpp"
 #include "families/codec_h264/h264_bitstream.hpp"
 #include "families/codec_h264/h264_codec.hpp"
@@ -38,7 +39,7 @@ void* aligned_alloc_cb(void* /*context*/, WORD32 alignment, WORD32 size) {
   void** slot = reinterpret_cast<void**>(aligned) - 1;
   *slot = raw;
   // libavc reads some buffers before writing them in error paths; start clean.
-  std::memset(reinterpret_cast<void*>(aligned), 0, static_cast<std::size_t>(size));
+  ::cvt::util::fill_bytes(reinterpret_cast<void*>(aligned), 0, static_cast<std::size_t>(size));
   return reinterpret_cast<void*>(aligned);
 }
 
@@ -317,7 +318,7 @@ struct H264Decoder::Impl {
         return;
       }
       for (std::size_t r = 0; r < rows; ++r) {
-        std::memcpy(frame.planes[p].data.data() + r * frame.planes[p].stride, src + r * strides[p], row_bytes);
+        ::cvt::util::copy_bytes(frame.planes[p].data.data() + r * frame.planes[p].stride, src + r * strides[p], row_bytes);
       }
     }
     if (sps) frame.color = sps->color_info();

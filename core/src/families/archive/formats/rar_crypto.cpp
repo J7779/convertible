@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include "util/bytes.hpp"
 #include "families/archive/crypto.hpp"
 #include "families/archive/formats/rar_internal.hpp"
 #include "util/hash.hpp"
@@ -50,7 +51,7 @@ class Rar3Sha1 {
     std::size_t i = 0;
     if (used + size > 63) {
       i = 64 - used;
-      std::memcpy(buffer_.data() + used, data, i);
+      ::cvt::util::copy_bytes(buffer_.data() + used, data, i);
       std::uint32_t w[16];
       transform(buffer_.data(), w);
       for (; i + 63 < size; i += 64) {
@@ -61,7 +62,7 @@ class Rar3Sha1 {
       }
       used = 0;
     }
-    std::memcpy(buffer_.data() + used, data + i, size - i);
+    ::cvt::util::copy_bytes(buffer_.data() + used, data + i, size - i);
   }
   [[nodiscard]] std::array<std::uint8_t, 20> finish() noexcept {
     const std::uint64_t bits = count_ * 8;
@@ -192,7 +193,7 @@ void Blake2s::update(const std::uint8_t* data, std::size_t size) noexcept {
       buffered_ = 0;
     }
     const std::size_t take = std::min(size, 64 - buffered_);
-    std::memcpy(buf_.data() + buffered_, data, take);
+    ::cvt::util::copy_bytes(buf_.data() + buffered_, data, take);
     buffered_ += take;
     data += take;
     size -= take;
@@ -223,7 +224,7 @@ void Blake2sp::update(ByteView data) noexcept {
       buffered_ = 0;
     }
     const std::size_t take = std::min(size, buf_.size() - buffered_);
-    std::memcpy(buf_.data() + buffered_, p, take);
+    ::cvt::util::copy_bytes(buf_.data() + buffered_, p, take);
     buffered_ += take;
     p += take;
     size -= take;

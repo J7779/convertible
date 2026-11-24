@@ -11,6 +11,7 @@
 //   decided per frame, a bit reservoir and CBR, ABR or VBR rate control.
 //
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "util/bytes.hpp"
 #include "families/audio_lossy/mpeg/mp3_encoder.hpp"
 
 #include <algorithm>
@@ -404,7 +405,7 @@ Result<void> Layer3Encoder::Impl::configure(std::uint32_t sample_rate, int chann
 
 void Layer3Encoder::Impl::analysis(int c, const double* samples, std::array<double, 32>& out) {
   auto& x = fifo[z(c)];
-  std::memmove(x.data() + 32, x.data(), sizeof(double) * 480);
+  ::cvt::util::move_bytes(x.data() + 32, x.data(), sizeof(double) * 480);
   for (std::size_t i = 0; i < 32; ++i) x[i] = samples[31 - i];
   std::array<double, 64> y{};
   for (std::size_t i = 0; i < 64; ++i) {
@@ -1009,7 +1010,7 @@ Result<void> Layer3Encoder::Impl::encode_frame(std::vector<GranuleChannel>& gcs,
     double want = mean - 0.5 * debt;
     if (settings.mode == Mp3Settings::Mode::Cbr) {
       const double reservoir = static_cast<double>(payload_pos - start) * 8.0;
-      want = capacity(index, padding) * 8.0 - reservoir + 0.6 * reservoir - static_cast<double>(header_bytes) * 0.0;
+      want = static_cast<double>(capacity(index, padding)) * 8.0 - reservoir + 0.6 * reservoir - static_cast<double>(header_bytes) * 0.0;
       want = std::max(want, mean * 0.5);
     }
     target = std::min<std::int64_t>(max_bits, static_cast<std::int64_t>(want));
@@ -1322,7 +1323,7 @@ Bytes Layer3Encoder::info_frame(std::uint32_t frames, std::uint64_t bytes, bool 
     f[p++] = static_cast<std::uint8_t>(v >> 8);
     f[p++] = static_cast<std::uint8_t>(v);
   };
-  std::memcpy(f.data() + p, vbr ? "Xing" : "Info", 4);
+  ::cvt::util::copy_bytes(f.data() + p, vbr ? "Xing" : "Info", 4);
   p += 4;
   put32(0x0F);
   put32(frames);
@@ -1332,7 +1333,7 @@ Bytes Layer3Encoder::info_frame(std::uint32_t frames, std::uint64_t bytes, bool 
   for (int i = 0; i < 100; ++i) f[p++] = static_cast<std::uint8_t>(std::min(255, i * 256 / 100));
   put32(static_cast<std::uint32_t>(std::clamp(100 - m.settings.quality, 0, 100)));
   const std::size_t lame = p;
-  std::memcpy(f.data() + p, "LAME     ", 9);  // tag layout of the LAME header (no encoder version claimed)
+  ::cvt::util::copy_bytes(f.data() + p, "LAME     ", 9);  // tag layout of the LAME header (no encoder version claimed)
   p += 9;
   const int method = vbr ? 4 : (m.settings.mode == Mp3Settings::Mode::Abr ? 2 : 1);
   f[p++] = static_cast<std::uint8_t>(method);

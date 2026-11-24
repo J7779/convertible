@@ -13,6 +13,7 @@
 #include <bit>
 #include <cstring>
 
+#include "util/bytes.hpp"
 #include "families/archive/checksums.hpp"
 #include "families/archive/codec_impl.hpp"
 #include "families/archive/codecs/bitio.hpp"
@@ -643,8 +644,8 @@ class Matcher {
     std::size_t n = 0;
     while (n + 8 <= max) {
       std::uint64_t x, y;
-      std::memcpy(&x, a + n, 8);
-      std::memcpy(&y, b + n, 8);
+      ::cvt::util::copy_bytes(&x, a + n, 8);
+      ::cvt::util::copy_bytes(&y, b + n, 8);
       if (x != y) {
         const std::uint64_t diff = x ^ y;
         return n + static_cast<std::size_t>((std::endian::native == std::endian::little ? std::countr_zero(diff)
@@ -658,7 +659,7 @@ class Matcher {
   }
   std::uint32_t hash4(const std::uint8_t* p) const {
     std::uint32_t v;
-    std::memcpy(&v, p, 4);
+    ::cvt::util::copy_bytes(&v, p, 4);
     if constexpr (std::endian::native == std::endian::big) v = std::byteswap(v);
     return (v * 2654435761u) >> (32 - hash_log_);
   }

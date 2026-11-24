@@ -16,6 +16,7 @@
 #include <format>
 #include <set>
 
+#include "util/bytes.hpp"
 #include "families/science/arrays.hpp"
 #include "families/science/science.hpp"
 #include "util/deflate.hpp"
@@ -708,7 +709,7 @@ class H5File {
       }
       return {};
     }
-    std::memcpy(dst, src, std::min<std::size_t>(t.size, dt.size));
+    ::cvt::util::copy_bytes(dst, src, std::min<std::size_t>(t.size, dt.size));
     if (t.big_endian && (t.cls == 0 || t.cls == 1)) std::reverse(dst, dst + t.size);
     return {};
   }
@@ -760,7 +761,7 @@ class H5File {
       Array packed = a;
       packed.dtype = DType{ScalarKind::Unicode, longest * 4};
       packed.data.assign(static_cast<std::size_t>(n * packed.dtype.size), std::byte{0});
-      for (std::uint64_t i = 0; i < n; ++i) std::memcpy(packed.data.data() + i * packed.dtype.size, a.element(i), packed.dtype.size);
+      for (std::uint64_t i = 0; i < n; ++i) ::cvt::util::copy_bytes(packed.data.data() + i * packed.dtype.size, a.element(i), packed.dtype.size);
       return packed;
     }
     return a;
@@ -865,7 +866,7 @@ class H5File {
                     const std::vector<std::uint64_t>& origin, std::size_t element) {
     const std::size_t rank = dims.size();
     if (rank == 0) {
-      std::memcpy(out.data(), chunk.data(), std::min(element, chunk.size()));
+      ::cvt::util::copy_bytes(out.data(), chunk.data(), std::min(element, chunk.size()));
       return;
     }
     std::vector<std::uint64_t> index(rank, 0);
@@ -883,7 +884,7 @@ class H5File {
       if (inside) {
         const std::uint64_t count = std::min<std::uint64_t>(inner, dims.back() - origin.back());
         if ((src + count) * element <= chunk.size()) {
-          std::memcpy(out.data() + dst * element, chunk.data() + src * element, static_cast<std::size_t>(count * element));
+          ::cvt::util::copy_bytes(out.data() + dst * element, chunk.data() + src * element, static_cast<std::size_t>(count * element));
         }
       }
       std::size_t d = rank - 1;
@@ -955,7 +956,7 @@ class H5File {
         const std::uint64_t address = offset(r);
         if (address != undefined_address && total > 0) {
           CVT_TRY_ASSIGN(const ByteView data, at(address, total));
-          std::memcpy(raw.data(), data.data(), static_cast<std::size_t>(total));
+          ::cvt::util::copy_bytes(raw.data(), data.data(), static_cast<std::size_t>(total));
         }
       } else if (cls == 2) {
         const std::uint64_t address = offset(r);
@@ -966,20 +967,20 @@ class H5File {
         (void)r.bytes(4 * rank);
         const std::uint32_t size = r.u32le();
         const ByteView data = r.bytes(std::min<std::size_t>(size, r.remaining()));
-        std::memcpy(raw.data(), data.data(), std::min<std::size_t>(data.size(), raw.size()));
+        ::cvt::util::copy_bytes(raw.data(), data.data(), std::min<std::size_t>(data.size(), raw.size()));
       }
     } else {
       const std::uint8_t cls = r.u8();
       if (cls == 0) {
         const std::uint16_t size = r.u16le();
         const ByteView data = r.bytes(std::min<std::size_t>(size, r.remaining()));
-        std::memcpy(raw.data(), data.data(), std::min<std::size_t>(data.size(), raw.size()));
+        ::cvt::util::copy_bytes(raw.data(), data.data(), std::min<std::size_t>(data.size(), raw.size()));
       } else if (cls == 1) {
         const std::uint64_t address = offset(r);
         (void)length(r);
         if (address != undefined_address && total > 0) {
           CVT_TRY_ASSIGN(const ByteView data, at(address, total));
-          std::memcpy(raw.data(), data.data(), static_cast<std::size_t>(total));
+          ::cvt::util::copy_bytes(raw.data(), data.data(), static_cast<std::size_t>(total));
         }
       } else if (cls == 2 && version == 3) {
         const std::uint8_t rank = r.u8();

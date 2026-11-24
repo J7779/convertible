@@ -87,7 +87,7 @@ std::optional<ir::Frame> decode_entry(const Kind& kind, const Chunk& chunk, cons
       const std::size_t channels = chunk.data.size() / pixels;
       for (std::size_t i = 0; i < pixels; ++i) {
         const auto* p = reinterpret_cast<const std::uint8_t*>(chunk.data.data()) + i * channels + (channels == 4 ? 1 : 0);
-        std::memcpy(frame.rgba.data() + i * 4, p, 3);
+        ::cvt::util::copy_bytes(frame.rgba.data() + i * 4, p, 3);
       }
     } else {
       for (std::size_t c = 0; c < 3; ++c) {
@@ -164,7 +164,7 @@ Result<ir::Frame> square(const ir::Frame& source, std::uint32_t size) {
   CVT_TRY_ASSIGN(const ir::Frame scaled, resize(source, w, h));
   ir::Frame out = ir::Frame::filled(size, size, {0, 0, 0, 0});
   for (std::uint32_t y = 0; y < h; ++y) {
-    std::memcpy(out.rgba.data() + out.offset((size - w) / 2, (size - h) / 2 + y), scaled.rgba.data() + scaled.offset(0, y),
+    ::cvt::util::copy_bytes(out.rgba.data() + out.offset((size - w) / 2, (size - h) / 2 + y), scaled.rgba.data() + scaled.offset(0, y),
                 std::size_t{w} * 4);
   }
   return out;

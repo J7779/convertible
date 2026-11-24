@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include "util/bytes.hpp"
 #include "families/audio_lossy/mpeg/mpeg_audio.hpp"
 #include "families/audio_lossy/mpeg/mpeg_tables.hpp"
 
@@ -124,7 +125,7 @@ std::optional<StreamInfo> parse_info_frame(ByteView frame, const FrameHeader& he
   StreamInfo info;
   if (header.layer == 3) {
     const std::size_t at = 4 + (header.crc ? 2 : 0) + header.side_info_bytes();
-    if (d.size() >= at + 8 && (std::memcmp(d.data() + at, "Xing", 4) == 0 || std::memcmp(d.data() + at, "Info", 4) == 0)) {
+    if (d.size() >= at + 8 && (::cvt::util::compare_bytes(d.data() + at, "Xing", 4) == 0 || ::cvt::util::compare_bytes(d.data() + at, "Info", 4) == 0)) {
       info.has_tag = true;
       const std::uint32_t flags = be32(d, at + 4);
       std::size_t p = at + 8;
@@ -153,7 +154,7 @@ std::optional<StreamInfo> parse_info_frame(ByteView frame, const FrameHeader& he
       }
       return info;
     }
-    if (d.size() >= 36 + 18 && std::memcmp(d.data() + 36, "VBRI", 4) == 0) {
+    if (d.size() >= 36 + 18 && ::cvt::util::compare_bytes(d.data() + 36, "VBRI", 4) == 0) {
       info.has_tag = true;
       info.frames = be32(d, 36 + 14);
       return info;

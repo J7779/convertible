@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 
+#include "util/bytes.hpp"
 #include "families/encoding/hashes.hpp"
 
 namespace cvt::encoding {
@@ -170,7 +171,7 @@ class Blake2 final : public Hasher {
     h_[0] ^= static_cast<Word>(0x01010000u ^ (key.size() << 8) ^ out_len);
     if (!key.empty()) {
       std::array<std::byte, block> padded{};
-      std::memcpy(padded.data(), key.data(), key.size());
+      ::cvt::util::copy_bytes(padded.data(), key.data(), key.size());
       update(ByteView(padded.data(), padded.size()));
     }
   }
@@ -351,7 +352,7 @@ struct ChunkState {
         block_len = 0;
       }
       const std::size_t take = std::min(64 - block_len, n);
-      std::memcpy(block.data() + block_len, p, take);
+      ::cvt::util::copy_bytes(block.data() + block_len, p, take);
       block_len += take;
       p += take;
       n -= take;

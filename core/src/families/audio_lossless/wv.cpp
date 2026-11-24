@@ -36,7 +36,7 @@ Result<AnyIR> read_wv(ReadContext& ctx) {
   std::size_t frames = 0;
   bool damaged = false;
   while (pos + 32 <= input.size()) {
-    if ((++frames & 15) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / input.size(), "Decoding"));
+    if ((++frames & 15) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(pos) / static_cast<double>(input.size()), "Decoding"));
     auto used = decoder.decode_frame(input.subspan(pos), samples);
     if (!used) {
       if (samples.empty()) return std::unexpected(used.error());

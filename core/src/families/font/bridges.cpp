@@ -212,7 +212,7 @@ Result<AnyIR> font_to_table(AnyIR value, Context& ctx) {
     const std::vector<std::string> names = glyph_names(font);
     std::size_t i = 0;
     for (const auto& [code, glyph] : source.cmap()) {
-      if ((i++ & 1023) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / source.cmap().size(), "Listing characters"));
+      if ((i++ & 1023) == 0) CVT_TRY(ctx.checkpoint(static_cast<double>(i) / static_cast<double>(source.cmap().size()), "Listing characters"));
       const double advance = source.advance(glyph);
       sheet.rows.push_back({ir::Cell::string(std::format("U+{:04X}", code)), ir::Cell::string(character(code)),
                             ir::Cell::numeric(glyph, std::to_string(glyph)),
@@ -335,7 +335,7 @@ Result<AnyIR> font_to_archive(AnyIR value, Context& ctx) {
   ir::Archive archive;
   std::size_t index = 0;
   for (const ir::Font* face : all_faces(font)) {
-    CVT_TRY(ctx.checkpoint(static_cast<double>(index) / (font.other_faces.size() + 1), "Splitting faces"));
+    CVT_TRY(ctx.checkpoint(static_cast<double>(index) / static_cast<double>(font.other_faces.size() + 1), "Splitting faces"));
     if (face->tables.empty()) continue;
     CVT_TRY_ASSIGN(Bytes bytes, write_sfnt(*face));
     std::string base = face->names ? face->names->postscript_name : std::string{};

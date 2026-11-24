@@ -160,7 +160,7 @@ struct RefFile {
 /// Copies `rows` rows of `row_bytes` from a packed source into a plane.
 inline void copy_plane(const std::uint8_t*& src, ir::Plane& plane, std::size_t row_bytes, std::size_t rows) {
   for (std::size_t y = 0; y < rows; ++y) {
-    std::memcpy(plane.data.data() + y * plane.stride, src, row_bytes);
+    ::cvt::util::copy_bytes(plane.data.data() + y * plane.stride, src, row_bytes);
     src += row_bytes;
   }
 }
@@ -389,7 +389,7 @@ inline void dump_raw_for_interop(std::string_view name, const std::vector<ir::Vi
     if (ref.md5) {
       const Bytes raw = frame_to_raw(ours, ref.pix_fmt);
       const auto digest = util::md5(raw);
-      if (raw.empty() || std::memcmp(digest.data(), ref.digests[i].data(), 16) != 0) return detail::not_a_number;
+      if (raw.empty() || ::cvt::util::compare_bytes(digest.data(), ref.digests[i].data(), 16) != 0) return detail::not_a_number;
     } else {
       const double value = test::psnr(ours, raw_to_frame(ref, ref.frames[i]));
       if (std::isnan(value)) return value;

@@ -211,7 +211,7 @@ struct GradientLut {
       last = s.offset;
     }
     for (std::size_t i = 0; i < table.size(); ++i) {
-      const double t = static_cast<double>(i) / (table.size() - 1);
+      const double t = static_cast<double>(i) / static_cast<double>(table.size() - 1);
       Color c;
       if (t <= stops.front().offset) {
         c = stops.front().color;
@@ -258,7 +258,7 @@ struct GradientLut {
         break;
       }
     }
-    const auto i = static_cast<std::size_t>(std::lround(t * (table.size() - 1)));
+    const auto i = static_cast<std::size_t>(std::lround(t * static_cast<double>(table.size() - 1)));
     return table[std::min(i, table.size() - 1)];
   }
 };
