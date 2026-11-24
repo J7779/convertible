@@ -10,6 +10,15 @@ function(cvt_set_warnings target)
       NOMINMAX WIN32_LEAN_AND_MEAN _CRT_SECURE_NO_WARNINGS _SCL_SECURE_NO_WARNINGS UNICODE _UNICODE)
   else()
     target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+    # Views of temporaries (a string_view or span into a string that dies at
+    # the end of the statement) work by luck on one platform and read garbage
+    # on another: ask both compilers for every lifetime diagnostic they have.
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      target_compile_options(${target} PRIVATE -Wdangling -Wdangling-gsl -Wreturn-stack-address)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
+      target_compile_options(${target} PRIVATE -Wdangling-reference -Wreturn-local-addr
+                                               "$<$<CONFIG:Debug>:-Wdangling-pointer=2>")
+    endif()
     # GCC's flow-sensitive middle-end diagnostics misfire in optimised builds
     # on libstdc++ internals (std::variant / std::vector moves inlined into our
     # code: GCC bugs 105593, 107919, 108197 and relatives). They stay on in

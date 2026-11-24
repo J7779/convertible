@@ -402,8 +402,8 @@ struct MkvReader {
       // As other players do: the delay is rounded to the track time base first.
       const std::int64_t pts = rescale(ns, 1'000'000'000, timescale) -
                                rescale(static_cast<std::int64_t>(t->codec_delay_ns), 1'000'000'000, timescale);
-      const std::int64_t duration = rescale(dur_ns, 1'000'000'000, timescale);
-      t->info.packets.push_back(builder.finish(pts, pts, duration, key || t->info.type != ir::TrackType::Video));
+      const std::int64_t packet_duration = rescale(dur_ns, 1'000'000'000, timescale);
+      t->info.packets.push_back(builder.finish(pts, pts, packet_duration, key || t->info.type != ir::TrackType::Video));
       at += size;
       ns = sat_add(ns, dur_ns);
     }
@@ -418,15 +418,15 @@ struct MkvReader {
       if (e.id == kSimpleBlock) CVT_TRY(parse_block(e, ts, true, false, 0));
       if (e.id == kBlockGroup) {
         bool reference = false;
-        std::int64_t duration = 0;
+        std::int64_t block_duration = 0;
         const Element* block = nullptr;
         const auto parts = children(input, e.data, e.data + e.size);
         for (const Element& g : parts) {
           if (g.id == kReferenceBlock) reference = true;
-          if (g.id == kBlockDuration) duration = static_cast<std::int64_t>(as_uint(input, g));
+          if (g.id == kBlockDuration) block_duration = static_cast<std::int64_t>(as_uint(input, g));
           if (g.id == kBlock) block = &g;
         }
-        if (block != nullptr) CVT_TRY(parse_block(*block, ts, false, reference, duration));
+        if (block != nullptr) CVT_TRY(parse_block(*block, ts, false, reference, block_duration));
       }
     }
     return {};

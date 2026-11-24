@@ -640,7 +640,8 @@ Result<Decoded> decode_page(const File& f, const Page& p, const Context& ctx) {
         Bytes inflated;
         const auto progress = inflater.feed(src, inflated, expected);
         if (!progress && progress.error().code != Status::Limit) damaged = true;
-        std::memcpy(chunk.data(), inflated.data(), std::min(inflated.size(), expected));
+        // An empty result has a null data pointer, which memcpy must not be given.
+        if (!inflated.empty()) std::memcpy(chunk.data(), inflated.data(), std::min(inflated.size(), expected));
         if (inflated.size() < expected) damaged = true;
         break;
       }

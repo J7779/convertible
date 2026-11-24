@@ -1210,7 +1210,8 @@ std::optional<FlacInfo> parse_flac_streaminfo(ByteView data) noexcept {
   info.sample_rate = b.bits(20);
   info.channels = static_cast<int>(b.bits(3)) + 1;
   info.bits = static_cast<int>(b.bits(5)) + 1;
-  info.total_samples = (static_cast<std::uint64_t>(b.bits(4)) << 32) | b.bits(32);
+  const std::uint64_t samples_high = b.bits(4);  // read in order: the operands of | are unsequenced
+  info.total_samples = (samples_high << 32) | b.bits(32);
   if (info.sample_rate == 0) return std::nullopt;
   return info;
 }

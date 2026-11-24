@@ -506,7 +506,8 @@ Result<DecoderConfig> parse_hvcc(ByteView hvcc) {
   config.ptl.tier = ((b1 >> 5) & 1) != 0;
   config.ptl.profile_idc = static_cast<std::uint8_t>(b1 & 0x1F);
   config.ptl.compatibility_flags = r.u32be();
-  config.ptl.constraint_flags = (std::uint64_t{r.u16be()} << 32) | r.u32be();
+  const std::uint64_t constraint_high = r.u16be();  // read in order: the operands of | are unsequenced
+  config.ptl.constraint_flags = (constraint_high << 32) | r.u32be();
   config.ptl.level_idc = r.u8();
   config.min_spatial_segmentation = static_cast<std::uint16_t>(r.u16be() & 0x0FFF);
   config.parallelism_type = static_cast<std::uint8_t>(r.u8() & 3);

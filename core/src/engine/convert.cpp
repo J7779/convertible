@@ -337,7 +337,8 @@ Result<ConvertOutput> pack_checked(const Registry& registry, const PackRequest& 
     // Names come from the user's files: drop parent and current-directory
     // segments and drive or root prefixes instead of refusing the file.
     std::string cleaned;
-    for (const std::string_view segment : util::split(util::sanitize_utf8(input.name), '/', false)) {
+    const std::string raw_name = util::sanitize_utf8(input.name);  // split() returns views into it
+    for (const std::string_view segment : util::split(raw_name, '/', false)) {
       for (const std::string_view part : util::split(segment, '\\', false)) {
         if (part.empty() || part == "." || part == ".." || part.ends_with(':')) continue;
         if (!cleaned.empty()) cleaned += '/';

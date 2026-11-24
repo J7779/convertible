@@ -276,7 +276,9 @@ Result<File> parse_file(ByteView input, const Context& ctx, std::unique_ptr<File
     // Parse the group element by element so that group 0008 can follow in another syntax.
     while (reader.remaining() >= 8 && reader.peek_rest()[0] == std::byte{0x02} && reader.peek_rest()[1] == std::byte{0x00}) {
       Element el;
-      el.tag = tag(reader.u16le(), reader.u16le());
+      const std::uint16_t group = reader.u16le();  // two statements: argument order is unspecified
+      const std::uint16_t element = reader.u16le();
+      el.tag = tag(group, element);
       el.vr = std::string(reader.chars(2));
       std::uint32_t length = long_length_vr(el.vr) ? ((void)reader.u16le(), reader.u32le()) : reader.u16le();
       if (!reader.ok() || length > reader.remaining()) return fail(Status::Decode, "DICOM file meta information is truncated");
