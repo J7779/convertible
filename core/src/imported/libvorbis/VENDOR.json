@@ -1,0 +1,7 @@
+{
+  "name": "libvorbis",
+  "version": "1.3.7",
+  "license": "BSD-3-Clause",
+  "url": "https://github.com/xiph/vorbis",
+  "files_modified": false
+}

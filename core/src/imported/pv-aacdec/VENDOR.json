@@ -1,0 +1,7 @@
+{
+  "name": "pv-aacdec (Android PacketVideo AAC decoder)",
+  "version": "android-4.0.4_r2.1",
+  "license": "Apache-2.0",
+  "url": "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-4.0.4_r2.1/media/libstagefright/codecs/aacdec",
+  "files_modified": true
+}

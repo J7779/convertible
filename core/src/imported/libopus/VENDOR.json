@@ -1,0 +1,7 @@
+{
+  "name": "libopus",
+  "version": "1.5.2",
+  "license": "BSD-3-Clause",
+  "url": "https://github.com/xiph/opus",
+  "files_modified": false
+}
