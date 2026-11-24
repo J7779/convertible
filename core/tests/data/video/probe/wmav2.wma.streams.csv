@@ -1,0 +1,2 @@
+index,type,codec,tag,width,height,sample_rate,channels,time_base,extradata_size,extradata_crc,packets
+0,audio,wmav2,a[1][0][0],0,0,8000,1,1/1000,10,28d6bbd3,16

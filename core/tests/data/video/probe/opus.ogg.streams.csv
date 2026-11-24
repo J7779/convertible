@@ -1,0 +1,2 @@
+index,type,codec,tag,width,height,sample_rate,channels,time_base,extradata_size,extradata_crc,packets
+0,audio,opus,[0][0][0][0],0,0,48000,1,1/48000,19,016adf29,51

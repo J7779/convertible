@@ -1,0 +1,2 @@
+index,type,codec,tag,width,height,sample_rate,channels,time_base,extradata_size,extradata_crc,packets
+0,audio,aac,mp4a,0,0,8000,1,1/8000,5,0df72490,9

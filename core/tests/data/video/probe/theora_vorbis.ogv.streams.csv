@@ -1,0 +1,3 @@
+index,type,codec,tag,width,height,sample_rate,channels,time_base,extradata_size,extradata_crc,packets
+0,video,theora,[0][0][0][0],64,64,0,0,1/10,3299,e4e4aa2c,10
+1,audio,vorbis,[0][0][0][0],0,0,8000,1,1/8000,2531,a1ad77a6,33

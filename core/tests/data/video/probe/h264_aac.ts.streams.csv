@@ -1,0 +1,3 @@
+index,type,codec,tag,width,height,sample_rate,channels,time_base,extradata_size,extradata_crc,packets
+0,video,h264,[27][0][0][0],64,64,0,0,1/90000,35,37b8d836,10
+1,audio,aac,[15][0][0][0],0,0,8000,1,1/90000,0,00000000,9

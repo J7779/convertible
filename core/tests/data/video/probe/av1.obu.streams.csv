@@ -1,0 +1,2 @@
+index,type,codec,tag,width,height,sample_rate,channels,time_base,extradata_size,extradata_crc,packets
+0,video,av1,[0][0][0][0],64,64,0,0,1/1200000,15,c81596a2,10

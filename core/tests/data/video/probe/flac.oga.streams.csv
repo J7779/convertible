@@ -1,0 +1,2 @@
+index,type,codec,tag,width,height,sample_rate,channels,time_base,extradata_size,extradata_crc,packets
+0,audio,flac,[0][0][0][0],0,0,8000,1,1/8000,34,f937217b,14
