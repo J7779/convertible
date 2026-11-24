@@ -1,0 +1,7 @@
+// Exposes the core's plain C interface to Swift as the module `CConvertible`.
+// The header is used straight from the repository; the static library comes
+// from apps/ios/build/ConvertibleCore.xcframework (see scripts/build-core.sh).
+module CConvertible {
+  header "../../../../../core/include/convertible/convertible.h"
+  export *
+}

@@ -1,0 +1,126 @@
+# XcodeGen spec for the Convertible iOS/iPadOS app.
+# Regenerate the committed project after editing:  (cd apps/ios && xcodegen generate)
+name: Convertible
+options:
+  bundleIdPrefix: app.convertible
+  deploymentTarget:
+    iOS: "16.4"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  groupSortPosition: top
+  transitivelyLinkDependencies: false
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.4"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    CLANG_CXX_LANGUAGE_STANDARD: "c++23"
+    CLANG_CXX_LIBRARY: "libc++"
+    # The core's C interface as the Swift module `CConvertible`.
+    SWIFT_INCLUDE_PATHS: "$(SRCROOT)/Convertible/Core/CConvertible"
+    CORE_XCFRAMEWORK: "$(SRCROOT)/build/ConvertibleCore.xcframework"
+
+targets:
+  Convertible:
+    type: application
+    platform: iOS
+    sources:
+      - path: Convertible
+        excludes:
+          - "Core/CConvertible/**"
+      - path: Convertible/Core/CConvertible/module.modulemap
+        buildPhase: none
+      # Shared repository assets, referenced in place (not copied into apps/ios).
+      - path: ../../assets/brand/animation.json
+        group: Shared
+        buildPhase: resources
+      - path: ../../assets/fonts/Inter-Regular.ttf
+        group: Shared/Fonts
+        buildPhase: resources
+      - path: ../../assets/fonts/Inter-Medium.ttf
+        group: Shared/Fonts
+        buildPhase: resources
+      - path: ../../assets/fonts/Inter-SemiBold.ttf
+        group: Shared/Fonts
+        buildPhase: resources
+      - path: ../../assets/fonts/JetBrainsMonoNL-Regular.ttf
+        group: Shared/Fonts
+        buildPhase: resources
+      - path: ../../assets/fonts/JetBrainsMonoNL-Medium.ttf
+        group: Shared/Fonts
+        buildPhase: resources
+      - path: ../../assets/fonts/Inter-LICENSE.txt
+        group: Shared/Licences
+        buildPhase: resources
+      - path: ../../assets/fonts/JetBrainsMono-LICENSE.txt
+        group: Shared/Licences
+        buildPhase: resources
+      - path: ../../LICENSE
+        group: Shared/Licences
+        buildPhase: resources
+    preBuildScripts:
+      - name: Build Convertible core
+        script: |
+          "${SRCROOT}/scripts/build-core.sh"
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
+    settings:
+      base:
+        PRODUCT_NAME: Convertible
+        PRODUCT_BUNDLE_IDENTIFIER: app.convertible.ios
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Convertible/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+        ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: NO
+        ENABLE_PREVIEWS: YES
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        # Link the core's static library from the XCFramework slice that matches the SDK.
+        # (Linked by path rather than as an XCFramework dependency so that a clean
+        # checkout builds in one step: the pre-build script creates the framework.)
+        OTHER_LDFLAGS: "$(inherited) -lc++"
+        "OTHER_LDFLAGS[sdk=iphoneos*]": "$(inherited) -lc++ $(CORE_XCFRAMEWORK)/ios-arm64/libconvertible_core.a"
+        "OTHER_LDFLAGS[sdk=iphonesimulator*]": "$(inherited) -lc++ $(CORE_XCFRAMEWORK)/ios-arm64_x86_64-simulator/libconvertible_core.a"
+
+  ConvertibleTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ConvertibleTests
+    dependencies:
+      - target: Convertible
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.convertible.ios.tests
+        # XCTest itself requires iOS 17; the app keeps 16.4.
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Convertible:
+    build:
+      targets:
+        Convertible: all
+        ConvertibleTests: [test]
+    run:
+      config: Debug
+      commandLineArguments:
+        "-ConvertibleSkipIntro": false
+        "-ConvertibleSampleFiles": false
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - name: ConvertibleTests
+          parallelizable: false
+    archive:
+      config: Release
