@@ -1,0 +1,2 @@
+# Fixtures are bytes: git must never translate line endings below this directory.
+* -text

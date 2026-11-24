@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>Convertible macOS icon (824 px tile on a 1024 px canvas)</title>
+  <defs>
+    <linearGradient id="cv-icon-macos-bg" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="924">
+      <stop offset="0" stop-color="#1B1E2C"/>
+      <stop offset="1" stop-color="#0A0B11"/>
+    </linearGradient>
+    <radialGradient id="cv-icon-macos-glow" gradientUnits="userSpaceOnUse" cx="310" cy="245" r="630">
+      <stop offset="0" stop-color="#7C6CFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#7C6CFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cv-icon-macos-flux" gradientUnits="userSpaceOnUse" x1="0" y1="360" x2="0" y2="664">
+      <stop offset="0" stop-color="#7C6CFF"/>
+      <stop offset="0.5" stop-color="#D662B0"/>
+      <stop offset="1" stop-color="#FF6452"/>
+    </linearGradient>
+    <filter id="cv-icon-macos-shadow" x="-10%" y="-10%" width="120%" height="124%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10"/>
+      <feOffset dy="10"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#cv-icon-macos-shadow)">
+    <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#cv-icon-macos-bg)"/>
+  </g>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#cv-icon-macos-glow)"/>
+  <g transform="translate(159.5 158) scale(0.692)">
+    <path fill="url(#cv-icon-macos-flux)" d="M512 160H772A100 100 0 0 1 772 360H512A152 152 0 0 0 360 512V664H864V864H160V512A352 352 0 0 1 512 160Z"/>
+  </g>
+</svg>

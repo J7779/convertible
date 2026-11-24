@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <title>Convertible adaptive icon background</title>
+  <defs>
+    <linearGradient id="cv-android-bg" gradientUnits="userSpaceOnUse" x1="0" y1="18" x2="0" y2="90">
+      <stop offset="0" stop-color="#1B1E2C"/>
+      <stop offset="1" stop-color="#0A0B11"/>
+    </linearGradient>
+    <radialGradient id="cv-android-glow" gradientUnits="userSpaceOnUse" cx="36.3" cy="30.7" r="54.8">
+      <stop offset="0" stop-color="#7C6CFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#7C6CFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="108" height="108" fill="url(#cv-android-bg)"/>
+  <rect width="108" height="108" fill="url(#cv-android-glow)"/>
+</svg>

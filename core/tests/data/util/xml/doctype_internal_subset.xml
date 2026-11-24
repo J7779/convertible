@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE note [
+  <!-- internal subset: a ] and a > inside a comment -->
+  <!ELEMENT note (to, body)>
+  <!ATTLIST note lang CDATA #IMPLIED title CDATA "untitled ]>">
+  <!ENTITY product "Sample">
+  <!ENTITY greeting "Hello from &product;">
+  <!ENTITY copy "&#169;">
+  <?subset-pi ]> ?>
+]>
+<note lang="en" title="&product; &copy;">
+  <to>&greeting;</to>
+  <body>Line one&#10;line two &amp; &lt;three&gt;</body>
+</note>

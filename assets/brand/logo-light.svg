@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="cv-logo-light-title">
+  <title id="cv-logo-light-title">Convertible</title>
+  <defs>
+    <linearGradient id="cv-logo-light-flux" gradientUnits="userSpaceOnUse" x1="0" y1="360" x2="0" y2="664">
+      <stop offset="0" stop-color="#6654F0"/>
+      <stop offset="0.5" stop-color="#C94FA3"/>
+      <stop offset="1" stop-color="#F04A36"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#cv-logo-light-flux)" d="M512 160H772A100 100 0 0 1 772 360H512A152 152 0 0 0 360 512V664H864V864H160V512A352 352 0 0 1 512 160Z"/>
+</svg>

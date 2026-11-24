@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- synthetic sample -->
+<?render mode="draft"?>
+<report title="Q&amp;A &lt;summary&gt;">
+  <section n="1">
+    <para>alpha &amp; beta &lt; gamma</para>
+    <code><![CDATA[if (a < b && c > d) { run(); }]]></code>
+    <break/>
+  </section>
+  <!-- end of report -->
+</report>

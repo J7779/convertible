@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>Convertible app icon, full bleed, small sizes (16 px grid)</title>
+  <defs>
+    <linearGradient id="cv-icon-small-bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1024">
+      <stop offset="0" stop-color="#1B1E2C"/>
+      <stop offset="1" stop-color="#0A0B11"/>
+    </linearGradient>
+    <radialGradient id="cv-icon-small-glow" gradientUnits="userSpaceOnUse" cx="260" cy="180" r="780">
+      <stop offset="0" stop-color="#7C6CFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#7C6CFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cv-icon-small-flux" gradientUnits="userSpaceOnUse" x1="0" y1="384" x2="0" y2="640">
+      <stop offset="0" stop-color="#7C6CFF"/>
+      <stop offset="0.5" stop-color="#D662B0"/>
+      <stop offset="1" stop-color="#FF6452"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#cv-icon-small-bg)"/>
+  <rect width="1024" height="1024" fill="url(#cv-icon-small-glow)"/>
+  <path fill="url(#cv-icon-small-flux)" d="M512 192H736A96 96 0 0 1 736 384H512A128 128 0 0 0 384 512V640H832V832H192V512A320 320 0 0 1 512 192Z"/>
+</svg>

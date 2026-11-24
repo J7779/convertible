@@ -1,0 +1,671 @@
+{
+  "meta": {
+    "name": "Convertible motion storyboard",
+    "version": "1.0.0",
+    "reference": {
+      "intro": "logo-animated.svg",
+      "spinner": "spinner.svg",
+      "staticLogo": "logo.svg"
+    }
+  },
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "origin": "top-left",
+    "yAxis": "down",
+    "units": "canvas units; scale uniformly to the target size",
+    "background": "transparent"
+  },
+  "conventions": {
+    "time": "Milliseconds from the start of the animation (or of the loop iteration).",
+    "keyframes": "Each track lists keyframes in time order. Before the first keyframe the property holds the first keyframe value; after the last it holds the last value. Properties without a track stay at the layer base value.",
+    "easing": "The easing named on a keyframe shapes the interpolation from that keyframe to the next one. Names resolve through the easings table to cubic-bezier control points [x1, y1, x2, y2] (CSS convention). A keyframe without an easing is followed by a hold or is the last one.",
+    "trim": "trimStart and trimEnd are fractions (0..1) of the centerline length measured from its first point. Only the part between them is stroked.",
+    "transforms": "scale and rotationDeg apply around the layer pivot in canvas units. Positive rotation is clockwise on screen. A group transform applies to all of its children.",
+    "order": "Layers are listed back to front."
+  },
+  "easings": {
+    "standard": [
+      0.2,
+      0,
+      0,
+      1
+    ],
+    "decelerate": [
+      0.16,
+      1,
+      0.3,
+      1
+    ],
+    "accelerate": [
+      0.7,
+      0,
+      0.84,
+      0
+    ],
+    "inOut": [
+      0.65,
+      0,
+      0.35,
+      1
+    ],
+    "emphasized": [
+      0.7,
+      0,
+      0.2,
+      1
+    ],
+    "settle": [
+      0.22,
+      0.61,
+      0.36,
+      1
+    ],
+    "overshoot": [
+      0.34,
+      1.56,
+      0.64,
+      1
+    ],
+    "easeOut": [
+      0.33,
+      1,
+      0.68,
+      1
+    ],
+    "trace": [
+      0.4,
+      0,
+      0.2,
+      1
+    ]
+  },
+  "colors": {
+    "iris": "#7C6CFF",
+    "orchid": "#D662B0",
+    "coral": "#FF6452"
+  },
+  "paints": {
+    "flux": {
+      "type": "linearGradient",
+      "units": "canvas",
+      "x1": 0,
+      "y1": 360,
+      "x2": 0,
+      "y2": 664,
+      "spread": "pad",
+      "stops": [
+        {
+          "offset": 0,
+          "color": "#7C6CFF"
+        },
+        {
+          "offset": 0.5,
+          "color": "#D662B0"
+        },
+        {
+          "offset": 1,
+          "color": "#FF6452"
+        }
+      ],
+      "note": "Fixed in canvas space, not along the path. Everything above y=360 is iris, everything below y=664 is coral."
+    },
+    "iris": {
+      "type": "solid",
+      "color": "#7C6CFF"
+    },
+    "coral": {
+      "type": "solid",
+      "color": "#FF6452"
+    }
+  },
+  "geometry": {
+    "markOutline": {
+      "type": "path",
+      "fillRule": "nonzero",
+      "d": "M512 160H772A100 100 0 0 1 772 360H512A152 152 0 0 0 360 512V664H864V864H160V512A352 352 0 0 1 512 160Z",
+      "bounds": {
+        "x": 160,
+        "y": 160,
+        "width": 712,
+        "height": 704
+      },
+      "note": "Final static mark as one filled outline. Identical in shape to trace (fully drawn) plus seed."
+    },
+    "centerline": {
+      "type": "path",
+      "d": "M772 260H512A252 252 0 0 0 260 512V764H864",
+      "strokeWidth": 200,
+      "lineCap": "butt",
+      "lineJoin": "miter",
+      "miterLimit": 4,
+      "length": 1511.841,
+      "segments": [
+        {
+          "type": "line",
+          "from": [
+            772,
+            260
+          ],
+          "to": [
+            512,
+            260
+          ],
+          "length": 260,
+          "startFraction": 0,
+          "endFraction": 0.17198
+        },
+        {
+          "type": "arc",
+          "center": [
+            512,
+            512
+          ],
+          "radius": 252,
+          "startAngleDeg": 270,
+          "endAngleDeg": 180,
+          "direction": "counterclockwise on screen (y down)",
+          "from": [
+            512,
+            260
+          ],
+          "to": [
+            260,
+            512
+          ],
+          "length": 395.841,
+          "startFraction": 0.17198,
+          "endFraction": 0.4338
+        },
+        {
+          "type": "line",
+          "from": [
+            260,
+            512
+          ],
+          "to": [
+            260,
+            764
+          ],
+          "length": 252,
+          "startFraction": 0.4338,
+          "endFraction": 0.60049
+        },
+        {
+          "type": "line",
+          "from": [
+            260,
+            764
+          ],
+          "to": [
+            864,
+            764
+          ],
+          "length": 604,
+          "startFraction": 0.60049,
+          "endFraction": 1
+        }
+      ],
+      "note": "Drawn from the round start (top right) to the square end (bottom right). trimStart and trimEnd are fractions of length. Angles are measured clockwise from +x with y pointing down."
+    },
+    "seed": {
+      "type": "circle",
+      "cx": 772,
+      "cy": 260,
+      "r": 100,
+      "note": "Round start cap of the mark."
+    },
+    "endSquare": {
+      "type": "rect",
+      "x": 664,
+      "y": 664,
+      "width": 200,
+      "height": 200,
+      "note": "Square end of the mark (last 200 units of the bottom arm)."
+    }
+  },
+  "intro": {
+    "durationMs": 1800,
+    "loop": false,
+    "description": "A round dot pops in at the top right, extrudes along the mark, turns the square corner and lands as a square end. A faint ghost stroke leads the main stroke; a round ripple marks the start and a square ripple marks the landing.",
+    "layers": [
+      {
+        "id": "stage",
+        "type": "group",
+        "pivot": [
+          512,
+          512
+        ],
+        "children": [
+          "rippleRound",
+          "rippleSquare",
+          "ghost",
+          "trace",
+          "seed"
+        ],
+        "base": {
+          "scale": 1,
+          "rotationDeg": 0
+        },
+        "tracks": [
+          {
+            "property": "scale",
+            "keyframes": [
+              {
+                "t": 0,
+                "value": 0.86,
+                "easing": "settle"
+              },
+              {
+                "t": 1200,
+                "value": 1,
+                "easing": "easeOut"
+              },
+              {
+                "t": 1350,
+                "value": 1.03,
+                "easing": "inOut"
+              },
+              {
+                "t": 1800,
+                "value": 1
+              }
+            ]
+          },
+          {
+            "property": "rotationDeg",
+            "keyframes": [
+              {
+                "t": 0,
+                "value": -8,
+                "easing": "settle"
+              },
+              {
+                "t": 1200,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rippleRound",
+        "type": "shape",
+        "geometry": "seed",
+        "fill": "iris",
+        "pivot": [
+          772,
+          260
+        ],
+        "base": {
+          "scale": 1,
+          "opacity": 0
+        },
+        "tracks": [
+          {
+            "property": "scale",
+            "keyframes": [
+              {
+                "t": 60,
+                "value": 1,
+                "easing": "decelerate"
+              },
+              {
+                "t": 600,
+                "value": 2.1
+              }
+            ]
+          },
+          {
+            "property": "opacity",
+            "keyframes": [
+              {
+                "t": 60,
+                "value": 0,
+                "easing": "easeOut"
+              },
+              {
+                "t": 120,
+                "value": 0.4,
+                "easing": "easeOut"
+              },
+              {
+                "t": 600,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rippleSquare",
+        "type": "shape",
+        "geometry": "endSquare",
+        "fill": "coral",
+        "pivot": [
+          764,
+          764
+        ],
+        "base": {
+          "scale": 1,
+          "opacity": 0
+        },
+        "tracks": [
+          {
+            "property": "scale",
+            "keyframes": [
+              {
+                "t": 1180,
+                "value": 1,
+                "easing": "decelerate"
+              },
+              {
+                "t": 1720,
+                "value": 1.6
+              }
+            ]
+          },
+          {
+            "property": "opacity",
+            "keyframes": [
+              {
+                "t": 1180,
+                "value": 0,
+                "easing": "easeOut"
+              },
+              {
+                "t": 1230,
+                "value": 0.45,
+                "easing": "easeOut"
+              },
+              {
+                "t": 1720,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ghost",
+        "type": "stroke",
+        "geometry": "centerline",
+        "stroke": "flux",
+        "base": {
+          "trimStart": 0,
+          "trimEnd": 1,
+          "opacity": 0
+        },
+        "tracks": [
+          {
+            "property": "trimEnd",
+            "keyframes": [
+              {
+                "t": 120,
+                "value": 0,
+                "easing": "trace"
+              },
+              {
+                "t": 900,
+                "value": 1
+              }
+            ]
+          },
+          {
+            "property": "opacity",
+            "keyframes": [
+              {
+                "t": 0,
+                "value": 0.26
+              },
+              {
+                "t": 1000,
+                "value": 0.26,
+                "easing": "standard"
+              },
+              {
+                "t": 1300,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "trace",
+        "type": "stroke",
+        "geometry": "centerline",
+        "stroke": "flux",
+        "base": {
+          "trimStart": 0,
+          "trimEnd": 1,
+          "opacity": 1
+        },
+        "tracks": [
+          {
+            "property": "trimEnd",
+            "keyframes": [
+              {
+                "t": 260,
+                "value": 0,
+                "easing": "trace"
+              },
+              {
+                "t": 1240,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seed",
+        "type": "shape",
+        "geometry": "seed",
+        "fill": "flux",
+        "pivot": [
+          772,
+          260
+        ],
+        "base": {
+          "scale": 1,
+          "opacity": 1
+        },
+        "tracks": [
+          {
+            "property": "scale",
+            "keyframes": [
+              {
+                "t": 0,
+                "value": 0,
+                "easing": "overshoot"
+              },
+              {
+                "t": 380,
+                "value": 1
+              }
+            ]
+          },
+          {
+            "property": "opacity",
+            "keyframes": [
+              {
+                "t": 0,
+                "value": 0,
+                "easing": "easeOut"
+              },
+              {
+                "t": 120,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "endState": "At t >= 1800 ms the frame equals logo.svg exactly: trace fully drawn, seed at scale 1, ghost and ripples at opacity 0, stage at scale 1 and rotation 0."
+  },
+  "spinner": {
+    "durationMs": 1400,
+    "loop": true,
+    "description": "Indeterminate \"converting\" indicator. The mark draws itself from the round start to the square end over a faint track, holds for a beat, then erases from the start. Seamless loop.",
+    "layers": [
+      {
+        "id": "track",
+        "type": "group",
+        "children": [
+          "trackStroke",
+          "trackSeed"
+        ],
+        "base": {
+          "opacity": 0.16
+        },
+        "tracks": []
+      },
+      {
+        "id": "trackStroke",
+        "type": "stroke",
+        "geometry": "centerline",
+        "stroke": "flux",
+        "base": {
+          "trimStart": 0,
+          "trimEnd": 1,
+          "opacity": 1
+        },
+        "tracks": []
+      },
+      {
+        "id": "trackSeed",
+        "type": "shape",
+        "geometry": "seed",
+        "fill": "flux",
+        "base": {
+          "scale": 1,
+          "opacity": 1
+        },
+        "tracks": []
+      },
+      {
+        "id": "runner",
+        "type": "stroke",
+        "geometry": "centerline",
+        "stroke": "flux",
+        "base": {
+          "trimStart": 0,
+          "trimEnd": 1,
+          "opacity": 1
+        },
+        "tracks": [
+          {
+            "property": "trimEnd",
+            "keyframes": [
+              {
+                "t": 0,
+                "value": 0,
+                "easing": "inOut"
+              },
+              {
+                "t": 630,
+                "value": 1
+              }
+            ]
+          },
+          {
+            "property": "trimStart",
+            "keyframes": [
+              {
+                "t": 770,
+                "value": 0,
+                "easing": "inOut"
+              },
+              {
+                "t": 1400,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seed",
+        "type": "shape",
+        "geometry": "seed",
+        "fill": "flux",
+        "pivot": [
+          772,
+          260
+        ],
+        "base": {
+          "scale": 1,
+          "opacity": 1
+        },
+        "tracks": [
+          {
+            "property": "scale",
+            "keyframes": [
+              {
+                "t": 0,
+                "value": 0,
+                "easing": "overshoot"
+              },
+              {
+                "t": 224,
+                "value": 1
+              },
+              {
+                "t": 770,
+                "value": 1,
+                "easing": "accelerate"
+              },
+              {
+                "t": 980,
+                "value": 0
+              },
+              {
+                "t": 1400,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "sizing": "Scale the 1024 canvas uniformly. Recommended sizes 16 to 64 px. The mark occupies x 160..872, y 160..864.",
+    "reducedMotion": "No drawing. Show runner and seed fully drawn and pulse the opacity of both between 1 and 0.45 with easing inOut, 800 ms each way."
+  },
+  "progress": {
+    "description": "Determinate progress derived from the mark. p is 0..1.",
+    "layers": [
+      {
+        "id": "track",
+        "sameAs": "spinner.track"
+      },
+      {
+        "id": "runner",
+        "type": "stroke",
+        "geometry": "centerline",
+        "stroke": "flux",
+        "trimStart": 0,
+        "trimEnd": "p"
+      },
+      {
+        "id": "seed",
+        "type": "shape",
+        "geometry": "seed",
+        "fill": "flux",
+        "scale": "p > 0 ? 1 : 0"
+      }
+    ],
+    "transition": "Animate changes of p over 220 ms with easing standard. At p = 1 the indicator is the logo; optionally play the rippleSquare track of the intro once (480 ms) as a completion cue."
+  },
+  "reducedMotion": {
+    "intro": "Skip the animation and show the static logo. A plain opacity fade from 0 to 1 over 140 ms is acceptable.",
+    "spinner": "No drawing. Show runner and seed fully drawn and pulse the opacity of both between 1 and 0.45 with easing inOut, 800 ms each way."
+  },
+  "implementation": {
+    "swiftui": "Build the centerline as a Path and stroke it with StrokeStyle(lineWidth: 200, lineCap: .butt, lineJoin: .miter) after .trim(from:to:). Fill with LinearGradient(stops:) using startPoint/endPoint at y 360/1024 and 664/1024 of the mark frame. Drive tracks with keyframeAnimator or a TimelineView and UnitCurve.bezier / Animation.timingCurve.",
+    "compose": "Use PathMeasure.getSegment(start * length, end * length, dst) for the trim and drawPath with Stroke(width, cap = StrokeCap.Butt, join = StrokeJoin.Miter). Brush.verticalGradient(0f to iris, 0.5f to orchid, 1f to coral, startY = 360, endY = 664) in canvas units. Use keyframes { } with CubicBezierEasing per segment.",
+    "imgui": "Flatten the centerline with PathLineTo / PathArcTo (centre 512,512 radius 252 from 270deg to 180deg, at least 24 segments), cut the polyline at the trim fractions and draw it as quads with per-vertex colours sampled from the gradient by vertex y (AddConvexPolyFilled or PrimReserve). Draw the seed with AddCircleFilled. Evaluate cubic-bezier easings numerically.",
+    "css": "See logo-animated.svg and spinner.svg: pathLength=\"1000\", stroke-dasharray and stroke-dashoffset for the trim, one @keyframes rule per track group with animation-timing-function on each keyframe."
+  }
+}

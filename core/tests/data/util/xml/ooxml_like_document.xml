@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p w:rsidR="00A00001">
+      <w:r>
+        <w:t xml:space="preserve">Lorem ipsum </w:t>
+      </w:r>
+      <w:r>
+        <w:rPr>
+          <w:b />
+        </w:rPr>
+        <w:t xml:space="preserve">dolor</w:t>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve"> sit amet.</w:t>
+      </w:r>
+    </w:p>
+    <w:p w:rsidR="00A10001">
+      <w:r>
+        <w:t xml:space="preserve">  two leading spaces</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:hyperlink r:id="rId4">
+        <w:r>
+          <w:t>link</w:t>
+        </w:r>
+      </w:hyperlink>
+    </w:p>
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838" />
+    </w:sectPr>
+  </w:body>
+</w:document>

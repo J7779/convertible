@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<catalog xmlns="urn:example:catalog" xmlns:m="urn:example:meta" version="3" m:checked="true">
+  <item id="a1" price="12.50">Blue &lt;widget&gt; &amp; "gadget"</item>
+  <item id="a2" price="0.75" m:note="tab&#09;here, quote &quot; and &lt;angle&gt;">Mixed <b>bold</b> tail text</item>
+  <m:empty />
+</catalog>

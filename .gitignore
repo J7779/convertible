@@ -1,0 +1,69 @@
+# Build output
+build/
+build-*/
+out/
+dist/
+cmake-build-*/
+CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+Testing/
+_deps/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.iml
+.vs/
+
+# Local, machine-specific or secret files (never commit)
+local.properties
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+*.pem
+*.key
+secrets.*
+
+# Android
+.gradle/
+.cxx/
+.kotlin/
+captures/
+*.apk
+*.aab
+*.ap_
+
+# Apple
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.xcframework/
+*.ipa
+*.dSYM/
+.swiftpm/
+.build/
+
+# Web / Node
+node_modules/
+.emscripten_cache/
+emsdk/
+npm-debug.log*
+*.tsbuildinfo
+
+# Python helpers
+__pycache__/
+*.pyc
+.venv/
