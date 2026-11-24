@@ -1,0 +1,8 @@
+[10][35] Hello, Ada Example.
+[40][62] Café déjà vu|second line
+[65][90] שלום עולם — مرحبا بالعالم
+[91][123] Emoji test 🎬 and bold words
+[120][140] Overlapping cue
+[150][200] This is a deliberately long subtitle line that keeps going well past forty-two characters
+[210][230] Positioned at the top
+[36010][36035] One hour later

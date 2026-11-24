@@ -1,0 +1,42 @@
+version: 1
+
+dn: cn=Ada Example,mail=ada@example.org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonAlpha
+givenName: Ada
+sn: Example
+cn: Ada Example
+mozillaNickname: Ada
+mail: ada@example.org
+mozillaSecondEmail: ada.home@example.org
+telephoneNumber: +1 555 0101
+homePhone: +1 555 0102
+mobile: +1 555 0100
+street: 1 Example Street
+l: Sampletown
+st: EX
+postalCode: 01234
+c: Exampleland
+mozillaHomeStreet: 9 Home Lane
+mozillaHomeLocalityName: Hometown
+o: Example Org
+ou: Research
+title: Chief Example Officer
+mozillaWorkUrl: https://example.org/ada
+birthyear: 1990
+birthmonth: 04
+birthday: 27
+description:: TXVsdGktbGluZSBub3RlCndpdGggw7xtbGF1dHM=
+
+dn:: Y249SsO8cmdlbiBNw7xsbGVyLG1haWw9anVlcmdlbkBleGFtcGxlLm9yZw==
+objectclass: top
+objectclass: person
+cn:: SsO8cmdlbiBNw7xsbGVy
+givenName:: SsO8cmdlbg==
+sn:: TcO8bGxlcg==
+mail: juergen@example.org
+jpegPhoto:: iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEUlEQVR42mP4zwAE
+ IOI/EAAAHu8F+zWBoMAAAAAASUVORK5CYII=

@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <id>https://news.example.org/</id>
+  <title>Example News</title>
+  <updated>2024-05-02T09:00:00+00:00</updated>
+  <author>
+    <name>Ada Example</name>
+    <email>ada@example.org</email>
+  </author>
+  <link href="https://news.example.org/" rel="alternate"/>
+  <generator uri="https://lkiesow.github.io/python-feedgen" version="1.0.0">python-feedgen</generator>
+  <subtitle>Made-up headlines</subtitle>
+  <entry>
+    <id>https://news.example.org/1</id>
+    <title>First story — ünïcödé</title>
+    <updated>2024-05-01T12:30:00+02:00</updated>
+    <content>Summary with &lt;b&gt;HTML&lt;/b&gt;</content>
+    <link href="https://news.example.org/1"/>
+    <summary>Summary with &lt;b&gt;HTML&lt;/b&gt;</summary>
+    <category term="fixtures"/>
+    <published>2024-05-01T12:30:00+02:00</published>
+  </entry>
+  <entry>
+    <id>https://news.example.org/2</id>
+    <title>שלום from the newsroom 📰</title>
+    <updated>2024-05-02T08:00:00+00:00</updated>
+    <content>Second summary</content>
+    <link href="https://news.example.org/2"/>
+    <link href="https://news.example.org/2.mp3"/>
+    <summary>Second summary</summary>
+    <category term="fixtures"/>
+    <published>2024-05-02T08:00:00+00:00</published>
+  </entry>
+</feed>

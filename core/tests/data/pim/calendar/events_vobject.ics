@@ -1,0 +1,21 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Org//vobject fixture//EN
+BEGIN:VEVENT
+UID:vobject-1@example.org
+DTSTART:20240701T130000Z
+DTEND:20240701T170000Z
+DESCRIPTION:A long description that certainly needs folding because it is l
+ onger than seventy-five octets\, with commas\, semicolons\; and a backslas
+ h \\ too.
+DTSTAMP:20240401T080000Z
+SUMMARY:Workshop: 日本語 and Русский
+END:VEVENT
+BEGIN:VEVENT
+UID:vobject-2@example.org
+DTSTART;VALUE=DATE:20240801
+DTEND;VALUE=DATE:20240803
+DTSTAMP:20240401T080000Z
+SUMMARY:Holiday
+END:VEVENT
+END:VCALENDAR

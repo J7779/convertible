@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttp="http://www.w3.org/ns/ttml#parameter"
+    xmlns:tts="http://www.w3.org/ns/ttml#styling" xmlns:ttm="http://www.w3.org/ns/ttml#metadata"
+    xmlns:ebuttm="urn:ebu:tt:metadata" xmlns:ebutts="urn:ebu:tt:style"
+    ttp:timeBase="media" ttp:cellResolution="50 30" xml:lang="de">
+  <head>
+    <metadata><ebuttm:documentMetadata><ebuttm:documentEbuttVersion>v1.0</ebuttm:documentEbuttVersion></ebuttm:documentMetadata></metadata>
+    <styling>
+      <style xml:id="s0" tts:fontFamily="monospaceSansSerif" tts:fontSize="1c 1c" tts:textAlign="center"/>
+      <style xml:id="s1" tts:fontStyle="italic"/>
+    </styling>
+    <layout>
+      <region xml:id="r0" tts:origin="10% 10%" tts:extent="80% 80%" tts:displayAlign="after"/>
+    </layout>
+  </head>
+  <body>
+    <div style="s0">
+      <p xml:id="sub1" region="r0" begin="00:00:01.000" end="00:00:03.000"><span>Grüße aus Köln</span></p>
+      <p xml:id="sub2" region="r0" begin="00:00:04.000" end="00:00:06.000"><span style="s1">Kursiv</span><br/><span>zweite Zeile</span></p>
+    </div>
+  </body>
+</tt>

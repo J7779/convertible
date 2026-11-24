@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+  <channel>
+    <title>Example News</title>
+    <link>https://news.example.org/</link>
+    <description>Made-up headlines</description>
+    <docs>http://www.rssboard.org/rss-specification</docs>
+    <generator>python-feedgen</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 02 May 2024 09:00:00 +0000</lastBuildDate>
+    <item>
+      <title>First story — ünïcödé</title>
+      <link>https://news.example.org/1</link>
+      <description>Summary with &lt;b&gt;HTML&lt;/b&gt;</description>
+      <guid isPermaLink="true">https://news.example.org/1</guid>
+      <category>fixtures</category>
+      <pubDate>Wed, 01 May 2024 12:30:00 +0200</pubDate>
+    </item>
+    <item>
+      <title>שלום from the newsroom 📰</title>
+      <link>https://news.example.org/2</link>
+      <description>Second summary</description>
+      <guid isPermaLink="true">https://news.example.org/2</guid>
+      <category>fixtures</category>
+      <enclosure url="https://news.example.org/2.mp3" length="1234" type="audio/mpeg"/>
+      <pubDate>Thu, 02 May 2024 08:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

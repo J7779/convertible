@@ -1,0 +1,12 @@
+#EXTM3U
+#PLAYLIST:Fixture mix
+#EXTINF:183.5,Überture
+#EXTALB:Synthetic Sessions
+#EXTART:Ada Example
+music/01 Überture.flac
+#EXTINF:241,שיר בדיוני
+#EXTALB:Synthetic Sessions
+#EXTART:Ben Sample
+music/02 שיר.mp3
+#EXTINF:-1 tvg-id="radio1" group-title="Live",Example Radio 🎵
+https://radio.example.org/stream

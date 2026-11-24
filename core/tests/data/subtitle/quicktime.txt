@@ -1,0 +1,13 @@
+{QTtext} {font:Tahoma}
+{plain} {size:20}
+{timeScale:30}
+{width:160} {height:32}
+{timestamps:absolute} {language:0}
+[00:00:01.00]
+Hello, Ada Example.
+[00:00:03.15]
+
+[00:00:04.00]
+Café déjà vu
+second line
+[00:00:06.06]

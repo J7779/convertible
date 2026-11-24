@@ -1,0 +1,23 @@
+@string{jmr = "Journal of Made-up Results"}
+@string{first = "Ada"}
+@comment{This line is ignored.}
+@preamble{"\newcommand{\noop}[1]{}"}
+
+@article{fontaine2022,
+  author       = {Jean-Luc de la Fontaine and M{\"u}ller, J{\"o}rg and {\O}stergaard, S{\o}ren},
+  title        = {Caf{\'e} {\&} cr\`eme --- an em dash, \emph{emphasis} and math $x^2$},
+  journaltitle = jmr # { (second series)},
+  date         = {2022-07-15},
+  volume       = 7,
+  pages        = {33--44},
+  langid       = {french},
+  url          = {https://example.org/paper?id=1&x=2},
+}
+
+@online{site2023,
+  author  = first # { Example},
+  title   = "Quoted {T}itle with ``quotes''",
+  url     = {https://example.org/},
+  urldate = {2023-01-02},
+  year    = 2023,
+}

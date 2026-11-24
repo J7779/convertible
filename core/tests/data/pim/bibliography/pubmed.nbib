@@ -1,0 +1,23 @@
+PMID- 99999901
+OWN - NLM
+STAT- MEDLINE
+TI  - A synthetic study of ünïcödé handling in long titles that wrap onto a
+      continuation line.
+AB  - Background: entirely made-up abstract text.
+FAU - Example, Ada
+AU  - Example A
+FAU - de la Fontaine, Jean-Luc
+AU  - de la Fontaine JL
+LA  - eng
+PT  - Journal Article
+DP  - 2021 Mar
+TA  - J Madeup Res
+JT  - Journal of Made-up Results
+VI  - 12
+IP  - 3
+PG  - 101-115
+LID - 10.1234/example.2021.001 [doi]
+IS  - 0000-0000 (Print)
+MH  - Testing
+OT  - unicode
+

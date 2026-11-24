@@ -1,0 +1,10 @@
+//Font select and font size
+$FontName = Arial
+$FontSize = 30
+
+//Colors
+$ColorIndex1 = 0
+$TapeOffset = FALSE
+
+00:00:01:00 , 00:00:03:12 , Hello, Ada Example.
+00:00:04:00 , 00:00:06:06 , ^ICafé déjà vu^I|second line

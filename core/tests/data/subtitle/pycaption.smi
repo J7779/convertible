@@ -1,0 +1,54 @@
+<sami>
+ <head>
+  <style type="text/css">
+   <!--
+    .en {
+     lang: en;
+    }
+   -->
+  </style>
+ </head>
+ <body>
+  <sync start="1000">
+   <p class="en" style="text-align:center;">
+    Hello, Ada Example.
+   </p>
+  </sync>
+  <sync start="3500">
+   <p class="en">
+    &nbsp;
+   </p>
+  </sync>
+  <sync start="4000">
+   <p class="en" style="text-align:center;">
+    &lt;i&gt;Café déjà vu&lt;/i&gt;<br/>
+    second line
+   </p>
+  </sync>
+  <sync start="6250">
+   <p class="en">
+    &nbsp;
+   </p>
+  </sync>
+  <sync start="7000">
+   <p class="en" style="text-align:center;">
+    Plain caption text
+   </p>
+  </sync>
+  <sync start="9000">
+   <p class="en">
+    &nbsp;
+   </p>
+  </sync>
+  <sync start="10000">
+   <p class="en" style="text-align:center;">
+    Ünïcödé and ½ ♪ ©
+   </p>
+  </sync>
+  <sync start="12500">
+   <p class="en">
+    &nbsp;
+   </p>
+  </sync>
+ </body>
+</sami>

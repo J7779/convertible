@@ -35,6 +35,19 @@ struct Alarm {
   /// after the start).
   int minutes_before = 0;
   std::string description;
+  /// ACTION: "DISPLAY" (default), "AUDIO", "EMAIL", ...
+  std::string action = "DISPLAY";
+  /// Absolute trigger time when the source gave one instead of an offset.
+  std::optional<CalendarTime> trigger_time;
+};
+
+/// A calendar component kept verbatim (VTIMEZONE, or sub-components the
+/// model does not cover), so that round trips do not drop it.
+struct CalendarComponent {
+  std::string name;  ///< upper-case, e.g. "VTIMEZONE", "STANDARD"
+  /// Properties; values as found after unfolding (text values unescaped).
+  std::vector<Property> properties;
+  std::vector<CalendarComponent> children;
 };
 
 /// One event (VEVENT).
@@ -60,6 +73,17 @@ struct Event {
   std::vector<Alarm> alarms;
   /// Properties not modelled above, preserved for round trips.
   std::vector<Property> extra;
+  /// iCalendar component type: "VEVENT" (default), "VTODO", "VJOURNAL" or "VFREEBUSY".
+  std::string component = "VEVENT";
+  /// Due time of a VTODO.
+  std::optional<CalendarTime> due;
+  /// EXDATE / RDATE values in source order.
+  std::vector<CalendarTime> exdates;
+  std::vector<CalendarTime> rdates;
+  /// RECURRENCE-ID of an overridden or expanded occurrence.
+  std::optional<CalendarTime> recurrence_id;
+  /// Sub-components other than VALARM.
+  std::vector<CalendarComponent> components;
 };
 
 /// A calendar (VCALENDAR).
@@ -68,6 +92,10 @@ struct Calendar {
   std::vector<Event> events;
   /// Calendar-level properties not modelled above.
   std::vector<Property> extra;
+  /// VTIMEZONE definitions, kept verbatim.
+  std::vector<CalendarComponent> timezones;
+  /// Other top-level components the model does not cover.
+  std::vector<CalendarComponent> other_components;
 };
 
 }  // namespace cvt::ir

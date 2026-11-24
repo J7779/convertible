@@ -1,0 +1,35 @@
+WEBVTT
+
+1
+00:00:01.000 --> 00:00:03.500
+Hello, Ada Example.
+
+2
+00:00:04.000 --> 00:00:06.250
+<i>Café déjà vu</i>
+second line
+
+3
+00:00:06.500 --> 00:00:09.000
+שלום עולם — مرحبا بالعالم
+
+4
+00:00:09.100 --> 00:00:12.345
+Emoji test 🎬 and bold words
+
+5
+00:00:12.000 --> 00:00:14.000
+Overlapping cue
+
+6
+00:00:15.000 --> 00:00:20.000
+This is a deliberately long subtitle line that keeps going well past forty-two characters
+
+7
+00:00:21.000 --> 00:00:23.000
+Positioned at the top
+
+8
+01:00:01.000 --> 01:00:03.500
+One hour later
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling"
+    xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:smpte="http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt"
+    xmlns:m608="http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608" xml:lang="en" ttp:frameRate="30"
+    ttp:frameRateMultiplier="1000 1001" ttp:timeBase="smpte" ttp:dropMode="dropNTSC">
+  <head>
+    <metadata><smpte:information m608:channel="CC1"/></metadata>
+  </head>
+  <body>
+    <div>
+      <p begin="00:00:01:00" end="00:00:03:00">SMPTE frames at 29.97</p>
+      <p begin="00:00:04:15" end="00:00:06:00">Second caption</p>
+    </div>
+  </body>
+</tt>

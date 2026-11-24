@@ -1,0 +1,8 @@
+00:00:01:Hello, Ada Example.
+00:00:04:<i>Café déjà vu</i>|second line
+00:00:06:שלום עולם — مرحبا بالعالم
+00:00:09:Emoji test 🎬 and bold words
+00:00:12:Overlapping cue
+00:00:15:This is a deliberately long subtitle line that keeps going well past forty-two characters
+00:00:21:Positioned at the top
+01:00:01:One hour later

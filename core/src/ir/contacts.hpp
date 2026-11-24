@@ -15,6 +15,8 @@ struct LabeledValue {
   std::string value;
   /// Lower-case type such as "home", "work", "cell", "fax"; may be empty.
   std::string type;
+  /// Custom label (e.g. Apple's X-ABLabel); empty when none.
+  std::string label;
 };
 
 struct PostalAddress {
@@ -24,6 +26,9 @@ struct PostalAddress {
   std::string postal_code;
   std::string country;
   std::string type;         ///< "home", "work", ... ; may be empty
+  std::string po_box;       ///< ADR component 1
+  std::string extended;     ///< ADR component 2 (apartment, suite)
+  std::string label;        ///< custom label; empty when none
 };
 
 /// One person or organisation (VCARD).
@@ -49,6 +54,14 @@ struct Card {
   Bytes photo;                  ///< embedded picture file; empty when none
   std::string photo_mime;       ///< e.g. "image/jpeg"
   std::string uid;
+  /// Organisational units after the organisation name (ORG components 2..n, ';' separated).
+  std::string department;
+  std::string role;
+  std::vector<std::string> categories;
+  /// ISO 8601 date like `birthday`; empty when unknown.
+  std::string anniversary;
+  /// Photo given as a link instead of embedded bytes; empty when none.
+  std::string photo_uri;
   /// Properties not modelled above, preserved for round trips.
   std::vector<Property> extra;
 };

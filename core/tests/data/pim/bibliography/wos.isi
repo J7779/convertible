@@ -1,0 +1,26 @@
+FN Clarivate Analytics Web of Science
+VR 1.0
+PT J
+AU Example, A
+   de la Fontaine, JL
+AF Example, Ada
+   de la Fontaine, Jean-Luc
+TI A synthetic study of unicode handling with a title that continues
+   on the next line
+SO JOURNAL OF MADE-UP RESULTS
+LA English
+DT Article
+DE testing; unicode
+AB Entirely made-up abstract.
+SN 0000-0000
+PD MAR
+PY 2021
+VL 12
+IS 3
+BP 101
+EP 115
+DI 10.1234/example.2021.001
+UT WOS:000000000000001
+ER
+
+EF

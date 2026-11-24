@@ -1,0 +1,21 @@
+RT Journal Article
+A1 Example, Ada
+A1 de la Fontaine, Jean-Luc
+T1 A synthetic study of ünïcödé handling
+JF Journal of Made-up Results
+YR 2021
+FD Mar
+VO 12
+IS 3
+SP 101
+OP 115
+DO 10.1234/example.2021.001
+K1 testing; unicode
+
+RT Book
+A1 Sample, Jr., Ben
+T1 Fictional Methods
+PB Example Press
+PP Springfield
+YR 2019
+SN 978-0-00-000000-0

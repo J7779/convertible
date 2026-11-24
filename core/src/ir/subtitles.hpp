@@ -38,6 +38,17 @@ struct Cue {
   std::optional<std::string> style;
   /// Explicit placement; nullopt = the player's default (bottom centre).
   std::optional<CuePosition> position;
+  /// Format-specific fields kept for round trips through the same format,
+  /// keyed "<format>.<field>" (e.g. "ass.layer", "ass.effect", "vtt.id",
+  /// "vtt.settings"). Writers of other formats ignore them.
+  std::map<std::string, std::string> attributes;
+  /// The cue text in the source format's own markup when that carries more
+  /// than `text` can express (ASS override tags such as colours or karaoke),
+  /// together with the id of that format. A writer of the same format may
+  /// use it instead of `text` as long as it still renders to the same plain
+  /// text; empty when not needed.
+  std::string source_text;
+  std::string source_format;
 };
 
 /// A subtitle track.

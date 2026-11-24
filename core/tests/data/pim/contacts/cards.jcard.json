@@ -1,0 +1,108 @@
+[
+ "vcard",
+ [
+  [
+   "version",
+   {},
+   "text",
+   "4.0"
+  ],
+  [
+   "fn",
+   {},
+   "text",
+   "Ada Example"
+  ],
+  [
+   "n",
+   {},
+   "text",
+   [
+    "Example",
+    "Ada",
+    "",
+    "Dr.",
+    ""
+   ]
+  ],
+  [
+   "org",
+   {},
+   "text",
+   [
+    "Example Org",
+    "Research"
+   ]
+  ],
+  [
+   "email",
+   {
+    "type": "work"
+   },
+   "text",
+   "ada@example.org"
+  ],
+  [
+   "tel",
+   {
+    "type": [
+     "home",
+     "voice"
+    ]
+   },
+   "uri",
+   "tel:+1-555-0100"
+  ],
+  [
+   "adr",
+   {
+    "type": "work"
+   },
+   "text",
+   [
+    "",
+    "",
+    "1 Example Street",
+    "Sampletown",
+    "EX",
+    "01234",
+    "Exampleland"
+   ]
+  ],
+  [
+   "bday",
+   {},
+   "date",
+   "1990-04-27"
+  ],
+  [
+   "categories",
+   {},
+   "text",
+   "Friends",
+   "Work"
+  ],
+  [
+   "note",
+   {},
+   "text",
+   "Unicode: éè 日本 😀, with; separators"
+  ],
+  [
+   "email",
+   {
+    "group": "item1"
+   },
+   "text",
+   "lab@example.org"
+  ],
+  [
+   "x-ablabel",
+   {
+    "group": "item1"
+   },
+   "text",
+   "Lab"
+  ]
+ ]
+]

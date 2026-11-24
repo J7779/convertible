@@ -1,0 +1,34 @@
+From ada@example.org Wed May  1 12:00:00 2024
+From: ada@example.org
+To: ben@example.org
+Subject: First
+Date: Wed, 01 May 2024 11:00:00 +0000
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+Plain body one.
+
+From ada@example.org Wed May  1 13:00:00 2024
+From: ada@example.org
+To: ben@example.org
+Subject: Second =?utf-8?b?w7xuw69jw7Zkw6k=?=
+Date: Wed, 01 May 2024 12:00:00 +0000
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+>From the start of a line
+body two.
+
+From ada@example.org Wed May  1 14:00:00 2024
+From: ada@example.org
+To: ben@example.org
+Subject: Third
+Date: Wed, 01 May 2024 13:00:00 +0000
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+Body three.
+

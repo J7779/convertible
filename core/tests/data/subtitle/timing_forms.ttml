@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling"
+    xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:ttm="http://www.w3.org/ns/ttml#metadata"
+    xml:lang="fr" ttp:frameRate="25" ttp:subFrameRate="2" ttp:tickRate="10000000">
+  <head>
+    <metadata><ttm:title>Timing forms</ttm:title></metadata>
+    <styling>
+      <style xml:id="base" tts:fontStyle="normal"/>
+      <style xml:id="it" style="base" tts:fontStyle="italic"/>
+      <style xml:id="bd" tts:fontWeight="bold"/>
+    </styling>
+    <layout>
+      <region xml:id="top" tts:origin="10% 5%" tts:extent="80% 20%" tts:displayAlign="before"/>
+      <region xml:id="low" tts:origin="10% 70%" tts:extent="80% 20%" tts:displayAlign="after" tts:textAlign="left"/>
+    </layout>
+  </head>
+  <body region="low">
+    <div begin="1s">
+      <p begin="00:00:00.000" end="00:00:02.500">Clock time, relative to the div</p>
+      <p begin="3.5s" dur="1500ms">Offset <span style="it">seconds</span> and <span style="bd">milliseconds</span></p>
+      <p begin="00:00:06:10" end="00:00:07:12.1" region="top">Frames and sub-frames</p>
+      <p begin="100f" end="0.05h" style="it">Frames offset, hours offset</p>
+    </div>
+    <div>
+      <p begin="200000000t" end="220000000t">Ticks<br/>two   lines</p>
+      <p begin="00:00:25.000" end="00:00:26.000"><span tts:textDecoration="underline">Under</span>lined</p>
+    </div>
+  </body>
+</tt>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <styling>
+   <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
+  </styling>
+  <layout>
+   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
+  </layout>
+ </head>
+ <body>
+  <div region="bottom" xml:lang="en">
+   <p begin="00:00:01.000" end="00:00:03.500" region="bottom" style="default">
+    Hello, Ada Example.
+   </p>
+   <p begin="00:00:04.000" end="00:00:06.250" region="bottom" style="default">
+    &lt;i&gt;Café déjà vu&lt;/i&gt;<br/>
+    second line
+   </p>
+   <p begin="00:00:07.000" end="00:00:09.000" region="bottom" style="default">
+    Plain caption text
+   </p>
+   <p begin="00:00:10.000" end="00:00:12.500" region="bottom" style="default">
+    Ünïcödé and ½ ♪ ©
+   </p>
+  </div>
+ </body>
+</tt>

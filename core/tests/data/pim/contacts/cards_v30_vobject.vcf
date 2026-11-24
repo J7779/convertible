@@ -1,0 +1,39 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:card-ada@example.org
+ADR;TYPE=WORK:;Suite 5;1 Example Street;Sampletown;EX;01234;Exampleland
+BDAY:1990-04-27
+CATEGORIES:Friends,Work
+EMAIL;TYPE=INTERNET,WORK:ada@example.org
+EMAIL;TYPE=INTERNET,HOME:ada.home@example.org
+FN:Dr. Ada Marie Example PhD
+ITEM1.EMAIL;TYPE=INTERNET:ada.lab@example.org
+ITEM1.X-ABLABEL:_$!<Other>!$_
+N:Example;Ada;Marie;Dr.;PhD
+NICKNAME:Ada
+NOTE:Met at the example conference 🎉. This note is deliberately long so 
+ that it has to be folded across several physical lines\, and it has commas
+ \, semicolons\; and a second line.\nSecond line.
+ORG:Example Org;Research
+PHOTO;ENCODING=b;TYPE=PNG:iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEUlEQVR42mP4zwAEIOI/EAAAHu8F+zWBoMAAAAAASUVORK5CYII=
+TEL;TYPE=CELL:+1 555 0100
+TEL;TYPE=WORK,VOICE:+1 555 0101
+TITLE:Chief Example Officer
+URL:https://example.org/ada
+X-CUSTOM-FIELD:kept as is
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+EMAIL:sara@example.org
+FN:سارة المثال
+N:المثال;سارة;;;
+NOTE:שלום — RTL text
+TEL:+44 20 7946 0000
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+ADR;TYPE=HOME:;;2 Sample Road\nBuilding B;Zürich;;8000;Switzerland
+FN:Bob Sample
+N:Sample;Bob;;;
+ORG:Sample & Sons
+END:VCARD

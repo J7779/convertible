@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?><timedtext format="3">
+<head><ws id="0"/><wp id="0"/></head>
+<body>
+<p t="1000" d="2500" w="1"><s ac="0">Hello,</s><s t="400" ac="0"> Ada</s><s t="800" ac="0"> Example.</s></p>
+<p t="4000" d="2250" w="1">Café &amp; déjà vu
+second line</p>
+<p t="6250" d="10" w="1" a="1">
+</p>
+</body>
+</timedtext>

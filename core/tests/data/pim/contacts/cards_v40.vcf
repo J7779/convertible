@@ -1,0 +1,19 @@
+BEGIN:VCARD
+VERSION:4.0
+KIND:individual
+FN:Chloé Exemple
+N:Exemple;Chloé;;;
+GENDER:F
+EMAIL;TYPE=work;PREF=1:chloe@example.org
+TEL;VALUE=uri;TYPE="voice,cell":tel:+33-1-23-45-67-89
+ADR;TYPE=home;LABEL="12 rue Exemple\n75001 Paris":;;12 rue Exemple;Paris;;7
+ 5001;France
+BDAY:--0612
+ANNIVERSARY:20150620
+PHOTO:data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAA
+ AEUlEQVR42mP4zwAEIOI/EAAAHu8F+zWBoMAAAAAASUVORK5CYII=
+LANG;PREF=1:fr
+IMPP:xmpp:chloe@example.org
+NOTE:Emoji 😀 and escaped\, commas\; semicolons
+UID:urn:uuid:4fbe8971-0bc3-424c-9c26-36c3e1eff6b1
+END:VCARD

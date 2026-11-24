@@ -1,0 +1,6 @@
+First Name,Middle Name,Last Name,Phonetic First Name,Phonetic Middle Name,Phonetic Last Name,Name Prefix,Name Suffix,Nickname,File As,Organization Name,Organization Title,Organization Department,Birthday,Notes,Photo,Labels,E-mail 1 - Label,E-mail 1 - Value,E-mail 2 - Label,E-mail 2 - Value,Phone 1 - Label,Phone 1 - Value,Phone 2 - Label,Phone 2 - Value,Address 1 - Label,Address 1 - Formatted,Address 1 - Street,Address 1 - City,Address 1 - PO Box,Address 1 - Region,Address 1 - Postal Code,Address 1 - Country,Address 1 - Extended Address,Website 1 - Label,Website 1 - Value
+Ada,Marie,Example,,,,Dr.,PhD,Ada,,Example Org,Chief Example Officer,Research,1990-04-27,"Line one
+Line two, with comma",,* myContacts ::: Friends,* Work,ada@example.org,Home,ada.home@example.org ::: ada.alt@example.org,Mobile,+1 555 0100,Work,+1 555 0101,Work,"1 Example Street
+Sampletown EX 01234
+Exampleland",1 Example Street,Sampletown,,EX,01234,Exampleland,Suite 5,Profile,https://example.org/ada
+سارة,,المثال,,,,,,,,,,,,😀,,* myContacts,,sara@example.org,,,,,,,,,,,,,,,,,

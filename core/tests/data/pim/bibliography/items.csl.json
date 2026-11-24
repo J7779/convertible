@@ -1,0 +1,55 @@
+[
+  {
+    "id": "example2021",
+    "type": "article-journal",
+    "title": "A synthetic study of ünïcödé handling",
+    "author": [
+      {
+        "family": "Example",
+        "given": "Ada"
+      },
+      {
+        "family": "Fontaine",
+        "given": "Jean-Luc",
+        "non-dropping-particle": "de la"
+      }
+    ],
+    "container-title": "Journal of Made-up Results",
+    "issued": {
+      "date-parts": [
+        [
+          2021,
+          3
+        ]
+      ]
+    },
+    "volume": "12",
+    "issue": "3",
+    "page": "101-115",
+    "DOI": "10.1234/example.2021.001",
+    "keyword": "testing, unicode",
+    "language": "en"
+  },
+  {
+    "id": "sample2019",
+    "type": "book",
+    "title": "Fictional Methods",
+    "author": [
+      {
+        "family": "Sample",
+        "given": "Ben",
+        "suffix": "Jr."
+      }
+    ],
+    "publisher": "Example Press",
+    "publisher-place": "Springfield",
+    "issued": {
+      "date-parts": [
+        [
+          2019
+        ]
+      ]
+    },
+    "ISBN": "978-0-00-000000-0"
+  }
+]

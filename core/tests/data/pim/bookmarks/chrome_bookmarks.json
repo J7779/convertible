@@ -1,0 +1,51 @@
+{
+   "checksum": "00000000000000000000000000000000",
+   "roots": {
+      "bookmark_bar": {
+         "children": [
+            {
+               "date_added": "13344473700000000",
+               "id": "5",
+               "name": "Example & Co",
+               "type": "url",
+               "url": "https://www.example.org/"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13344473900000000",
+                     "id": "7",
+                     "name": "שלום 🎉",
+                     "type": "url",
+                     "url": "https://example.org/שלום"
+                  }
+               ],
+               "date_added": "13344473800000000",
+               "date_modified": "13344473900000000",
+               "id": "6",
+               "name": "Ünïcödé folder",
+               "type": "folder"
+            }
+         ],
+         "date_added": "13344473600000000",
+         "id": "1",
+         "name": "Bookmarks bar",
+         "type": "folder"
+      },
+      "other": {
+         "children": [],
+         "date_added": "13344473600000000",
+         "id": "2",
+         "name": "Other bookmarks",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [],
+         "date_added": "13344473600000000",
+         "id": "3",
+         "name": "Mobile bookmarks",
+         "type": "folder"
+      }
+   },
+   "version": 1
+}

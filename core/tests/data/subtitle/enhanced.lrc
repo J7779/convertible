@@ -1,0 +1,10 @@
+[ti:Fixture Song]
+[ar:Ada Example]
+[al:Synthetic Album]
+[offset:+500]
+[length:01:00]
+[00:01.50]First line
+[00:04.00][00:20.00]Repeated chorus line
+[00:08.25]<00:08.25>Word <00:08.75>by <00:09.10>word
+[00:12.00]
+[00:15.00]Last line
