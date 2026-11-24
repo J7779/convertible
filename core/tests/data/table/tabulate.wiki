@@ -1,0 +1,11 @@
+{| class="wikitable" style="text-align: left;"
+|+ <!-- caption -->
+|-
+! Item      !! style="text-align: right;"|   Qty !! style="text-align: right;"|   Price !! Note
+|-
+| Tea       || style="text-align: right;"|     3 || style="text-align: right;"|   1.5   || green
+|-
+| Grüße     || style="text-align: right;"|   -12 || style="text-align: right;"|   0.99  || 世界
+|-
+| pipe|char || style="text-align: right;"|     0 || style="text-align: right;"|   1e-05 ||
+|}
