@@ -1,0 +1,7 @@
+{bool_false: false, bool_true: true, empty_list: [], empty_object: {}, escapes: "quote\
+    \ \" backslash \\ tab \t newline \n end", float: 3.141592653589793, float_exp: 6.02214076e+23,
+  float_neg: -0.5, float_tiny: 5.0e-324, int_max64: 9223372036854775807, int_min64: -9223372036854775808,
+  int_neg: -17, int_small: 42, int_zero: 0, list: [1, two, 3.25, null, true], nested: {
+    level1: {level2: {level3: [1, [2, [3, [4, {deep: 'yes'}]]]]}}}, 'null': null,
+  records: [{id: 1, name: alpha}, {id: 2, name: beta}], string: hello, uint64_max: 18446744073709551615,
+  unicode: "h\xE9llo w\xF6rld \u2713 \u65E5\u672C\u8A9E \U0001F600"}

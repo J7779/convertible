@@ -1,0 +1,54 @@
+string = "hello"
+unicode = "héllo wörld ✓ 日本語 😀"
+escapes = """
+quote \" backslash \\ tab 	 newline 
+ end"""
+int_small = 42
+int_neg = -17
+int_zero = 0
+int_max64 = 9223372036854775807
+int_min64 = -9223372036854775808
+float = 3.141592653589793
+float_neg = -0.5
+float_exp = 6.02214076e+23
+float_tiny = 5e-324
+bool_true = true
+bool_false = false
+empty_list = []
+list = [
+    1,
+    2,
+    3,
+]
+records = [
+    { id = 1, name = "alpha" },
+    { id = 2, name = "beta" },
+]
+nan = nan
+inf = inf
+neg_inf = -inf
+date = 2024-05-01 12:30:45.123456+00:00
+local_datetime = 2024-05-01 12:30:45
+local_date = 2024-05-01
+local_time = 12:30:45.500000
+multiline = """
+line one
+line two
+"""
+
+[empty_object]
+
+[nested.level1.level2]
+level3 = [
+    1,
+    [
+        2,
+        [
+            3,
+            [
+                4,
+                { deep = "yes" },
+            ],
+        ],
+    ],
+]

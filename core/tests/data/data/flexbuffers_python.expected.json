@@ -1,0 +1,27 @@
+{
+ "string": "hello",
+ "int": -12345,
+ "big": 1099511627776,
+ "float": 1.5,
+ "bool": true,
+ "null": null,
+ "list": [
+  1,
+  2,
+  3
+ ],
+ "mixed": [
+  1,
+  "two",
+  3.5
+ ],
+ "nested": {
+  "a": {
+   "b": [
+    true,
+    false
+   ]
+  }
+ },
+ "unicode": "é✓"
+}

@@ -1,0 +1,47 @@
+[
+ {
+  "id": 1,
+  "name": "alpha é",
+  "score": 1.5,
+  "tags": [
+   "x",
+   "y"
+  ],
+  "attrs": {
+   "a": 1
+  },
+  "kind": "A",
+  "blob": {
+   "$binary": "AAEC"
+  },
+  "when": {
+   "$date": "2024-05-01T12:30:45.123456Z"
+  },
+  "day": {
+   "$date": "2024-05-01"
+  },
+  "amount": 123.45,
+  "flag": true,
+  "ratio": 0.25
+ },
+ {
+  "id": -2,
+  "name": "beta",
+  "score": null,
+  "tags": [],
+  "attrs": {},
+  "kind": "B",
+  "blob": {
+   "$binary": ""
+  },
+  "when": {
+   "$date": "1969-12-31T23:59:59Z"
+  },
+  "day": {
+   "$date": "1970-01-01"
+  },
+  "amount": -0.01,
+  "flag": false,
+  "ratio": -2.0
+ }
+]

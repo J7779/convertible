@@ -1,0 +1,5 @@
+{"id": 0, "name": "item 0", "ok": true, "score": 0.0}
+{"id": 1, "name": "item 1", "ok": false, "score": 1.5}
+{"id": 2, "name": "item 2", "ok": true, "score": 3.0}
+{"id": 3, "name": "item 3", "ok": false, "score": 4.5}
+{"id": 4, "name": "item 4", "ok": true, "score": 6.0}

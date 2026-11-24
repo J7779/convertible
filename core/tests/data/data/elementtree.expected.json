@@ -1,0 +1,18 @@
+{
+ "catalog": {
+  "@version": "2",
+  "book": [
+   {
+    "@id": "1",
+    "title": "Alpha",
+    "price": "10.50"
+   },
+   {
+    "@id": "2",
+    "title": "Beta é",
+    "price": "20.50"
+   }
+  ],
+  "empty": null
+ }
+}

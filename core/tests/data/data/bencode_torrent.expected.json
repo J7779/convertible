@@ -1,0 +1,11 @@
+{
+ "announce": "http://tracker.example.invalid/announce",
+ "info": {
+  "name": "sample.txt",
+  "length": 1024,
+  "piece length": 16384,
+  "pieces": {
+   "$binary": "AAECAwQFBgcICQoLDA0ODxAREhM="
+  }
+ }
+}

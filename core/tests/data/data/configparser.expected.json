@@ -1,0 +1,11 @@
+{
+ "server": {
+  "host": "example.invalid",
+  "port": "8080",
+  "path": "/srv/data"
+ },
+ "empty section": {},
+ "multi": {
+  "text": "first line\nsecond line"
+ }
+}

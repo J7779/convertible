@@ -1,0 +1,12 @@
+{
+ "name": "alpha",
+ "count": 3,
+ "ratio": 0.5,
+ "ok": true,
+ "none": null,
+ "list": [
+  "x",
+  "y"
+ ],
+ "unicode": "é"
+}
