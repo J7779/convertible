@@ -1,0 +1,7 @@
+{
+  "name": "libvpx",
+  "version": "1.16.0",
+  "license": "BSD-3-Clause (with the WebM project's additional patent grant, see PATENTS)",
+  "url": "https://chromium.googlesource.com/webm/libvpx (tag v1.16.0)",
+  "files_modified": true
+}

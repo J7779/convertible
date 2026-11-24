@@ -1,0 +1,30 @@
+#format: frame checksums
+#version: 2
+#hash: MD5
+#software: Lavf60.16.100
+#tb 0: 1/30
+#media_type 0: video
+#codec_id 0: rawvideo
+#dimensions 0: 176x144
+#sar 0: 0/1
+#stream#, dts,        pts, duration,     size, hash
+0,          0,          0,        1,    38016, 1d61a62223e5b68d0d3a36c6ce84dd0b
+0,          1,          1,        1,    38016, 4acd32a6e573f5f9f6ac2116bd6e0723
+0,          2,          2,        1,    38016, a7adfbf818e7f5415b773296bf34dcdb
+0,          3,          3,        1,    38016, 777c02d3b82689858ccd49ef0dbe9756
+0,          4,          4,        1,    38016, 64e8fa15cefada46c67bdc3924dd0edf
+0,          5,          5,        1,    38016, 25ce7008686996672b15d9decbc03a2f
+0,          6,          6,        1,    38016, cf902fa8aad459a8298f3b9323b09cea
+0,          7,          7,        1,    38016, e950f0c8d8d242175d08688216d46986
+0,          8,          8,        1,    38016, 76d3bea86225551e6647cb3e7052baba
+0,          9,          9,        1,    38016, b6abfa848d2e24832f469f1695ba2885
+0,         10,         10,        1,    38016, 7b285a203bf26c8b66e1e6b3c4740484
+0,         11,         11,        1,    38016, 372ef5e9dcb8a15201b36415fb21dd08
+0,         12,         12,        1,    38016, 991887a213fe92f831395a8853a1b111
+0,         13,         13,        1,    38016, bea3520e6d14c67280092542be8fd700
+0,         14,         14,        1,    38016, 76070be173e1f121716b1fc473c24b7b
+0,         15,         15,        1,    38016, 7eb400984c1a61ba67fa704548238e29
+0,         16,         16,        1,    38016, 231d2b4e326e9df6b82e355b95ef793b
+0,         17,         17,        1,    38016, 4fa38433b8b7beb0dd8e7f2ecff578c8
+0,         18,         18,        1,    38016, a60c99dac45048d6740b8f3cecf61508
+0,         19,         19,        1,    38016, 588979aff372d1372de113967dd6100b
