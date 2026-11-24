@@ -495,7 +495,7 @@ std::string braille_encode(std::string_view text, std::size_t* skipped) {
       append_cell(out, braille_letters[(c | 0x20) - 'a']);
     } else if (c == ' ' || c == '\n' || c == '\r' || c == '\t' || (c >= 0x2800 && c <= 0x28FF)) {
       util::append_utf8(out, c == ' ' ? static_cast<char32_t>(0x2800) : c);
-    } else if (const auto* p = std::ranges::find_if(braille_punctuation, [c](const BraillePunct& b) {
+    } else if (const auto p = std::ranges::find_if(braille_punctuation, [c](const BraillePunct& b) {
                  return static_cast<char32_t>(b.c) == c;
                });
                p != braille_punctuation.end()) {
@@ -539,7 +539,7 @@ Result<std::string> braille_decode(std::string_view text) {
       number_mode = false;
       continue;
     }
-    const auto* letter = std::ranges::find(braille_letters, dots);
+    const auto letter = std::ranges::find(braille_letters, dots);
     if (letter != braille_letters.end()) {
       const auto index = static_cast<char>(letter - braille_letters.begin());
       if (number_mode && index < 10) {
@@ -550,7 +550,7 @@ Result<std::string> braille_decode(std::string_view text) {
       capital = false;
       continue;
     }
-    const auto* p = std::ranges::find_if(braille_punctuation, [dots](const BraillePunct& b) { return b.dots == dots; });
+    const auto p = std::ranges::find_if(braille_punctuation, [dots](const BraillePunct& b) { return b.dots == dots; });
     if (p == braille_punctuation.end()) return fail(Status::Decode, "unknown braille cell U+{:04X}", static_cast<std::uint32_t>(c));
     out.push_back(p->c);
     number_mode = false;

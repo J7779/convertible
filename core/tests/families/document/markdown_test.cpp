@@ -60,8 +60,8 @@ TEST_CASE("document/markdown: CommonMark inlines") {
   CHECK(html("\\*not em\\* \\_ \\\\") == "<p>*not em* _ \\</p>");
   CHECK(html("&amp; &copy; &#35; &#x41; &nope;") == "<p>&amp; \xC2\xA9 # A &amp;nope;</p>");
   CHECK(html("a  \nb\\\nc") == "<p>a<br>b<br>c</p>");
-  CHECK(html("<https://e.com/x> <a@b.co>") ==
-        "<p><a href=\"https://e.com/x\">https://e.com/x</a> <a href=\"mailto:a@b.co\">a@b.co</a></p>");
+  CHECK(html("<https://e.com/x> <a@b.example>") ==
+        "<p><a href=\"https://e.com/x\">https://e.com/x</a> <a href=\"mailto:a@b.example\">a@b.example</a></p>");
   CHECK(html("[a [nested] link](</my url> 'T') ![img](i.png \"t\")") ==
         "<p><a href=\"/my url\" title=\"T\">a [nested] link</a> <img src=\"i.png\" alt=\"img\" title=\"t\"></p>");
   CHECK(html("[link [inner](u1)](u2)") == "<p>[link <a href=\"u1\">inner</a>](u2)</p>");
