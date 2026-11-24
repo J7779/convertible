@@ -14,18 +14,58 @@
 /* precache:start */
 const CACHE_VERSION = 'dev';
 const PRECACHE = [];
+const PRECACHE_HASHES = {};
 /* precache:end */
 
 const CACHE_PREFIX = 'convertible-app-';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const SHARE_INBOX = 'convertible-share-inbox';
+const HASH_HEADER = 'X-Content-Hash';
+const PARALLEL_DOWNLOADS = 4;
+
+async function sha256Prefix(buffer) {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', buffer));
+  return [...digest.slice(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Puts one file of the new version into `cache`. A file whose content hash
+ * is unchanged is copied from the previous version's cache, so an update
+ * downloads only what changed (the core alone is ~30 MB). Anything else is
+ * fetched revalidating the HTTP cache (on a first visit the page has just
+ * downloaded the core, so this is usually a 304, not a second download) and
+ * checked against the manifest, so a deployment that lands mid-install can
+ * never mix files of two versions.
+ */
+async function precacheOne(cache, previous, url) {
+  const hash = PRECACHE_HASHES[url];
+  for (const old of previous) {
+    const hit = await old.match(url);
+    if (hit && hash && hit.headers.get(HASH_HEADER) === hash) {
+      await cache.put(url, hit);
+      return;
+    }
+  }
+  const response = await fetch(new Request(url, { cache: 'no-cache' }));
+  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+  const body = await response.arrayBuffer();
+  if (hash && (await sha256Prefix(body)) !== hash) throw new Error(`${url} changed during the update`);
+  const headers = new Headers({ 'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream' });
+  if (hash) headers.set(HASH_HEADER, hash);
+  await cache.put(url, new Response(body, { status: 200, headers }));
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      // Bypass the HTTP cache so a new version never mixes in stale files.
-      await cache.addAll(PRECACHE.map((url) => new Request(url, { cache: 'reload' })));
+      const names = (await caches.keys()).filter((n) => n.startsWith(CACHE_PREFIX) && n !== CACHE_NAME);
+      const previous = await Promise.all(names.map((n) => caches.open(n)));
+      const todo = [...PRECACHE];
+      const worker = async () => {
+        while (todo.length) await precacheOne(cache, previous, todo.shift());
+      };
+      await Promise.all(Array.from({ length: PARALLEL_DOWNLOADS }, worker));
     })(),
   );
 });

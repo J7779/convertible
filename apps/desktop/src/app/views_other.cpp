@@ -19,16 +19,28 @@ Rect column(const Rect& r, float max_w = 880.0f, float pad = 24.0f) {
   return {r.x + (r.w - w) * 0.5f, r.y, w, r.h};
 }
 
-bool format_matches(const FormatInfo& f, std::string_view q) {
-  const std::string_view query = trim(q);
-  if (query.empty()) return true;
-  if (contains_ci(f.id, query) || contains_ci(f.name, query) || contains_ci(f.description, query)) return true;
+/// How well a format matches the query: 0 = not at all; exact ids and
+/// extensions first, then prefixes, names, categories and descriptions.
+int format_score(const FormatInfo& f, std::string_view q) {
+  std::string_view query = trim(q);
+  if (query.empty()) return 1;
   std::string_view e = query;
   if (!e.empty() && e.front() == '.') e.remove_prefix(1);
+  if (e.empty()) return 1;
+  const auto equals_ci = [](std::string_view a, std::string_view b) { return a.size() == b.size() && starts_with_ci(a, b); };
+  if (equals_ci(f.id, e)) return 100;
   for (const auto& ext : f.extensions) {
-    if (starts_with_ci(ext, e)) return true;
+    if (equals_ci(ext, e)) return 95;
   }
-  return contains_ci(category_label(f.category), query);
+  if (starts_with_ci(f.id, e)) return 80;
+  for (const auto& ext : f.extensions) {
+    if (starts_with_ci(ext, e)) return 70;
+  }
+  if (starts_with_ci(f.name, query)) return 60;
+  if (contains_ci(f.id, query) || contains_ci(f.name, query)) return 40;
+  if (contains_ci(category_label(f.category), query)) return 20;
+  if (contains_ci(f.description, query)) return 10;
+  return 0;
 }
 
 void pill(Context& ctx, const Rect& r, std::string_view label, bool on, Color on_color) {
@@ -104,26 +116,43 @@ void App::build_formats(Rect r) {
     cut_top(col, (y - col.y) + h + 16.0f);
   }
 
-  // List grouped by category.
-  struct Row {
-    bool header;
-    std::string category;
-    const FormatInfo* format;
-    int count;
-  };
-  std::vector<Row> rows;
-  int matched = 0;
-  for (const auto& c : category_order()) {
-    if (!formats_category_.empty() && c != formats_category_) continue;
-    std::vector<const FormatInfo*> fs;
-    for (const auto& f : cat.formats()) {
-      if (f.category == c && format_matches(f, formats_query_)) fs.push_back(&f);
+  // List grouped by category, rebuilt only when the query or the category
+  // filter changes (the catalogue has ~1,500 formats). With a query, each
+  // group is ordered by match quality (ties keep the catalogue's popularity
+  // order) and the group holding the best match comes first.
+  const std::string key = std::string(trim(formats_query_)) + '\x1f' + formats_category_ + '\x1f' +
+                          std::to_string(cat.formats().size());
+  if (key != formats_rows_key_) {
+    formats_rows_key_ = key;
+    formats_rows_.clear();
+    struct Group {
+      std::string category;
+      std::vector<std::pair<int, const FormatInfo*>> fs;
+      int best = 0;
+    };
+    std::vector<Group> groups;
+    for (const auto& c : category_order()) {
+      if (!formats_category_.empty() && c != formats_category_) continue;
+      Group g{c, {}, 0};
+      for (const auto& f : cat.formats()) {
+        if (f.category != c) continue;
+        if (const int score = format_score(f, formats_query_)) g.fs.emplace_back(score, &f);
+      }
+      if (g.fs.empty()) continue;
+      std::stable_sort(g.fs.begin(), g.fs.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
+      g.best = g.fs.front().first;
+      groups.push_back(std::move(g));
     }
-    if (fs.empty()) continue;
-    rows.push_back({true, c, nullptr, static_cast<int>(fs.size())});
-    for (const auto* f : fs) rows.push_back({false, c, f, 0});
-    matched += static_cast<int>(fs.size());
+    std::stable_sort(groups.begin(), groups.end(), [](const Group& a, const Group& b) { return a.best > b.best; });
+    int matched = 0;
+    for (const auto& g : groups) {
+      formats_rows_.push_back({true, g.category, nullptr, static_cast<int>(g.fs.size())});
+      for (const auto& [score, f] : g.fs) formats_rows_.push_back({false, g.category, f, 0});
+      matched += static_cast<int>(g.fs.size());
+    }
+    formats_matched_ = matched;
   }
+  const auto& rows = formats_rows_;
   const float header_h = 44.0f;
   const float row_h = 56.0f;
   float content = 0.0f;
@@ -178,7 +207,6 @@ void App::build_formats(Rect r) {
                 {col.x, list.y + 40.0f, col.w, 24.0f}, t.color.text_secondary, 0.5f);
   }
   ui_.end_scroll();
-  formats_matched_ = matched;
 }
 
 // ---------------------------------------------------------------------------

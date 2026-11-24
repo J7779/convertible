@@ -13,7 +13,7 @@ import { startServer } from './lib/server.mjs';
 import { core, e2e, server, suite } from './lib/harness.mjs';
 
 const precache = await import(pathToFileURL(path.join(WEB_DIR, 'tools', 'precache.mjs')).href);
-const { acceptedExtensions } = await import('../src/js/model/targets.js');
+const { acceptedExtensions, fileHandlers, FILE_HANDLER_EXTENSION_LIMIT } = await import('../src/js/model/targets.js');
 
 /** Waits until a service worker controls the page; returns its cache state. */
 async function waitForControl(page) {
@@ -64,9 +64,16 @@ suite('progressive web app', () => {
       assert.ok(info.ok, icon.src);
       if (icon.type === 'image/png') assert.equal(`${info.w}x${info.h}`, icon.sizes, `${icon.src} is ${icon.sizes}`);
     }
-    // File handlers accept every extension the core can read.
-    const accept = Object.values(manifest.file_handlers[0].accept).flat();
-    assert.deepEqual([...accept].sort(), acceptedExtensions(core.formats()).sort());
+    // File handlers: the most popular readable formats, within the browser's
+    // limit on extensions, grouped by category and MIME type.
+    const accept = manifest.file_handlers.flatMap((h) => Object.values(h.accept).flat());
+    assert.ok(accept.length <= FILE_HANDLER_EXTENSION_LIMIT, `${accept.length} extensions`);
+    assert.equal(new Set(accept).size, accept.length, 'each extension once');
+    const readable = new Set(acceptedExtensions(core.formats()));
+    for (const e of accept) assert.ok(readable.has(e), `${e} is readable`);
+    assert.deepEqual(manifest.file_handlers, fileHandlers(core.formats(), { icons: manifest.file_handlers[0].icons }));
+    const top = core.formats().filter((f) => f.readable && f.extensions.length).slice(0, 20);
+    for (const f of top) assert.ok(f.extensions.some((e) => accept.includes(`.${e}`)), `${f.id} (one of the most popular) opens with the app`);
 
     await waitForControl(page);
     const installability = await page.send('Page.getInstallabilityErrors');

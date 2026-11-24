@@ -23,8 +23,9 @@ apps/web/build.sh --docker   # always the container (what CI uses)
 apps/web/build.sh --local    # never the container
 ```
 
-The output is a complete static site in `apps/web/dist/` (about 3 MB, of which
-`wasm/convertible.wasm` is about 0.9 MB). Intermediate files go to
+The output is a complete static site in `apps/web/dist/` (about 38 MB, of which
+`wasm/convertible.wasm` is 35.9 MB, 13.2 MB with gzip -9, for the 1,485-format
+catalogue). Intermediate files go to
 `apps/web/build/` (`build/wasm` for CMake, `build/emcache` for Emscripten's
 system-library cache, which CI may cache between runs). Both directories are
 ignored by git.
@@ -39,9 +40,11 @@ What the build does:
    `convertible::core` into `convertible.mjs` + `convertible.wasm`.
 2. `node apps/web/tools/assemble.mjs` — copies `src/`, the module, and the
    shared brand assets (`assets/brand/tokens.css`, fonts, icons, licences; they
-   are never duplicated in git), turns `animation.json` into an ES module,
-   generates `manifest.webmanifest` (its `file_handlers` list every format the
-   real core can read) and `sw.js` with a precache list of every file and a
+   are never duplicated in git, and `NOTICES.md` for the components compiled
+   into the core), turns `animation.json` into an ES module, asks the real core
+   for its catalogue and writes it as `catalogue.json`, generates
+   `manifest.webmanifest` (see [File handlers](#file-handlers)) and `sw.js` with
+   a precache list of every file, each file's content hash, and a
    content-digest cache version.
 
 ## Run
@@ -65,7 +68,7 @@ apps/web/test.sh             # needs a build in apps/web/dist
 apps/web/test.sh --build     # build first
 ```
 
-58 tests on `node --test`:
+62 tests on `node --test`:
 
 - `binding.test.mjs` — loads the real `convertible.wasm` in Node and performs
   real conversions: text ↔ Base64, every byte value through hex and back,
@@ -78,10 +81,14 @@ apps/web/test.sh --build     # build first
   the queue state machine, schema → controls model (also over the real
   catalogue), target grouping/sorting/search, size formatting, naming, error
   mapping, limits, settings.
-- `dist.test.mjs` — every file in `dist` is precached and nothing else, the
-  cache version is a content digest, all imports and assets resolve, no
-  external URLs, a strict CSP without inline code, a valid installable
-  manifest, and the motion storyboard → Web Animations conversion.
+- `loader.test.mjs` — the real core streamed in pieces with monotonic byte
+  progress and compiled once; an unknown total for compressed responses;
+  network, HTTP and compile failures classified for the start-up screen.
+- `dist.test.mjs` — every file in `dist` is precached (with its content hash)
+  and nothing else, the cache version is a content digest, all imports and
+  assets resolve, no external URLs, a strict CSP without inline code, a valid
+  installable manifest within the browser's file-handler limits, the shipped
+  catalogue, and the motion storyboard → Web Animations conversion.
 
 Tests are written against the dynamic catalogue, so they keep passing as the
 core gains formats.
@@ -119,15 +126,23 @@ default 2), `E2E_LONG_MB` (size of the cancel-test inputs, default 192),
   exceptions, no CSP violations, no failed requests and every request
   same-origin. A failing test leaves a screenshot and a log in
   `e2e/artifacts/` (git-ignored).
-- `startup` (intro, skip, reduced motion), `queue` (picker, drag-and-drop,
-  detected formats, bulk target, Convert all, Save all), `picker` (catalogue,
-  groups, search, keyboard, Compress), `convert` (progress, sizes, names,
-  bytes, schema-driven options, UTF-16, large files, native save dialog),
-  `cancel`, `errors`, `sheets` (formats browser, settings persistence,
-  licences, deep links), `keyboard`, `layout` (320/375/768/1440 px, dark and
-  light), `pwa` (manifest, precache, offline reload and conversion, update
-  prompt), `catalogue` (PNG → JPEG, any file → ZIP, WAV → audio; skipped
-  with "format not in catalogue" until the core can do them).
+- 61 tests: `startup` (intro, skip, reduced motion, byte progress during a
+  slow core download with the shell usable, a failed download and Retry),
+  `queue` (picker, drag-and-drop, detected formats, bulk target, Convert all,
+  Save all), `picker` (catalogue, groups, search, keyboard, Compress),
+  `convert` (progress, sizes, names, bytes, schema-driven options, UTF-16,
+  large files, native save dialog), `cancel`, `errors`, `sheets` (formats
+  browser, settings persistence, licences, deep links), `keyboard`, `layout`
+  (320/375/768/1440 px, dark and light), `pwa` (manifest, precache, offline
+  reload and conversion, update prompt), `catalogue` (PNG → JPEG, any file →
+  ZIP, WAV → audio equal to the core in Node), `media` (PNG → a
+  browser-decodable image checked with `createImageBitmap`, WAV → compressed
+  audio decoded with `decodeAudioData` for duration and level, a YUV4MPEG2
+  clip → animated GIF with its frames counted, Markdown → PDF with `%PDF` and
+  pages counted, CSV → XLSX → CSV and CSV → JSON cell by cell, a 3.6-gigapixel
+  PNG refused with the size-limit message). Catalogue-dependent tests find
+  their targets by category and MIME type and are skipped with "format not in
+  catalogue" when the core cannot do them.
 
 Downloads use the app's fallback for browsers without the File System Access
 API (the tests remove it, since a headless browser cannot answer the native
@@ -145,6 +160,7 @@ src/
   js/core/binding.js              typed binding over the C ABI (strings, freeing, heap buffers, statuses)
   js/core/worker.js               dedicated worker that owns one WebAssembly instance
   js/core/pool.js                 main-thread client: catalogue worker + conversion pool, cancel
+  js/core/loader.js               one streaming download + compile of the core, byte progress
   js/model/*.js                   pure, DOM-free state: queue, options, targets, format, limits, settings
   js/ui/*.js                      views: cards, picker, sheets, intro/spinner/progress (motion)
   js/platform/*.js                file I/O (drop, folders, paste, save, share) and PWA plumbing
@@ -156,10 +172,24 @@ tests/*.test.mjs
 **Binding → model → views.** Only `js/core` touches the C ABI; `js/model` is
 plain logic tested in Node; `js/ui` renders it.
 
+**First load.** The page never waits for the core to show itself: the
+catalogue ships as `catalogue.json` (counts, the formats browser and search
+work at once), and the shell is usable while `js/core/loader.js` downloads
+the core with `fetch` and compiles it while the bytes arrive
+(`WebAssembly.compileStreaming` over a counting stream). The home screen shows
+the brand progress mark filling with the bytes received ("12 MB of 35.9 MB";
+the total is the uncompressed size recorded at build time, because
+`Content-Length` is the compressed size when the host compresses), but only if
+loading takes longer than 250 ms, so a cached start does not flash it. Files
+added meanwhile wait for the core. A failed download says so (offline or not)
+with a Retry button, and retries by itself when the browser comes back online.
+The compiled `WebAssembly.Module` is posted to every worker, so the binary is
+downloaded and compiled once, not once per worker.
+
 **Threads.** The main thread never runs core code. One worker answers catalogue
 questions (formats, detection, targets, option schemas) and up to three
 conversion workers (half the logical cores) convert in parallel, each with
-its own instance. Files are posted as `Blob`s and streamed straight into the
+its own instance of the one compiled module. Files are posted as `Blob`s and streamed straight into the
 WebAssembly heap (no second full copy in JavaScript); results come back as
 transferred `ArrayBuffer`s.
 
@@ -181,10 +211,54 @@ otherwise a download. Save all: a folder picker where available, otherwise
 individual downloads. Share (Web Share with files) and Open (new tab) appear
 when the browser supports them for that type.
 
+**Long lists.** A source format can have over 400 targets and the catalogue
+has about 1,500 formats. The picker and the formats browser build their first
+rows at once and the rest in batches between frames (`js/ui/incremental.js`;
+the list carries `aria-busy` until complete, and keyboard navigation past the
+built rows builds the rest at once); off-screen browser groups skip layout and
+paint (`content-visibility`). Search ranks exact id or extension, then
+prefixes, then name words, then descriptions, and puts the group holding the
+best match first. The picker offers category jump links when it has four or
+more categories, and the browser filters by category.
+
 **Offline and updates.** `sw.js` precaches everything into
-`convertible-app-<digest>` and serves cache-first. A new deployment installs
-in the background; the page shows "A new version is available — Reload",
+`convertible-app-<digest>` and serves cache-first. It is registered only after
+the page has loaded the core, so a first visit does not download the 36 MB
+twice in parallel; the install then revalidates (`cache: 'no-cache'`), which a
+host with validators answers with 304. Every file is checked against its
+content hash from the build, so a deployment that lands mid-install cannot mix
+versions, and a file whose hash is unchanged is copied from the previous
+version's cache: an update that does not touch the core downloads only the
+few changed files. The page shows "A new version is available — Reload",
 which activates it and reloads. Old caches are deleted on activation.
+
+### File handlers
+
+Chromium accepts at most 300 file extensions across all of a manifest's
+`file_handlers` and reports the rest as a manifest error, so the build takes
+the most popular readable formats up to that limit (a format's extensions all
+or none), one handler per category with the extensions grouped by MIME type
+(`fileHandlers()` in `js/model/targets.js`). Every other readable format still
+opens through the file chooser, drag and drop, paste and sharing.
+
+### Keeping heavy codecs out of the first download (investigated)
+
+The core offers no CMake option to leave families out (every
+`src/families/*/family.cmake` is always included and `register_all.cpp`
+registers every family), so the web build cannot make a smaller "base"
+module without editing the core. Measured on this build (object sizes, a
+proxy for code size): the imported codecs are roughly a quarter of the code
+(libjxl 12.9 MB, libaom 6.8 MB, libvpx 3.8 MB, opencore-amr 2.6 MB, others
+under 2 MB each) and the in-house families the rest (archive, document,
+vector, office, geo and science 7–10 MB each). A media split would therefore
+save roughly a third of the first download. What the core would need: a cache
+variable such as `CVT_FAMILIES` (a list; default all) that includes only those
+families' `family.cmake` and generates the registration list, so that
+`apps/web/CMakeLists.txt` can link a base module (documents, data, archives,
+images without JPEG XL/AVIF) and a media module (audio, video, codecs) from
+the same sources. The app would load the media module on demand when a
+source or target is missing from the base module's `cvt_targets_json`; the
+catalogue the user sees would stay the union.
 
 **Installed app.** `file_handlers` + `launchQueue` open files from the OS;
 `share_target` receives shared files (the service worker holds them in a
@@ -212,3 +286,7 @@ no debug info, stripped. No pthreads.
 - Send `Content-Security-Policy` as in `tools/serve.mjs` (the page also
   carries it in a `<meta>` tag; `frame-ancestors` only works as a header).
 - Serve `sw.js` with `Cache-Control: no-cache` so updates are found promptly.
+- Compress `.wasm` (gzip or Brotli: 35.9 MB becomes about 13 MB with gzip)
+  and send validators (`ETag` or `Last-Modified`), so the service worker's
+  install revalidates the core the page has just downloaded instead of
+  fetching it again.

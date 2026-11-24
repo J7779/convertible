@@ -539,6 +539,7 @@ bool Automation::step(const Json& cmd, double now) {
         Json exts = Json::array();
         for (const auto& e : f.extensions) exts.push_back(e);
         j.set("extensions", exts);
+        j.set("mime", f.mime);
         j.set("readable", f.readable);
         j.set("writable", f.writable);
         formats.push_back(j);

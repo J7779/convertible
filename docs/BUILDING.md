@@ -64,7 +64,8 @@ code is compiled with warnings off.
 ```sh
 cmake -S . -B build/desktop -DCVT_BUILD_DESKTOP=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build/desktop -j 6 --config Release
-ctest --test-dir build/desktop -L desktop -C Release --output-on-failure
+ctest --test-dir build/desktop -L '^desktop$' -C Release --output-on-failure     # unit tests
+ctest --test-dir build/desktop -L desktop-e2e -C Release --output-on-failure   # end-to-end
 cmake --build build/desktop --config Release --target package
 ```
 
@@ -125,7 +126,7 @@ match, builds everything and publishes a GitHub Release:
 | --- | --- |
 | `convertible-cli-<v>-linux-x64.tar.gz`, `convertible-desktop-<v>-linux-x64.tar.gz`, `convertible-desktop_<v>_amd64.deb` | `tools/ci/desktop.sh`, `tools/ci/package-cli.sh` on ubuntu-24.04 |
 | `convertible-cli-<v>-macos-universal.tar.gz`, `Convertible-<v>-macos-arm64-x64.zip` | the same, with `CMAKE_OSX_ARCHITECTURES=arm64;x86_64` (unsigned, not notarised) |
-| `convertible-cli-<v>-windows-x64.zip`, `Convertible-<v>-windows-x64.zip` | the same on windows-latest (MSVC) |
+| `convertible-cli-<v>-windows-x64.zip`, `Convertible-<v>-windows-x64.zip` | the same on windows-2025 (MSVC) |
 | `convertible-android-<v>-<abi>-release-unsigned.apk`, `...-<abi>-debug.apk` | Gradle, `tools/ci/package-android.sh` |
 | `convertible-web-<v>.zip` | `apps/web/build.sh --docker`, `tools/ci/package-web.sh` |
 | `SHA256SUMS.txt` | `tools/ci/checksums.sh` |
@@ -150,7 +151,18 @@ launch. Right-click the app and choose *Open*, or remove the quarantine attribut
 
 Only GitHub's own actions are used, each pinned to a full commit SHA; everything else is a
 shell step that calls a script in `tools/ci/`, so every job can be reproduced locally (see
-[TESTING.md](TESTING.md#rehearsing-ci-locally)). No secrets are needed.
+[TESTING.md](TESTING.md#rehearsing-ci-locally)). No secrets are needed. Runner images are
+pinned (`ubuntu-24.04`, `macos-26`, `windows-2025`) so toolchains change only with the
+workflow files.
+
+The full core compiles every family and imported codec (libaom, libjxl, libvpx, libopus, ...)
+in every job that builds it, so those jobs keep their build directory in the Actions cache,
+keyed on a hash of `core/**`, `assets/fonts/**` and the CMake files (plus the app's own files
+for the web and desktop jobs). There is no compiler cache: after a restore,
+`tools/ci/build-cache.sh restore <dir>` back-dates exactly the sources whose content is
+unchanged since the cache was saved (it records `git ls-files -s` in the build directory), so
+make and MSBuild rebuild only what changed and what depends on it. Caches are saved after a
+successful build, even when tests then fail. Release builds always start clean.
 
 **GitHub Pages** must be enabled once before `pages.yml` can deploy: repository *Settings ->
 Pages -> Build and deployment -> Source: GitHub Actions*. Until then the workflow stops at its

@@ -26,7 +26,7 @@ add_dependencies(convertible_desktop_e2e convertible_desktop)
 # One CTest entry per group so failures are easy to place and groups can run in parallel.
 set(CVD_E2E_GROUPS
   intro add-files queue picker options convert cancel errors formats settings
-  keyboard layout themes text a11y catalog window)
+  keyboard layout themes text a11y catalog media window)
 set(CVD_E2E_WORK "${CMAKE_CURRENT_BINARY_DIR}/e2e")
 foreach(_group IN LISTS CVD_E2E_GROUPS)
   add_test(NAME desktop_e2e_${_group}

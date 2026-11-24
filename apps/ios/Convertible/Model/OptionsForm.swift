@@ -16,6 +16,9 @@ enum Preset: String, CaseIterable, Identifiable, Codable {
 enum OptionControl: Equatable {
     case slider(min: Double, max: Double, step: Double)
     case stepper(min: Int, max: Int)
+    /// A numeric field (typed, clamped): unbounded options and ranges too wide
+    /// for a slider, such as a sample rate of 0...384000.
+    case number(min: Double?, max: Double?, integer: Bool)
     case toggle
     case menu([String])
     case textField
@@ -61,14 +64,25 @@ struct OptionsForm: Equatable {
         case .string:
             return .textField
         case .int:
-            let lo = Int(spec.min ?? 0), hi = Int(spec.max ?? 100)
-            if spec.min == nil || spec.max == nil { return .stepper(min: lo, max: spec.max == nil ? Int.max / 2 : hi) }
-            return hi - lo <= 20 ? .stepper(min: lo, max: hi) : .slider(min: Double(lo), max: Double(hi), step: 1)
+            guard let lo = spec.min, let hi = spec.max, hi > lo else {
+                return .number(min: spec.min, max: spec.max, integer: true)
+            }
+            if hi - lo <= Double(stepperMaxSteps) { return .stepper(min: Int(lo), max: Int(hi)) }
+            if hi - lo <= Double(sliderMaxSteps) { return .slider(min: lo, max: hi, step: 1) }
+            return .number(min: lo, max: hi, integer: true)
         case .float:
-            let lo = spec.min ?? 0, hi = spec.max ?? 1
+            guard let lo = spec.min, let hi = spec.max, hi > lo else {
+                return .number(min: spec.min, max: spec.max, integer: false)
+            }
             return .slider(min: lo, max: hi, step: (hi - lo) / 100)
         }
     }
+
+    /// Integer ranges up to this many steps use a stepper.
+    static let stepperMaxSteps = 20
+    /// Integer ranges up to this many steps use a slider; wider ones a number field
+    /// (a slider over thousands of values cannot hit a particular one).
+    static let sliderMaxSteps = 1000
 
     /// The effective value of an option: the chosen one or the schema default.
     static func value(of spec: OptionSpec, in values: OptionValues) -> OptionValue? {

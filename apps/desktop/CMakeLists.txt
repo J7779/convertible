@@ -3,7 +3,8 @@
 # Built from the repository root:
 #   cmake -S . -B build/desktop -DCVT_BUILD_DESKTOP=ON -DCMAKE_BUILD_TYPE=Release
 #   cmake --build build/desktop -j 6
-#   ctest --test-dir build/desktop -L desktop --output-on-failure
+#   ctest --test-dir build/desktop -L '^desktop$' --output-on-failure
+#   ctest --test-dir build/desktop -L desktop-e2e --output-on-failure
 #
 # Only the OS SDKs are used: Cocoa (macOS), Win32/COM/Shell (Windows), Xlib +
 # XShm (Linux). Fonts, design tokens, the motion storyboard and licence texts

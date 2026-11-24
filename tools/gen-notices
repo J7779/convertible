@@ -5,8 +5,12 @@
 Collected from the repository, never typed by hand:
   - every imported component under core/src/imported/<name>/: its VENDOR.json
     (name, version, licence, upstream URL, whether files were modified) and the full
-    text of its licence, NOTICE, PATENTS, AUTHORS and CREDITS files;
-  - the bundled fonts in assets/fonts/ (SIL Open Font License texts, *-LICENSE.txt);
+    text of its licence, NOTICE and PATENTS files. Contributor lists (AUTHORS, CREDITS,
+    THANKS, CONTRIBUTORS) are referenced by path, not reproduced, and e-mail addresses are
+    removed from every text: the notices carry copyright lines and licence terms, not
+    address lists;
+  - the bundled fonts in assets/fonts/ (SIL Open Font License texts, *-LICENSE.txt), which
+    the apps ship and the core embeds (the families whose family.cmake reads them);
   - the libraries the Android app links at run time, read from
     apps/android/gradle/libs.versions.toml and apps/android/app/build.gradle.kts.
 
@@ -33,7 +37,10 @@ FONTS = REPO / "assets" / "fonts"
 ANDROID_TOML = REPO / "apps" / "android" / "gradle" / "libs.versions.toml"
 ANDROID_BUILD = REPO / "apps" / "android" / "app" / "build.gradle.kts"
 
-NOTICE_FILES = re.compile(r"^(LICEN[CS]E|COPYING|UNLICENSE|NOTICE|PATENTS|AUTHORS|CREDITS)([._-].*)?$", re.I)
+NOTICE_FILES = re.compile(r"^(LICEN[CS]E|COPYING|UNLICENSE|NOTICE|PATENTS|AUTHORS|CREDITS|THANKS|CONTRIBUTORS)([._-].*)?$", re.I)
+CONTRIBUTOR_LISTS = re.compile(r"^(AUTHORS|CREDITS|THANKS|CONTRIBUTORS)([._-].*)?$", re.I)
+# An e-mail address with its optional <...> or (...) wrapper and the blank before it.
+EMAIL = re.compile(r"[ \t]*[<(]?(?:mailto:)?[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}[>)]?")
 # Licences of the Android libraries by Maven group prefix (all published by their projects under these terms).
 ANDROID_LICENCES = [
     ("androidx.", "Apache-2.0", "https://developer.android.com/jetpack/androidx"),
@@ -45,6 +52,11 @@ ANDROID_LICENCES = [
 def read_text(path: Path) -> str:
     text = path.read_bytes().decode("utf-8", "replace").replace("\r\n", "\n").replace("\r", "\n")
     return text.strip("\n")
+
+
+def strip_emails(text: str) -> str:
+    """Removes e-mail addresses (names and copyright lines stay)."""
+    return "\n".join(EMAIL.sub("", line).rstrip() for line in text.split("\n"))
 
 
 def fence(text: str) -> str:
@@ -83,24 +95,52 @@ def imported_sections() -> list[str]:
                        key=lambda p: (len(p.relative_to(root).parts), p.relative_to(root).as_posix().lower()))
         if not any(re.match(r"^(LICEN[CS]E|COPYING|UNLICENSE)", p.name, re.I) for p in files if p.parent == root):
             sys.exit(f"gen-notices: {rel} has no licence file")
+        credits = [p for p in files if CONTRIBUTOR_LISTS.match(p.name)]
         for path in files:
-            out += ["", f"`{path.relative_to(root).as_posix()}`", "", fence(read_text(path))]
+            if path in credits:
+                continue
+            out += ["", f"`{path.relative_to(root).as_posix()}`", "", fence(strip_emails(read_text(path)))]
+        if credits:
+            out += ["", "Contributors are credited in " + ", ".join(
+                f"`{rel}/{p.relative_to(root).as_posix()}`" for p in credits) + " in the source tree."]
         out.append("")
     return out
+
+
+def font_embedders() -> dict[str, list[str]]:
+    """font file name -> core families whose family.cmake embeds it into the library."""
+    users: dict[str, list[str]] = {}
+    families = REPO / "core" / "src" / "families"
+    if not families.is_dir():
+        return users
+    for cmake in sorted(families.glob("*/family.cmake")):
+        text = cmake.read_text(encoding="utf-8", errors="replace")
+        if "assets/fonts" not in text:
+            continue
+        for name in sorted(set(re.findall(r"([A-Za-z0-9_-]+\.(?:ttf|otf))", text))):
+            users.setdefault(name, []).append(cmake.parent.name)
+    return users
 
 
 def font_sections() -> list[str]:
     out: list[str] = []
     if not FONTS.is_dir():
         return out
+    embedded = font_embedders()
     for licence in sorted(FONTS.glob("*-LICENSE.txt")):
         family = licence.name[: -len("-LICENSE.txt")]
         files = sorted(p.name for p in FONTS.iterdir() if p.suffix.lower() in (".ttf", ".otf", ".woff2")
                        and p.name.startswith(family))
-        out += [f"### {family}", "",
-                "- Licence: SIL Open Font License 1.1",
-                "- Files: " + ", ".join(f"`assets/fonts/{name}`" for name in files),
-                "", fence(read_text(licence)), ""]
+        lines = [f"### {family}", "",
+                 "- Licence: SIL Open Font License 1.1",
+                 "- Files: " + ", ".join(f"`assets/fonts/{name}`" for name in files)]
+        inside = sorted({fam for name in files for fam in embedded.get(name, [])})
+        if inside:
+            lines.append("- Embedded in the core library (every app and the CLI) by the "
+                         + ", ".join(f"`{fam}`" for fam in inside)
+                         + (" families" if len(inside) > 1 else " family")
+                         + ": " + ", ".join(f"`{name}`" for name in files if name in embedded))
+        out += [*lines, "", fence(strip_emails(read_text(licence))), ""]
     return out
 
 
@@ -165,7 +205,7 @@ def render() -> str:
         "at build time. Each directory carries a `VENDOR.json` and the upstream licence files.",
         "",
         *imported_sections(),
-        "## Fonts (bundled with the apps)",
+        "## Fonts (bundled with the apps and embedded in the core)",
         "",
         *font_sections(),
     ]

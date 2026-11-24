@@ -48,8 +48,14 @@ object TargetRanking {
         targets.filter { !it.compress }.take(limit)
 
     /** The "Compress" choices for a file: the same-format re-encode first, then archive formats. */
-    fun compressTargets(targets: List<TargetInfo>): List<TargetInfo> =
-        targets.filter { it.compress } + targets.filter { !it.compress && it.category == "archive" }
+    fun compressTargets(targets: List<TargetInfo>): List<TargetInfo> {
+        // Prefer the core's explicit roles when it sends them; otherwise the compress flag and the archive category.
+        if (targets.any { it.role != null }) {
+            return targets.filter { it.compress || it.role == "compress" } +
+                targets.filter { !it.compress && it.role == "archive" }
+        }
+        return targets.filter { it.compress } + targets.filter { !it.compress && it.category == "archive" }
+    }
 
     /**
      * Search by id, extension or name, case-insensitively. Exact id/extension matches first, then prefixes, then

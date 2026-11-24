@@ -65,9 +65,9 @@ have no sanitizer job.
 
 | App | Unit tests | End-to-end |
 | --- | --- | --- |
-| Desktop | `ctest --test-dir build/desktop -L desktop -C Release --output-on-failure`: `desktop_unit_tests` and `desktop_automation_smoke` (the real executable in headless automation mode) | label `desktop-e2e` when registered; `tools/ci/desktop.sh` runs it (under Xvfb on Linux) |
-| Web | `apps/web/test.sh` (Node's built-in runner, no packages; real conversions through `convertible.wasm`) | `apps/web/e2e.sh` against a local Chrome, when present |
-| Android | `./gradlew testDebugUnitTest lint` (JVM, headless) | `./gradlew connectedDebugAndroidTest` on a device or emulator, plus `apps/android/e2e.sh` when present |
+| Desktop | `ctest --test-dir build/desktop -L '^desktop$' -C Release --output-on-failure`: `desktop_unit_tests` and `desktop_automation_smoke` (the real executable in headless automation mode). `-L` is a regular expression: anchor it, or the end-to-end groups run too | `ctest --test-dir build/desktop -L desktop-e2e -C Release --output-on-failure`; `tools/ci/desktop.sh` runs both (the end-to-end suite under Xvfb on Linux) |
+| Web | `apps/web/test.sh` (Node's built-in runner, no packages; real conversions through `convertible.wasm`) | `E2E_REQUIRE_BROWSER=1 apps/web/e2e.sh` against a local Chrome |
+| Android | `./gradlew testDebugUnitTest lint` (JVM, headless) | `./gradlew connectedDebugAndroidTest` on a device or emulator, plus `apps/android/e2e.sh` |
 | iOS | `xcodebuild test -project apps/ios/Convertible.xcodeproj -scheme Convertible -destination 'platform=iOS Simulator,name=iPhone 18 Pro' CODE_SIGNING_ALLOWED=NO` | XCUITest identifiers are listed in `apps/ios/README.md` |
 
 Android instrumented tests need an emulator. `tools/ci/android-emulator.sh up` installs the
@@ -94,8 +94,9 @@ apps/web/build.sh --docker && apps/web/test.sh   # the web job
 ```
 
 Differences from GitHub's runners: a minimal image rather than the full runner image, the
-distribution's CMake (3.28) rather than the runner's newer one, no compiler cache, and memory
-capped with `--memory` (default 6 GB, `CVT_DOCKER_MEMORY`). Ubuntu 24.04's own MinGW is GCC 13,
+distribution's CMake (3.28) rather than the runner's newer one, no build-directory cache, and
+memory capped with `--memory` (default 6 GB, `CVT_DOCKER_MEMORY`). No flags are passed in from
+the host: the jobs build with exactly what the CMake files say. Ubuntu 24.04's own MinGW is GCC 13,
 which cannot compile the core, hence Debian trixie for the MinGW smoke check. macOS jobs are
 rehearsed by running `tools/ci/core.sh dev` and `tools/ci/desktop.sh` on a Mac; Windows/MSVC
 can only be exercised on Windows or in CI.
@@ -104,9 +105,12 @@ Reading a failed CI run: `gh run view <run-id> --log-failed`; see the `ci-triage
 
 ## Repository checks
 
-Run these before every push (CI's hygiene job runs them too):
+Run these before every push. CI's hygiene job runs the first four plus `bash -n` on the
+scripts and actionlint on the workflows; the formats check needs a built CLI, so it runs in
+the `core / linux-gcc14` job.
 
 ```sh
+tools/privacy-audit --self-test     # every rule still fires on planted samples
 tools/privacy-audit --history       # personal data, machine details, secrets, commit identities
 tools/sync-skills --check           # .claude/skills mirrors .agents/skills
 tools/gen-notices --check           # NOTICES.md matches core/src/imported and assets/fonts

@@ -91,6 +91,33 @@ data class QueueState(
             }
 }
 
+/** The queue's bulk actions, in display order. */
+enum class QueueAction { CANCEL_ALL, CONVERT_ALL, SAVE_ALL, SHARE_ALL }
+
+/**
+ * Bulk actions offered for the queue, in display order. `limit` is how many fit (two in the phone's
+ * bottom bar): they are chosen by importance, so "Cancel all" is never the one left out while
+ * something is running (it used to be dropped by taking the last two of four buttons).
+ */
+fun QueueState.queueActions(limit: Int = Int.MAX_VALUE): List<QueueAction> {
+    val active = activeCount
+    val convertible = convertibleCount
+    val done = doneItems.size
+    val offered = buildList {
+        if (active > 0) add(QueueAction.CANCEL_ALL)
+        if (convertible > 0) add(QueueAction.CONVERT_ALL)
+        if (done > 1 || (done > 0 && convertible == 0 && active == 0)) {
+            add(QueueAction.SAVE_ALL)
+            add(QueueAction.SHARE_ALL)
+        }
+    }
+    if (offered.size <= limit) return offered
+    // Importance: stop what runs, then start what waits, then keep results.
+    val priority = listOf(QueueAction.CANCEL_ALL, QueueAction.CONVERT_ALL, QueueAction.SAVE_ALL, QueueAction.SHARE_ALL)
+    val kept = priority.filter { it in offered }.take(limit).toSet()
+    return offered.filter { it in kept }
+}
+
 enum class ThemeMode { SYSTEM, DARK, LIGHT }
 
 data class AppSettings(

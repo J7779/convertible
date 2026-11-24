@@ -192,13 +192,30 @@ TEST_CASE("desktop/state: options from a schema, presets and coercion") {
   CHECK(coerce_option(name, Json("t")).str() == "t");
 }
 
+TEST_CASE("desktop/state: wide numeric ranges are steppers with round steps") {
+  const auto spec = [](OptionType type, std::optional<double> mn, std::optional<double> mx) {
+    return OptionSpec{"k", "K", type, Json(0), mn, mx, {}, "", false};
+  };
+  CHECK(numeric_control(spec(OptionType::Int, 1.0, 100.0)) == NumericControl::Slider);
+  CHECK(numeric_control(spec(OptionType::Int, 0.0, 1000.0)) == NumericControl::Slider);
+  CHECK(numeric_control(spec(OptionType::Int, 0.0, 2000.0)) == NumericControl::Stepper);     // bit rate
+  CHECK(numeric_control(spec(OptionType::Int, 0.0, 384000.0)) == NumericControl::Stepper);   // sample rate
+  CHECK(numeric_control(spec(OptionType::Int, std::nullopt, 10.0)) == NumericControl::Stepper);
+  CHECK(numeric_control(spec(OptionType::Float, 0.0, 1e6)) == NumericControl::Slider);       // bounded float
+  CHECK(numeric_control(spec(OptionType::Float, std::nullopt, std::nullopt)) == NumericControl::Stepper);
+  CHECK(stepper_step(spec(OptionType::Int, 0.0, 2000.0)) == 10.0);
+  CHECK(stepper_step(spec(OptionType::Int, 0.0, 384000.0)) == 1000.0);
+  CHECK(stepper_step(spec(OptionType::Int, 0.0, 20.0)) == 1.0);
+  CHECK(stepper_step(spec(OptionType::Int, std::nullopt, std::nullopt)) == 1.0);
+}
+
 TEST_CASE("desktop/state: target grouping, ordering and search") {
   std::vector<TargetInfo> targets = {
-      {"base64", "Base64 text", "encoding", {"b64"}, "", false, false},
-      {"txt", "Plain text", "document", {"txt"}, "", false, true},
-      {"hex", "Hexadecimal text", "encoding", {"hex"}, "", false, false},
-      {"md", "Markdown", "document", {"md", "markdown"}, "", false, false},
-      {"zip", "ZIP archive", "archive", {"zip"}, "", false, false},
+      {"base64", "Base64 text", "encoding", {"b64"}, "", false, false, ""},
+      {"txt", "Plain text", "document", {"txt"}, "", false, true, ""},
+      {"hex", "Hexadecimal text", "encoding", {"hex"}, "", false, false, ""},
+      {"md", "Markdown", "document", {"md", "markdown"}, "", false, false, ""},
+      {"zip", "ZIP archive", "archive", {"zip"}, "", false, false, ""},
   };
   const auto groups = group_targets(targets, "document", "");
   REQUIRE(groups.size() == 3u);
@@ -213,6 +230,13 @@ TEST_CASE("desktop/state: target grouping, ordering and search") {
   CHECK(group_targets(targets, "document", "zzz").empty());
   CHECK(default_target(targets) == "base64");  // the first non-compress entry
   CHECK(archive_targets(targets).size() == 1u);
+  {
+    // With roles (newer cores) the role decides: an "extract" archive target is not offered.
+    std::vector<TargetInfo> roled = targets;
+    for (auto& t : roled) t.role = t.category == "archive" ? "archive" : "";
+    roled.push_back(TargetInfo{"unpacked", "Unpacked", "archive", {"d"}, "", false, false, "extract"});
+    CHECK(archive_targets(roled).size() == 1u);
+  }
   CHECK(output_file_name("photo.jpeg", "png", false) == "photo.png");
   CHECK(output_file_name("photo.png", "png", true) == "photo (compressed).png");
   CHECK(output_file_name("backup.tar.gz", "zip", false) == "backup.zip");

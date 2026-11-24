@@ -1,5 +1,6 @@
 package app.convertible.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,6 +58,7 @@ import app.convertible.ui.components.TextInput
 import app.convertible.ui.theme.AppTheme
 
 /** Searchable catalogue of every format the core knows, by category, with read/write indicators. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FormatsScreen(viewModel: ConverterViewModel, onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -99,7 +101,7 @@ fun FormatsScreen(viewModel: ConverterViewModel, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(d.space3),
                 ) {
                     item { Chip(stringResource(R.string.formats_all), category == null, { category = null }) }
-                    items(catalogue.categories) { c ->
+                    items(catalogue.categories, key = { it }) { c ->
                         Chip(
                             categoryName(c),
                             category == c,
@@ -118,9 +120,13 @@ fun FormatsScreen(viewModel: ConverterViewModel, onBack: () -> Unit) {
             }
             grouped.forEach { (cat, formats) ->
                 if (cat != null) {
-                    item(key = "h-$cat") {
+                    // Pinned while its (possibly hundreds of) rows scroll under it.
+                    stickyHeader(key = "h-$cat", contentType = "header") {
                         Row(
-                            Modifier.padding(start = d.space6, end = d.space6, top = d.space7, bottom = d.space3),
+                            Modifier
+                                .fillMaxWidth()
+                                .background(colors.background)
+                                .padding(start = d.space6, end = d.space6, top = d.space7, bottom = d.space3),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(colors.category(cat)))
@@ -131,7 +137,7 @@ fun FormatsScreen(viewModel: ConverterViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
-                items(formats, key = { "f-${it.id}" }) { FormatRow(it) }
+                items(formats, key = { "f-${it.id}" }, contentType = { "format" }) { FormatRow(it) }
             }
             item(key = "note") {
                 Row(Modifier.padding(horizontal = d.space6, vertical = d.space7).widthIn(max = 760.dp)) {

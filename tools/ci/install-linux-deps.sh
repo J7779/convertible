@@ -9,13 +9,12 @@
 #   tools/ci/install-linux-deps.sh clang     Clang 18 + libc++ 18 (sanitizer job)
 #   tools/ci/install-linux-deps.sh desktop   GCC 14 + X11 headers + Xvfb (desktop job)
 #   tools/ci/install-linux-deps.sh hygiene   Python 3 + git (repository checks)
-#   tools/ci/install-linux-deps.sh ccache    compiler cache (CI only)
 #
 # Several sets may be given at once. Packages come from the distribution archive only.
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
-  sed -n '4,14p' "$0" >&2
+  sed -n '4,13p' "$0" >&2
   exit 2
 fi
 
@@ -26,7 +25,6 @@ for set in "$@"; do
     clang) packages+=(clang-18 libc++-18-dev libc++abi-18-dev libclang-rt-18-dev llvm-18 cmake make) ;;
     desktop) packages+=(g++-14 gcc-14 cmake make libx11-dev libxext-dev xvfb x11-apps dpkg-dev file) ;;
     hygiene) packages+=(python3 git) ;;
-    ccache) packages+=(ccache) ;;
     *) echo "install-linux-deps: unknown set '${set}'" >&2; exit 2 ;;
   esac
 done

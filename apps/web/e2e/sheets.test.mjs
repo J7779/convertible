@@ -32,6 +32,9 @@ suite('formats browser and settings', () => {
     const page = await openApp(ctx, server());
     await page.click(tid('open-formats'));
     await page.waitForSelector(FORMATS);
+    // Long lists render incrementally: the first rows at once, the rest between frames.
+    assert.ok((await rows(page)).length > 0, 'rows appear at once');
+    await page.waitForGone(`${FORMATS} [data-testid="formats-results"][aria-busy="true"]`);
     const all = await rows(page);
     assert.deepEqual([...all].sort(), formats.map((f) => f.id).sort(), 'every format exactly once');
     const summary = await page.text(`${FORMATS} .sheet-sub`);
@@ -164,7 +167,9 @@ suite('formats browser and settings', () => {
     const licences = await page.evaluate(() =>
       [...document.querySelectorAll('dialog[data-testid="licences-dialog"] details.licence')].map((d) => ({ title: d.querySelector('.licence-title').textContent, size: d.querySelector('pre').textContent.length })),
     );
-    assert.equal(licences.length, 3);
+    assert.equal(licences.length, 4);
+    // The core contains imported codecs and fonts: their notices ship with the app.
+    assert.ok(licences.some((l) => l.title === 'Third-party components' && l.size > 10_000), 'the third-party notices');
     for (const l of licences) assert.ok(l.size > 500, `${l.title} has its full text`);
     await page.click(tid('licences-dialog-close'));
     await page.waitForGone('dialog[data-testid="licences-dialog"][open]');

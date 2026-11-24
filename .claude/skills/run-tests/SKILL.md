@@ -31,18 +31,21 @@ assertions.
 ```sh
 cmake -S . -B build/desktop -DCVT_BUILD_DESKTOP=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build/desktop -j 6 --config Release
-ctest --test-dir build/desktop -L desktop -C Release --output-on-failure
+ctest --test-dir build/desktop -L '^desktop$' -C Release --output-on-failure     # unit tests
+ctest --test-dir build/desktop -L desktop-e2e -C Release --output-on-failure   # end-to-end
 ```
 
-`tools/ci/desktop.sh` does the same and also runs the `desktop-e2e` label when it exists
-(under `xvfb-run` on Linux) and packages the app.
+`-L` is a regular expression, so the unit tests need the anchored `'^desktop$'` (a bare
+`-L desktop` also runs the end-to-end groups). `tools/ci/desktop.sh` does all of this (the
+end-to-end suite under `xvfb-run` on Linux) and packages the app.
+`CVT_DESKTOP_STEPS=build tools/ci/desktop.sh` only configures and builds.
 
 ## Web
 
 ```sh
 apps/web/build.sh --docker
 apps/web/test.sh
-[ -f apps/web/e2e.sh ] && apps/web/e2e.sh     # end-to-end suite, when present
+E2E_REQUIRE_BROWSER=1 apps/web/e2e.sh        # end-to-end suite in a local Chrome
 ```
 
 ## Android

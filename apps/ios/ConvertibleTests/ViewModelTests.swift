@@ -282,6 +282,30 @@ final class OptionsFormTests: XCTestCase {
         XCTAssertNil(specs[1].min)
         XCTAssertTrue(specs[1].isAdvanced)
     }
+
+    func testWideAndUnboundedRangesUseANumberField() {
+        let rate = OptionSpec(key: "sample_rate", label: "Sample rate", type: .int, defaultValue: .int(0), min: 0, max: 384_000)
+        XCTAssertEqual(OptionsForm.control(for: rate), .number(min: 0, max: 384_000, integer: true))
+        let bitrate = OptionSpec(key: "bitrate_kbps", label: "Bitrate", type: .int, defaultValue: .int(0), min: 0, max: 1000)
+        XCTAssertEqual(OptionsForm.control(for: bitrate), .slider(min: 0, max: 1000, step: 1))
+        let open = OptionSpec(key: "width", label: "Width", type: .int, defaultValue: .int(0), min: 0)
+        XCTAssertEqual(OptionsForm.control(for: open), .number(min: 0, max: nil, integer: true))
+        let gamma = OptionSpec(key: "gamma", label: "Gamma", type: .float, defaultValue: .float(1))
+        XCTAssertEqual(OptionsForm.control(for: gamma), .number(min: nil, max: nil, integer: false))
+    }
+
+    func testNewerCoreJSONStillDecodes() throws {
+        // Unknown fields are ignored, a new additive "role" is read, missing fields get
+        // defaults, and an entry of an unexpected shape is skipped, not fatal.
+        let json = #"[{"id":"zip","name":"ZIP","category":"archive","extensions":["zip"],"mime":"application/zip","lossy":false,"compress":false,"role":"archive","future":{"x":1}},{"id":"png"},42,{"name":"no id"},{"id":"tar.gz","category":"archive","role":"extract"}]"#
+        let targets = try JSONDecoder().decode(LossyArray<TargetFormat>.self, from: Data(json.utf8)).elements
+        XCTAssertEqual(targets.map(\.id), ["zip", "png", "tar.gz"])
+        XCTAssertEqual(targets[0].role, "archive")
+        XCTAssertNil(targets[1].role)
+        XCTAssertEqual(targets[1].category, "other")
+        XCTAssertEqual(TargetCatalog.compressTarget(targets)?.id, "zip")
+        XCTAssertNil(TargetCatalog.compressTarget([targets[2]]), "an extract target never compresses")
+    }
 }
 
 final class TargetCatalogTests: XCTestCase {
@@ -340,6 +364,19 @@ final class TargetCatalogTests: XCTestCase {
         let encodings = FormatsBrowser.sections(formats, query: "hex")
         XCTAssertTrue(encodings.flatMap(\.formats).contains { $0.id == "hex" })
         XCTAssertTrue(FormatsBrowser.sections(formats, query: "Encodings").contains { $0.id == "encoding" })
+        // A search puts the best match first, whatever its category.
+        if let pdf = formats.first(where: { $0.id == "pdf" }) {
+            XCTAssertEqual(FormatsBrowser.sections(formats, query: ".pdf").first?.formats.first?.id, pdf.id)
+        }
+        // The category filter keeps one category.
+        let images = FormatsBrowser.sections(formats, category: "image")
+        XCTAssertEqual(images.map(\.id), ["image"])
+        XCTAssertEqual(images[0].formats.count, FormatsBrowser.categories(formats).first { $0.id == "image" }?.count)
+    }
+
+    func testLargeCatalogueSearchIsFast() {
+        let formats = ConvertibleCore.formats()
+        measure { _ = FormatsBrowser.sections(formats, query: "mp") }
     }
 }
 

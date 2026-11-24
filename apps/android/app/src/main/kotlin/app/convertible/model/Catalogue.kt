@@ -34,6 +34,12 @@ data class TargetInfo(
     val mime: String,
     val lossy: Boolean,
     val compress: Boolean,
+    /**
+     * Optional, additive: what the target does for this source when the core says so (for example "compress",
+     * "archive" or "extract"). Null when the core does not send it; the app then falls back to [compress] and the
+     * category. Unknown values are kept and ignored.
+     */
+    val role: String? = null,
 ) {
     val label: String get() = id.uppercase()
 }
@@ -96,6 +102,7 @@ class Catalogue(val formats: List<FormatInfo>) {
                 mime = o.string("mime"),
                 lossy = o.bool("lossy"),
                 compress = o.bool("compress"),
+                role = o.string("role").ifEmpty { null },
             )
         }
 

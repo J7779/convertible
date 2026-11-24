@@ -13,6 +13,7 @@ The repository must contain no personal or machine data, in files or in history.
 1. Run it on the tree and the history:
    ```sh
    tools/privacy-audit --history
+   tools/privacy-audit --self-test   # after changing the tool: every rule still fires
    ```
 2. Add words that must never appear but must not be written into the repository either (your
    real name, user name, host name, a private project name) at run time only:
@@ -28,8 +29,11 @@ The repository must contain no personal or machine data, in files or in history.
      carry the marker `privacy-audit: allow`; use it sparingly and never for real data.
    - **signing**: never commit keystores, `.p12`, provisioning profiles, `.pem`/`.key` or
      `local.properties`; they are also in `.gitignore`.
-   - **e-mail**: addresses are allowed only in `core/src/imported/**`, licence files and the
-     generated `NOTICES.md`; use `example.com` in examples.
+   - **e-mail**: addresses are allowed only in `core/src/imported/**` and licence/credit files
+     (`LICENSE*`, `AUTHORS*`, `CREDITS*`, ...); use `example.com` in examples. `NOTICES.md` is
+     checked too: `tools/gen-notices` strips addresses and only references contributor lists.
+   - **private-key / signing in fixtures**: key, certificate and keystore files under
+     `core/tests/data/**` are test data for the formats that carry them and are allowed.
    - **identity**: commits must use the GitHub noreply address
      (`git config user.email <id>+<login>@users.noreply.github.com`).
    - **trailer**: commit messages carry no co-author, "generated with/by" or tool-attribution

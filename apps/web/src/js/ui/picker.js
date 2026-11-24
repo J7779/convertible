@@ -4,6 +4,10 @@
 import { categoryKey, organizeTargets, searchEntries } from '../model/targets.js';
 import { formatLabel } from '../model/format.js';
 import { clear, h, icon, uniqueId } from './dom.js';
+import { createIncrementalRenderer } from './incremental.js';
+
+/** Category jump links appear when the list has at least this many groups. */
+const JUMP_MIN_GROUPS = 4;
 
 let dialog = null;
 
@@ -41,8 +45,9 @@ function optionRow(target, { current, idPrefix }) {
  * @param {string|null} o.current
  * @param {string|null} o.sourceCategory
  * @param {Map} o.formats            catalogue index (popularity)
+ * @param {boolean} [o.suggest]      offer a "Suggested" group for long lists
  */
-export function openPicker({ title, subtitle = '', targets, current = null, sourceCategory = null, formats = new Map() }) {
+export function openPicker({ title, subtitle = '', targets, current = null, sourceCategory = null, formats = new Map(), suggest = true }) {
   const dlg = ensureDialog();
   clear(dlg);
   const idPrefix = uniqueId('opt');
@@ -63,6 +68,9 @@ export function openPicker({ title, subtitle = '', targets, current = null, sour
   const list = h('div', { class: 'picker-list', id: listId, role: 'listbox', 'aria-label': title });
   const empty = h('p', { class: 'picker-empty', hidden: true }, 'No matching formats.');
   const closeBtn = h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', 'data-testid': 'picker-close' }, icon('close'));
+  const jumps = h('nav', { class: 'picker-jumps', 'aria-label': 'Categories', hidden: true, 'data-testid': 'picker-jumps' });
+  const scroller = h('div', { class: 'picker-scroll' }, list, empty);
+  const rows = createIncrementalRenderer(list);
 
   dlg.append(
     h(
@@ -72,59 +80,120 @@ export function openPicker({ title, subtitle = '', targets, current = null, sour
       closeBtn,
     ),
     h('div', { class: 'picker-search-wrap' }, icon('search', { size: 18 }), search),
-    h('div', { class: 'picker-scroll' }, list, empty),
+    jumps,
+    scroller,
   );
+
+  // The organised (unsearched) list never changes while the picker is open.
+  const org = organizeTargets(targets, { sourceCategory, formats });
+  const groups = [];
+  if (org.compress) groups.push({ key: 'compress', label: 'Same format, smaller', items: [org.compress] });
+  if (suggest && org.count > 10 && org.suggested.length) groups.push({ key: 'suggested', label: 'Suggested', items: org.suggested });
+  for (const g of org.groups) groups.push({ key: g.category, label: g.label, items: g.targets, category: g.category });
 
   let active = -1;
   const options = () => [...list.querySelectorAll('[role="option"]')];
-  const setActive = (i) => {
-    const all = options();
+  const setActive = (i, { scroll = true } = {}) => {
+    let all = options();
+    if (i >= all.length && rows.busy) {
+      rows.flush();
+      all = options();
+    }
     if (!all.length) {
       active = -1;
       search.removeAttribute('aria-activedescendant');
       return;
     }
-    active = Math.max(0, Math.min(all.length - 1, i));
-    all.forEach((o, n) => o.classList.toggle('is-active', n === active));
+    const next = Math.max(0, Math.min(all.length - 1, i));
+    if (all[active]) all[active].classList.remove('is-active');
+    active = next;
+    all[active].classList.add('is-active');
     search.setAttribute('aria-activedescendant', all[active].id);
-    all[active].scrollIntoView({ block: 'nearest' });
+    if (scroll) all[active].scrollIntoView({ block: 'nearest' });
+  };
+
+  const renderGroups = (sections) => {
+    const jobs = [];
+    const seen = new Set();
+    for (const g of sections) {
+      const labelId = uniqueId('grp');
+      const ul = h('ul', { role: 'group', class: 'picker-group', 'aria-labelledby': labelId });
+      // An id appears once per list; suggested duplicates get their own ids.
+      const dup = new Set(g.items.filter((t) => seen.has(t.id)).map((t) => t.id));
+      for (const t of g.items) seen.add(t.id);
+      list.append(
+        h(
+          'div',
+          { class: 'picker-group-wrap', role: 'none', 'data-group': g.key },
+          h('p', { class: 'picker-group-label', id: labelId, role: 'presentation' }, g.label),
+          ul,
+        ),
+      );
+      jobs.push({ parent: ul, items: g.items, make: (t) => optionRow(t, { current, idPrefix: dup.has(t.id) ? `${idPrefix}-${g.key}` : idPrefix }) });
+    }
+    return jobs;
+  };
+
+  const renderJumps = (visible) => {
+    clear(jumps);
+    const cats = groups.filter((g) => g.category);
+    jumps.hidden = !visible || cats.length < JUMP_MIN_GROUPS;
+    if (jumps.hidden) return;
+    for (const g of cats) {
+      jumps.append(
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'chip',
+            'data-cat': categoryKey(g.category),
+            'data-testid': `picker-jump-${g.category}`,
+            tabindex: '-1', // the search field keeps keyboard focus; arrows move through the list
+            onClick: () => {
+              rows.flush();
+              list.querySelector(`[data-group="${CSS.escape(g.key)}"]`)?.scrollIntoView({ block: 'start' });
+              const first = list.querySelector(`[data-group="${CSS.escape(g.key)}"] [role="option"]`);
+              if (first) setActive(options().indexOf(first), { scroll: false });
+              search.focus({ preventScroll: true });
+            },
+          },
+          h('span', { class: 'cat-dot', 'aria-hidden': 'true' }),
+          g.label,
+        ),
+      );
+    }
   };
 
   const render = () => {
     clear(list);
+    active = -1;
     const q = search.value.trim();
     let count = 0;
+    let jobs;
     if (q) {
       const results = searchEntries(targets, q);
       count = results.length;
-      if (results.length) {
-        list.append(h('ul', { role: 'group', class: 'picker-group', 'aria-label': 'Results' }, results.map((t) => optionRow(t, { current, idPrefix }))));
-      }
+      const ul = h('ul', { role: 'group', class: 'picker-group', 'aria-label': 'Results' });
+      if (results.length) list.append(ul);
+      jobs = [{ parent: ul, items: results, make: (t) => optionRow(t, { current, idPrefix }) }];
     } else {
-      const org = organizeTargets(targets, { sourceCategory, formats });
-      const groups = [];
-      if (org.compress) groups.push({ key: 'compress', label: 'Same format, smaller', items: [org.compress] });
-      if (org.count > 10 && org.suggested.length) groups.push({ key: 'suggested', label: 'Suggested', items: org.suggested });
-      for (const g of org.groups) groups.push({ key: g.category, label: g.label, items: g.targets });
-      const seen = new Set();
-      for (const g of groups) {
-        const labelId = uniqueId('grp');
-        const items = g.items.map((t) => {
-          // An id appears once per list; suggested duplicates get their own ids.
-          const row = optionRow(t, { current, idPrefix: seen.has(t.id) ? `${idPrefix}-${g.key}` : idPrefix });
-          seen.add(t.id);
-          return row;
-        });
-        count += items.length;
-        list.append(
-          h('div', { class: 'picker-group-wrap', role: 'none' }, h('p', { class: 'picker-group-label', id: labelId, role: 'presentation' }, g.label), h('ul', { role: 'group', class: 'picker-group', 'aria-labelledby': labelId }, items)),
-        );
-      }
+      jobs = renderGroups(groups);
+      count = groups.reduce((n, g) => n + g.items.length, 0);
     }
+    renderJumps(!q);
     empty.hidden = count > 0;
-    const all = options();
-    const currentIndex = q ? 0 : Math.max(0, all.findIndex((o) => o.dataset.value === current));
-    setActive(currentIndex);
+    rows.render(jobs);
+    if (q) {
+      setActive(0);
+      return;
+    }
+    // The current target: usually in the first rows, otherwise build the rest now.
+    let at = options().findIndex((o) => o.dataset.value === current);
+    if (at < 0 && current && rows.busy) {
+      rows.flush();
+      at = options().findIndex((o) => o.dataset.value === current);
+    }
+    setActive(Math.max(0, at));
   };
 
   return new Promise((resolve) => {
@@ -154,6 +223,9 @@ export function openPicker({ title, subtitle = '', targets, current = null, sour
       } else if (e.key === 'PageUp') {
         e.preventDefault();
         setActive(active - 8);
+      } else if ((e.key === 'End' || e.key === 'Home') && e.ctrlKey) {
+        e.preventDefault();
+        setActive(e.key === 'End' ? Number.MAX_SAFE_INTEGER : 0);
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (all[active]) choose(all[active].dataset.value);
@@ -169,14 +241,11 @@ export function openPicker({ title, subtitle = '', targets, current = null, sour
       const opt = e.target.closest('[role="option"]');
       if (opt) {
         const i = options().indexOf(opt);
-        if (i !== active) {
-          active = i;
-          options().forEach((o, n) => o.classList.toggle('is-active', n === active));
-          search.setAttribute('aria-activedescendant', opt.id);
-        }
+        if (i !== active) setActive(i, { scroll: false });
       }
     });
     closeBtn.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('close', () => rows.cancel(), { once: true });
     dlg.onclick = (e) => {
       if (e.target === dlg) dlg.close(); // backdrop
     };

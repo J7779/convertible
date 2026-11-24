@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { importSrc, loadCore } from './helpers.mjs';
 
-const { organizeTargets, defaultTarget, compressTargets, searchEntries, catalogueGroups, indexFormats, acceptedExtensions, categoryLabel, categoryKey } =
+const { organizeTargets, defaultTarget, compressTargets, searchEntries, catalogueGroups, catalogueCategories, fileHandlers, indexFormats, acceptedExtensions, categoryLabel, categoryKey } =
   await importSrc('js/model/targets.js');
 
 const formats = indexFormats([
@@ -39,6 +39,9 @@ test('default and compress targets', () => {
   assert.equal(defaultTarget([t('hex')], 'image').id, 'hex');
   assert.equal(defaultTarget([], 'image'), null);
   assert.deepEqual(compressTargets(pngTargets).map((x) => x.id), ['png', 'zip']);
+  // Newer cores: the role decides (an extract target in the archive category is not offered).
+  const roled = [t('png', { compress: true, role: 'compress' }), t('zip', { role: 'archive' }), { ...t('zip'), id: 'unzip', role: 'extract' }, t('pdf')];
+  assert.deepEqual(compressTargets(roled).map((x) => x.id), ['png', 'zip']);
 });
 
 test('search: ids, extensions, names, categories; all words must match', () => {
@@ -59,10 +62,31 @@ test('catalogue groups and accepted extensions', () => {
   assert.deepEqual(groups[0].formats.map((f) => f.id), ['jpg', 'png', 'webp'], 'most popular first');
   assert.equal(groups[0].readable, 3);
   assert.deepEqual(catalogueGroups([...formats.values()], 'zip').map((g) => g.category), ['archive']);
+  // Searching: the group holding the best match comes first, not the canonical first group.
+  assert.deepEqual(catalogueGroups([...formats.values()], 'pdf').map((g) => g.category)[0], 'document');
+  assert.deepEqual(catalogueGroups([...formats.values()], '', { category: 'encoding' }).map((g) => g.formats.map((f) => f.id)), [['base64', 'hex']]);
+  assert.deepEqual(catalogueCategories([...formats.values()]).map((c) => [c.category, c.count]), [['image', 3], ['document', 1], ['archive', 1], ['encoding', 2]]);
   assert.ok(acceptedExtensions([...formats.values()]).includes('.jpeg'));
   assert.equal(categoryLabel('model3d'), '3D models');
   assert.equal(categoryLabel('newcat'), 'Newcat');
   assert.equal(categoryKey('newcat'), 'other');
+});
+
+test('file handlers: popular formats first, grouped by category and MIME, within the limit', () => {
+  const list = [...formats.values(), { id: 'raw', name: 'Raw', category: 'image', extensions: ['raw', 'png'], mime: 'not a mime', popularity: 1, readable: true }];
+  const handlers = fileHandlers(list, { limit: 6 });
+  const all = handlers.flatMap((h) => Object.values(h.accept).flat());
+  assert.ok(all.length <= 6);
+  assert.equal(new Set(all).size, all.length, 'no extension twice');
+  // Most popular first: pdf (99), jpg+jpeg (98), png (95), zip (90); webp (80) still fits; nothing else does.
+  assert.deepEqual([...all].sort(), ['.jpeg', '.jpg', '.pdf', '.png', '.webp', '.zip']);
+  assert.deepEqual(handlers.map((h) => h.name), ['Images', 'Documents', 'Archives'], 'canonical category order');
+  // Grouped by MIME type; missing or invalid MIME types fall back to application/octet-stream.
+  const typed = list.map((f) => (f.id === 'png' ? { ...f, mime: 'image/png' } : f.id === 'jpg' ? { ...f, mime: 'image/jpeg' } : f));
+  const images = fileHandlers(typed).find((h) => h.name === 'Images');
+  assert.deepEqual(Object.keys(images.accept).sort(), ['application/octet-stream', 'image/jpeg', 'image/png']);
+  assert.deepEqual(images.accept['image/jpeg'], ['.jpeg', '.jpg']);
+  assert.deepEqual(images.accept['application/octet-stream'].sort(), ['.raw', '.webp']);
 });
 
 test('the real catalogue: every source organizes without loss', async () => {

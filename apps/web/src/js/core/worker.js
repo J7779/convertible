@@ -2,6 +2,8 @@
 // instance of the core. The main thread never runs core code.
 //
 // Messages in  (each carries a numeric `id` that the reply echoes):
+//   {type:'module', module}                    the compiled core (no reply; every
+//                                              other request waits for it)
 //   {type:'init'}
 //   {type:'catalogue'}                         -> {formats, version}
 //   {type:'detect', blob, name}               -> {format}
@@ -24,9 +26,29 @@ import { ConvertibleCore, CoreError, Status } from './binding.js';
 import { MAX_INPUT_BYTES, DETECT_BYTES, tooLargeMessage } from '../model/limits.js';
 
 let corePromise = null;
+let provideModule = null;
+// The page downloads and compiles the core once and sends the compiled
+// module ({type:'module', module}); `module: null` means "fetch it yourself".
+const compiled = new Promise((resolve) => {
+  provideModule = resolve;
+});
 
 function core() {
-  if (!corePromise) corePromise = ConvertibleCore.create(createConvertibleModule);
+  if (!corePromise) {
+    corePromise = compiled.then((module) =>
+      ConvertibleCore.create(
+        createConvertibleModule,
+        module
+          ? {
+              instantiateWasm(imports, receive) {
+                WebAssembly.instantiate(module, imports).then((instance) => receive(instance, module));
+                return {};
+              },
+            }
+          : {},
+      ),
+    );
+  }
   return corePromise;
 }
 
@@ -114,6 +136,10 @@ async function handle(msg) {
 
 self.addEventListener('message', async (event) => {
   const msg = event.data;
+  if (msg && msg.type === 'module') {
+    provideModule(msg.module ?? null);
+    return;
+  }
   try {
     const out = await handle(msg);
     if (out && out.reply) {

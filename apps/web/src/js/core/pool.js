@@ -31,8 +31,9 @@ export class WorkerError extends Error {
 }
 
 class Channel {
-  constructor(createWorker) {
+  constructor(createWorker, onSpawn = null) {
     this.createWorker = createWorker;
+    this.onSpawn = onSpawn;
     this.pending = new Map();
     this.nextId = 1;
     this.spawn();
@@ -43,6 +44,7 @@ class Channel {
     this.worker = worker;
     this.dead = false;
     worker.addEventListener('message', (event) => this.receive(event.data));
+    if (this.onSpawn) this.onSpawn(worker);
     worker.addEventListener('error', (event) => {
       if (event && typeof event.preventDefault === 'function') event.preventDefault();
       if (worker !== this.worker) return;
@@ -108,10 +110,27 @@ export class CorePool {
     this.createWorker = createWorker;
     const cores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 2;
     this.size = Math.max(1, Math.min(3, size ?? Math.floor(cores / 2)));
-    this.catalogue = new Channel(createWorker);
+    this.module = undefined; // the compiled core, once provideModule() has been called
+    this.attach = (worker) => {
+      if (this.module !== undefined) worker.postMessage({ type: 'module', module: this.module });
+    };
+    this.catalogue = new Channel(createWorker, this.attach);
     this.slots = [];
     this.queue = []; // jobs waiting for a slot
     this.jobs = new Map(); // key -> job
+  }
+
+  /**
+   * Hands the compiled core (a WebAssembly.Module, or null for "fetch it
+   * yourself") to every worker, current and future. Requests sent earlier
+   * wait inside the workers until it arrives.
+   */
+  provideModule(module) {
+    if (this.module !== undefined) return;
+    this.module = module ?? null;
+    for (const channel of [this.catalogue, ...this.slots.map((s) => s.channel)]) {
+      if (!channel.dead) this.attach(channel.worker);
+    }
   }
 
   // -- quick requests ----------------------------------------------------------
@@ -193,7 +212,7 @@ export class CorePool {
       if (!slot && this.slots.length < this.size) {
         // A crashed worker rejects its job through failAll() and is respawned;
         // run()'s rejection handler frees the slot and keeps pumping.
-        slot = { channel: new Channel(this.createWorker), job: null };
+        slot = { channel: new Channel(this.createWorker, this.attach), job: null };
         this.slots.push(slot);
       }
       if (!slot) return;

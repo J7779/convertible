@@ -80,6 +80,11 @@ import app.convertible.ui.components.TextInput
 import app.convertible.ui.components.focusRing
 import app.convertible.ui.theme.AppTheme
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
+import app.convertible.model.ChoiceControl
+import app.convertible.model.NumberControl
 
 @Immutable
 class CardActions(
@@ -373,25 +378,31 @@ private fun OptionField(spec: OptionSpec, item: QueueItem, actions: CardActions)
                         colors.accentText,
                     )
                 }
-                if (spec.min != null && spec.max != null) {
+                val setNumber = { v: Double -> set(if (integer) OptionValue.IntValue(v.roundToLong()) else OptionValue.FloatValue(v)) }
+                if (spec.min != null && spec.max != null && OptionsForm.numberControl(spec) == NumberControl.SLIDER) {
                     BrandSlider(
                         value = number,
                         min = spec.min,
                         max = spec.max,
                         integer = integer,
                         label = spec.label,
-                        onChange = { v -> set(if (integer) OptionValue.IntValue(v.roundToInt().toLong()) else OptionValue.FloatValue(v)) },
+                        onChange = setNumber,
                     )
                 } else {
-                    TextInput(
-                        value = if (integer) number.roundToInt().toString() else number.toString(),
-                        onChange = { text ->
-                            val parsed = text.toDoubleOrNull()
-                            if (parsed != null) set(if (integer) OptionValue.IntValue(parsed.roundToInt().toLong()) else OptionValue.FloatValue(parsed))
-                        },
-                        placeholder = spec.label,
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
-                    )
+                    // Wide or open ranges (bit rates, sample rates, sizes): a typed field with -/+ steps; the
+                    // value is clamped to the schema's bounds by OptionSpec.coerce when it is sent.
+                    val step = OptionsForm.step(spec)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(Icons.Minus, stringResource(R.string.option_decrease, spec.label), { setNumber(clampTo(spec, number - step)) })
+                        TextInput(
+                            value = if (integer) number.roundToLong().toString() else number.toString(),
+                            onChange = { text -> text.trim().toDoubleOrNull()?.let { setNumber(clampTo(spec, it)) } },
+                            placeholder = spec.label,
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                            modifier = Modifier.weight(1f).testTag("${tag}_field"),
+                        )
+                        IconButton(Icons.Plus, stringResource(R.string.option_increase, spec.label), { setNumber(clampTo(spec, number + step)) })
+                    }
                 }
                 if (spec.description.isNotEmpty()) Text(spec.description, AppTheme.type.caption, colors.textSecondary)
             }
@@ -400,14 +411,16 @@ private fun OptionField(spec: OptionSpec, item: QueueItem, actions: CardActions)
             Text(spec.label, AppTheme.type.body, colors.textPrimary)
             Spacer(Modifier.height(d.space3))
             val selected = (value as? OptionValue.Text)?.value
-            if (spec.choices.size in 2..3) {
-                SegmentedControl(spec.choices, selected ?: spec.choices.first(), { it }, { set(OptionValue.Text(it)) })
-            } else {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(d.space3), verticalArrangement = Arrangement.spacedBy(d.space3)) {
-                    spec.choices.forEach { choice ->
-                        Chip(choice, selected = choice == selected, onClick = { set(OptionValue.Text(choice)) })
+            when (OptionsForm.choiceControl(spec)) {
+                ChoiceControl.SEGMENTED ->
+                    SegmentedControl(spec.choices, selected ?: spec.choices.first(), { it }, { set(OptionValue.Text(it)) })
+                ChoiceControl.CHIPS ->
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(d.space3), verticalArrangement = Arrangement.spacedBy(d.space3)) {
+                        spec.choices.forEach { choice ->
+                            Chip(choice, selected = choice == selected, onClick = { set(OptionValue.Text(choice)) })
+                        }
                     }
-                }
+                ChoiceControl.MENU -> ChoiceMenu(spec, selected, { set(OptionValue.Text(it)) }, Modifier.testTag("${tag}_menu"))
             }
             if (spec.description.isNotEmpty()) {
                 Spacer(Modifier.height(d.space2))
@@ -592,6 +605,75 @@ private fun ErrorBlock(title: String, detail: String, cancelled: Boolean = false
             if (detail.isNotEmpty()) {
                 Spacer(Modifier.height(d.space1))
                 Text(detail, AppTheme.type.label, colors.textPrimary)
+            }
+        }
+    }
+}
+
+private fun clampTo(spec: OptionSpec, v: Double): Double {
+    var x = v
+    spec.min?.let { if (x < it) x = it }
+    spec.max?.let { if (x > it) x = it }
+    return x
+}
+
+/** An enum with many choices: a field showing the value that opens a sheet listing every choice. */
+@Composable
+private fun ChoiceMenu(spec: OptionSpec, selected: String?, onChoose: (String) -> Unit, modifier: Modifier = Modifier) {
+    val colors = AppTheme.colors
+    val d = AppTheme.dimens
+    var open by rememberSaveable { mutableStateOf(false) }
+    val current = selected ?: spec.choices.firstOrNull().orEmpty()
+    val shape = RoundedCornerShape(d.radiusMd)
+    val description = stringResource(R.string.option_choose, spec.label, current)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = d.touchTarget)
+            .clip(shape)
+            .background(colors.surfaceSunken)
+            .clickable(role = Role.DropdownList, onClickLabel = description) { open = true }
+            .semantics { contentDescription = description }
+            .padding(horizontal = d.space4, vertical = d.space3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(current, AppTheme.type.body, colors.textPrimary, Modifier.weight(1f), maxLines = 1)
+        Icon(Icons.ChevronDown, null, colors.textSecondary, size = d.iconMd)
+    }
+    if (open) {
+        Sheet(onDismiss = { open = false }, tag = "choice_menu") {
+            Column {
+                Row(Modifier.fillMaxWidth().padding(start = d.space6, end = d.space3, top = d.space4), verticalAlignment = Alignment.CenterVertically) {
+                    Text(spec.label, AppTheme.type.title3, colors.textPrimary, Modifier.weight(1f).semantics { heading() })
+                    IconButton(Icons.Close, stringResource(R.string.picker_close), { open = false })
+                }
+                androidx.compose.foundation.lazy.LazyColumn(
+                    Modifier.fillMaxWidth().heightIn(max = 480.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(d.space4),
+                ) {
+                    items(spec.choices.size, key = { spec.choices[it] }) { i ->
+                        val choice = spec.choices[i]
+                        val isSelected = choice == current
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .clip(shape)
+                                .background(if (isSelected) colors.accentSubtle else androidx.compose.ui.graphics.Color.Transparent)
+                                .clickable(role = Role.RadioButton) {
+                                    onChoose(choice)
+                                    open = false
+                                }
+                                .semantics { this.selected = isSelected }
+                                .padding(horizontal = d.space3)
+                                .testTag("choice_$choice"),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(choice, AppTheme.type.body, if (isSelected) colors.accentText else colors.textPrimary, Modifier.weight(1f))
+                            if (isSelected) Icon(Icons.Check, null, colors.accentText, size = d.iconMd)
+                        }
+                    }
+                }
             }
         }
     }

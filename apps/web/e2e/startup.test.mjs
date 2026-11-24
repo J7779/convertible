@@ -111,6 +111,77 @@ suite('startup', () => {
     assert.equal(seen, null, 'no intro mark on the second load');
   });
 
+  e2e('a slow core download shows byte progress while the app stays usable', async ({ ctx }) => {
+    const page = await ctx.newPage();
+    await page.addInitScript(`try { sessionStorage.setItem('convertible.intro', '1'); } catch {}`);
+    // Serve the core to the page in small pieces with pauses (a slow network).
+    await page.addInitScript(`
+      const realFetch = window.fetch.bind(window);
+      window.fetch = async (input, init) => {
+        const response = await realFetch(input, init);
+        if (!String(input).endsWith('convertible.wasm')) return response;
+        const reader = response.body.getReader();
+        const body = new ReadableStream({
+          async pull(controller) {
+            const { done, value } = await reader.read();
+            if (done) return controller.close();
+            for (let i = 0; i < value.length; i += 1 << 20) {
+              await new Promise((r) => setTimeout(r, 60));
+              controller.enqueue(value.subarray(i, i + (1 << 20)));
+            }
+          },
+        });
+        return new Response(body, { status: 200, headers: response.headers });
+      };
+    `);
+    await page.goto(server().url);
+    await page.waitForSelector(tid('core-status'));
+    await page.waitFor(() => / of [0-9]/.test(document.querySelector('[data-testid="core-status"]').textContent), [], { message: 'byte progress ("x MB of y MB")' });
+    const status = await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="core-status"]');
+      return { role: el.getAttribute('role'), live: el.getAttribute('aria-live'), mark: Boolean(el.querySelector('svg.progress-mark')), text: el.textContent };
+    });
+    assert.equal(status.role, 'status');
+    assert.equal(status.live, 'polite');
+    assert.ok(status.mark, 'the brand progress mark');
+    assert.match(status.text, /MB of \d/);
+    // The shell works meanwhile: the formats browser opens with the catalogue.
+    await page.waitFor(() => document.body.classList.contains('catalogue-ready'), [], { message: 'the catalogue before the core' });
+    assert.equal(await page.evaluate(() => document.body.classList.contains('core-ready')), false, 'the core is still loading');
+    await page.click(tid('open-formats'));
+    await page.waitForSelector('dialog[data-testid="formats-dialog"][open] [data-testid^="format-"]');
+    await page.press('Escape');
+    // Then the core arrives and the status goes away.
+    await appReady(page, { timeout: 60_000 });
+    await page.waitForGone(`${tid('core-status')}:not([hidden])`, { timeout: 5_000 });
+  }, { timeout: 120_000 });
+
+  e2e('a failed core download offers Retry, and Retry starts the converter', async ({ ctx }) => {
+    const files = await tempDir();
+    const page = await ctx.newPage();
+    await page.addInitScript(`try { sessionStorage.setItem('convertible.intro', '1'); } catch {}`);
+    await page.addInitScript(`
+      const realFetch = window.fetch.bind(window);
+      let failed = false;
+      window.fetch = (input, init) => {
+        if (!failed && String(input).endsWith('convertible.wasm')) {
+          failed = true;
+          return Promise.reject(new TypeError('Failed to fetch'));
+        }
+        return realFetch(input, init);
+      };
+    `);
+    await page.goto(server().url);
+    await page.waitForSelector(`${tid('core-status')}[data-state="failed"]`);
+    assert.match(await page.text(tid('core-status')), /could not be loaded/);
+    // A file added now waits for the converter instead of failing.
+    await chooseFiles(page, [await files.file('notes.txt', TEXT)]);
+    await page.click(tid('core-retry'));
+    await appReady(page, { timeout: 60_000 });
+    await waitForReady(page, ['notes.txt'], { timeout: 30_000 });
+    await files.remove();
+  });
+
   e2e('the home screen loads cleanly: same-origin requests only, no errors', async ({ ctx }) => {
     const page = await openApp(ctx, server());
     assert.deepEqual(await cards(page), []);

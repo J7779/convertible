@@ -103,8 +103,47 @@ object OptionKeys {
     const val STRIP_METADATA = "strip_metadata"
 }
 
+/** How a numeric option is edited. */
+enum class NumberControl { SLIDER, STEPPER }
+
+/** How an enum option is edited. */
+enum class ChoiceControl { SEGMENTED, CHIPS, MENU }
+
 /** Option-form logic shared by the UI and the conversion call. */
 object OptionsForm {
+    /** Integer ranges with more steps than this are edited with a stepper/field, not a slider. */
+    const val MAX_SLIDER_STEPS = 1000
+
+    /** Enums with more choices than this are a menu (a chip row would wrap over many lines). */
+    const val MAX_CHIP_CHOICES = 6
+
+    /**
+     * A slider only for bounded ranges a thumb can actually address: floats, and integers with at most
+     * [MAX_SLIDER_STEPS] steps (e.g. "quality" 1..100). "bitrate_kbps" 0..2000 or "sample_rate" 0..384000 get a
+     * stepper with a typed field.
+     */
+    fun numberControl(spec: OptionSpec): NumberControl {
+        val min = spec.min
+        val max = spec.max
+        if (min == null || max == null || !min.isFinite() || !max.isFinite() || max <= min) return NumberControl.STEPPER
+        if (spec.type == OptionType.INT && max - min > MAX_SLIDER_STEPS) return NumberControl.STEPPER
+        return NumberControl.SLIDER
+    }
+
+    fun choiceControl(spec: OptionSpec): ChoiceControl = when {
+        spec.choices.size in 2..3 -> ChoiceControl.SEGMENTED
+        spec.choices.size > MAX_CHIP_CHOICES -> ChoiceControl.MENU
+        else -> ChoiceControl.CHIPS
+    }
+
+    /** The stepper's increment: 1 for integers; for floats a power of ten near a hundredth of the range. */
+    fun step(spec: OptionSpec): Double {
+        if (spec.type == OptionType.INT) return 1.0
+        val span = (spec.max ?: 0.0) - (spec.min ?: 0.0)
+        if (span <= 0.0 || !span.isFinite()) return 0.1
+        return Math.pow(10.0, Math.floor(Math.log10(span)) - 2)
+    }
+
     /** True when the schema offers the High / Balanced / Small control. */
     fun hasPreset(schema: List<OptionSpec>): Boolean =
         schema.any { it.key == OptionKeys.PRESET && it.type == OptionType.ENUM }

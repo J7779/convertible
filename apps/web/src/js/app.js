@@ -1,8 +1,9 @@
 // Convertible web app - application controller: wires the core workers, the
 // queue model and the views together.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
-import { APP_VERSION } from './generated/build-info.js';
+import { APP_VERSION, CORE_WASM_BYTES } from './generated/build-info.js';
 import { CancelledError, CorePool } from './core/pool.js';
+import { CoreLoadError, loadCoreModule } from './core/loader.js';
 import { Status } from './core/binding.js';
 import { Queue, State, isBusy, isFinished } from './model/queue.js';
 import { buildControls, optionsFor } from './model/options.js';
@@ -14,7 +15,7 @@ import { announce, clear, h, icon } from './ui/dom.js';
 import { badge, renderCard, updateProgress } from './ui/cards.js';
 import { openPicker } from './ui/picker.js';
 import { createFormatsSheet, createLicencesSheet, createSettingsSheet } from './ui/sheets.js';
-import { playIntro, staticMark } from './ui/motion.js';
+import { createProgressMark, playIntro, staticMark } from './ui/motion.js';
 import { canOpen, canShareFile, filesFromClipboard, filesFromDataTransfer, hasFiles, isUserFile, openInTab, saveAll, saveFile, shareFile } from './platform/files.js';
 import { consumeLaunchFiles, consumeSharedFiles, registerServiceWorker, setupInstall } from './platform/pwa.js';
 
@@ -240,6 +241,8 @@ async function pickTarget(key, { compressOnly = false } = {}) {
     current: item.target,
     sourceCategory: item.category,
     formats: catalogue.byId,
+    // Compress lists only the same format and archives: no "Suggested" duplicates.
+    suggest: !compressOnly,
   });
   if (!chosen) {
     focusCard(key, 'target');
@@ -563,20 +566,126 @@ function wireInput() {
 // Start-up
 // ---------------------------------------------------------------------------
 
-async function loadCatalogue() {
+/** The catalogue ships as data (catalogue.json); the core is the fallback. */
+async function fetchCatalogue() {
   try {
-    const { version, formats } = await pool.loadCatalogue();
-    catalogue.formats = formats;
-    catalogue.byId = indexFormats(formats);
-    catalogue.version = version;
-    catalogue.ready = true;
-    formatsSheet.setFormats(formats);
-    settingsSheet.refresh();
-    $('#core-version').textContent = `core ${version}`;
-    $('#format-count').textContent = String(formats.length);
-    document.body.classList.add('core-ready');
+    const response = await fetch(new URL('../catalogue.json', import.meta.url));
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data?.formats)) return { version: String(data.version ?? ''), formats: data.formats };
+    }
   } catch {
-    toast('The converter could not start in this browser. Please use a current version of Chrome, Edge, Firefox or Safari.', { timeout: 0 });
+    /* fall back to asking the core */
+  }
+  return pool.loadCatalogue();
+}
+
+async function loadCatalogue() {
+  const { version, formats } = await fetchCatalogue();
+  catalogue.formats = formats;
+  catalogue.byId = indexFormats(formats);
+  catalogue.version = version;
+  catalogue.ready = true;
+  formatsSheet.setFormats(formats);
+  settingsSheet.refresh();
+  $('#core-version').textContent = `core ${version}`;
+  $('#format-count').textContent = String(formats.length);
+  document.body.classList.add('catalogue-ready');
+  markReady();
+}
+
+/** body.core-ready: the catalogue is shown and the converter runs. */
+function markReady() {
+  if (catalogue.ready && engine.state === 'ready') document.body.classList.add('core-ready');
+}
+
+// The core: one download + compile on the page, shared with every worker.
+// The shell stays usable meanwhile (files can be added; they wait for it).
+const engine = { state: 'idle', mark: null, shownAt: 0, timer: 0 };
+const STATUS_DELAY_MS = 250; // a cached core starts without flashing the status
+
+function renderEngineStatus({ loaded = 0, total = 0, error = null } = {}) {
+  const box = $('#core-status');
+  if (engine.state === 'ready') {
+    if (engine.mark) engine.mark.complete();
+    box.dataset.state = 'ready';
+    // Leave the finished mark up briefly if it was shown at all.
+    setTimeout(() => {
+      box.hidden = true;
+    }, box.hidden ? 0 : 600);
+    return;
+  }
+  if (!engine.mark) engine.mark = createProgressMark({ size: 28 });
+  box.dataset.state = engine.state;
+  if (engine.state === 'failed') {
+    engine.mark.reset();
+    clear(box);
+    box.append(
+      engine.mark.el,
+      h('span', { class: 'core-status-text' }, h('strong', {}, error?.kind === 'offline' ? 'You are offline. ' : 'The converter could not be loaded. '), error?.kind === 'unsupported' ? 'Please use a current version of Chrome, Edge, Firefox or Safari.' : 'Files you add will wait until it is ready.'),
+      error?.kind === 'unsupported' ? null : h('button', { type: 'button', class: 'btn btn-secondary btn-small', 'data-testid': 'core-retry', onClick: () => startEngine() }, h('span', {}, 'Retry')),
+    );
+    box.hidden = false;
+    return;
+  }
+  const fraction = total > 0 ? Math.min(1, loaded / total) : 0;
+  if (fraction > 0) engine.mark.set(fraction);
+  else engine.mark.spin();
+  let text = box.querySelector('.core-status-text');
+  if (!text || !box.contains(engine.mark.el)) {
+    clear(box);
+    text = h('span', { class: 'core-status-text' });
+    box.append(engine.mark.el, text);
+  }
+  text.textContent =
+    engine.state === 'compiling' || fraction >= 1
+      ? 'Starting the converter…'
+      : total > 0
+        ? `Getting the converter ready: ${formatBytes(loaded)} of ${formatBytes(total)}`
+        : 'Getting the converter ready…';
+  box.setAttribute('aria-valuetext', text.textContent);
+}
+
+async function startEngine() {
+  if (engine.state !== 'idle' && engine.state !== 'failed') return engine.state === 'ready';
+  engine.state = 'loading';
+  clearTimeout(engine.timer);
+  let last = { loaded: 0, total: CORE_WASM_BYTES };
+  engine.timer = setTimeout(() => {
+    if (engine.state === 'ready') return;
+    $('#core-status').hidden = false;
+    renderEngineStatus(last);
+  }, STATUS_DELAY_MS);
+  let lastPaint = 0;
+  try {
+    const module = await loadCoreModule({
+      url: new URL('../wasm/convertible.wasm', import.meta.url),
+      expectedBytes: CORE_WASM_BYTES,
+      onProgress: (loaded, total) => {
+        last = { loaded, total };
+        const now = performance.now();
+        if (loaded >= total) engine.state = 'compiling';
+        if (!$('#core-status').hidden && (now - lastPaint > 100 || loaded >= total)) {
+          lastPaint = now;
+          renderEngineStatus(last);
+        }
+      },
+    });
+    pool.provideModule(module);
+    engine.state = 'ready';
+    clearTimeout(engine.timer);
+    renderEngineStatus();
+    document.body.classList.add('engine-ready');
+    markReady();
+    return true;
+  } catch (error) {
+    engine.state = 'failed';
+    clearTimeout(engine.timer);
+    renderEngineStatus({ error: error instanceof CoreLoadError ? error : new CoreLoadError('compile', String(error)) });
+    if (!(error instanceof CoreLoadError) || error.kind === 'unsupported' || error.kind === 'compile') return false;
+    // Retry by itself as soon as the network comes back.
+    window.addEventListener('online', () => startEngine(), { once: true });
+    return false;
   }
 }
 
@@ -617,13 +726,22 @@ async function start() {
   }
   const introDone = introSeen ? (intro.remove(), Promise.resolve()) : playIntro(intro);
 
-  const ready = loadCatalogue();
+  const engineStarted = startEngine();
+  const ready = loadCatalogue().catch(() => {
+    toast('The list of formats could not be loaded. Please reload the page.', { timeout: 0 });
+    throw new Error('catalogue');
+  });
   setupInstall($('#install'));
   consumeLaunchFiles(addFiles);
   ready.then(() => consumeSharedFiles(addFiles)).catch(() => {});
   await introDone;
   handleStartupParams();
 
+  // The service worker precaches the whole app, the core included: start it
+  // after the core has loaded (or failed), so the two never compete for the
+  // network on a first visit, and the precache revalidates what the page has
+  // just downloaded instead of fetching it again.
+  await engineStarted;
   registerServiceWorker({
     onUpdate: (apply) => toast('A new version is available.', { action: { label: 'Reload', testid: 'update-reload', run: apply }, timeout: 0 }),
     onOfflineReady: () => toast('Ready to work offline.'),

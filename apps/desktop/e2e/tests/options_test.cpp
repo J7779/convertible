@@ -5,6 +5,7 @@
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 #include "common.hpp"
 
@@ -26,7 +27,7 @@ std::vector<Pick> find_options(const Discovery& d, const std::string& type) {
       for (const Json& spec : d.by_target.at(t)["optionSpecs"].items()) {
         if (spec["type"].str() != type || spec["advanced"].as_bool() != advanced) continue;
         if (spec["key"].str() == "preset") continue;
-        if (type == "int" && !(spec.contains("min") && spec.contains("max"))) continue;
+        if (type == "int" && spec["control"].str() != "slider") continue;  // wide ranges are steppers
         if (type == "enum" && spec["choices"].size() < 2) continue;
         out.push_back(Pick{t, spec});
       }
@@ -93,9 +94,11 @@ void exercise(const std::string& name, const std::string& type, MakeInteraction 
   const Discovery d = discover_text(probe);
   const auto picks = find_options(d, type);
   if (picks.empty()) SKIP("no text target offers a ", type, " option");
+  // Many options leave plain text unchanged (an image quality for a text
+  // document, say), and with the full catalogue they come first: try more.
   int attempts = 0;
   for (const Pick& pick : picks) {
-    if (++attempts > 6) break;
+    if (++attempts > 40) break;
     Session s(name + "-" + std::to_string(attempts));
     const Json interaction = make(pick);
     const OptionRun r = run_control(s, pick, interaction);
@@ -151,6 +154,52 @@ TEST_CASE("e2e/options/a slider from the schema changes the output") {
       });
 }
 
+TEST_CASE("e2e/options/a wide numeric range is a stepper: typed values and +/- steps") {
+  // Ranges too wide to drag through (a sample rate of 0..384000, a bit rate
+  // of 0..2000) are number fields with - and + buttons.
+  Session probe("options-stepper-probe");
+  const Discovery d = discover_text(probe);
+  std::optional<Pick> pick;
+  for (const auto& t : d.targets) {
+    for (const Json& spec : d.by_target.at(t)["optionSpecs"].items()) {
+      if (!pick && spec["type"].str() == "int" && spec["control"].str() == "stepper" && spec.contains("min") &&
+          spec.contains("max") && !spec["advanced"].as_bool()) {
+        pick = Pick{t, spec};
+      }
+    }
+  }
+  if (!pick) SKIP("no text target offers a basic integer option with a wide range");
+  INFO("target ", pick->target, " option ", pick->spec["key"].str());
+  const double mn = pick->spec["min"].as_number();
+  const double mx = pick->spec["max"].as_number();
+  const long long typed = static_cast<long long>(std::floor(mn + (mx - mn) * 0.37));
+  Session s("options-stepper");
+  const std::string a = s.write_input("stepper.txt", kText);
+  const std::string label = pick->spec["label"].str();
+  Json files = Json::array();
+  files.push_back(a);
+  Json steps = Json::array();
+  steps.push_back(step({{"op", "open"}, {"files", files}}));
+  steps.push_back(step({{"op", "setTarget"}, {"index", 0}, {"target", pick->target}}));
+  steps.push_back(step({{"op", "frames"}, {"count", 30}}));
+  steps.push_back(step({{"op", "click"}, {"label", label}, {"role", "textfield"}, {"exact", true}, {"nth", 0}}));
+  steps.push_back(step({{"op", "key"}, {"key", "A"}, {"primary", true}}));
+  steps.push_back(step({{"op", "type"}, {"text", std::to_string(typed)}}));
+  steps.push_back(step({{"op", "frames"}, {"count", 3}}));
+  steps.push_back(step({{"op", "dump"}, {"path", "typed.json"}}));
+  steps.push_back(step({{"op", "click"}, {"label", "Increase " + label}, {"exact", true}, {"nth", 0}}));
+  steps.push_back(step({{"op", "frames"}, {"count", 3}}));
+  steps.push_back(step({{"op", "dump"}, {"path", "stepped.json"}}));
+  REQUIRE(s.ok(s.run_inline(steps)));
+  const std::string key = pick->spec["key"].str();
+  const Json typed_state = s.state("typed.json");
+  CHECK(at(typed_state, "items.0.options." + key).as_number() == static_cast<double>(typed));
+  CHECK(node(typed_state, label, "slider") == nullptr);
+  const double stepped = at(s.state("stepped.json"), "items.0.options." + key).as_number();
+  CHECK(stepped > static_cast<double>(typed));
+  CHECK(stepped <= mx);
+}
+
 TEST_CASE("e2e/options/a switch from the schema changes the output") {
   exercise(
       "options-switch", "bool",
@@ -178,16 +227,21 @@ TEST_CASE("e2e/options/a menu from the schema changes the output") {
   exercise(
       "options-menu", "enum",
       [](const Pick& pick) {
-        // The last choice that is not the default.
+        // The neighbour of the default choice, chosen with the keyboard: long
+        // menus scroll, and the opened menu shows the current choice.
         const Json& choices = pick.spec["choices"];
-        int other = static_cast<int>(choices.size()) - 1;
-        while (other > 0 && choices[static_cast<std::size_t>(other)] == pick.spec["default"]) --other;
+        int at_default = 0;
+        for (std::size_t k = 0; k < choices.size(); ++k) {
+          if (choices[k] == pick.spec["default"]) at_default = static_cast<int>(k);
+        }
+        const bool down = at_default + 1 < static_cast<int>(choices.size());
         Json steps = Json::array();
         steps.push_back(
             step({{"op", "click"}, {"label", pick.spec["label"].str()}, {"role", "button"}, {"exact", true}, {"nth", 0}}));
         steps.push_back(step({{"op", "frames"}, {"count", 12}}));
         steps.push_back(step({{"op", "dump"}, {"path", "menu-open.json"}}));
-        steps.push_back(step({{"op", "click"}, {"label", ""}, {"role", "menuitem"}, {"nth", other}}));
+        steps.push_back(step({{"op", "key"}, {"key", down ? "Down" : "Up"}}));
+        steps.push_back(step({{"op", "key"}, {"key", "Enter"}}));
         return steps;
       },
       [](Session& s, const Pick& pick, const OptionRun& r) {
@@ -213,6 +267,8 @@ TEST_CASE("e2e/options/a text field from the schema changes the output") {
       [](const Pick& pick) {
         Json steps = Json::array();
         steps.push_back(step({{"op", "click"}, {"label", pick.spec["label"].str()}, {"role", "textfield"}, {"nth", 0}}));
+        // Replace whatever default the field holds.
+        steps.push_back(step({{"op", "key"}, {"key", "A"}, {"primary", true}}));
         steps.push_back(step({{"op", "type"}, {"text", "e2e_blob"}}));
         return steps;
       },

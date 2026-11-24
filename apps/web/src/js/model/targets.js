@@ -102,9 +102,15 @@ export function defaultTarget(targets, sourceCategory) {
   return regular.find((t) => t.category === sourceCategory) || regular[0] || null;
 }
 
-/** Targets offered by the "Compress" action: the same-format entry and archive formats. */
+/**
+ * Targets offered by the "Compress" action: the same-format entry and archive
+ * formats. Newer cores mark targets with a `role` ("compress", "archive",
+ * "extract"); when present it decides, otherwise the archive category does.
+ */
 export function compressTargets(targets) {
-  return (targets || []).filter((t) => t.compress || t.category === 'archive');
+  const list = targets || [];
+  if (list.some((t) => t.role)) return list.filter((t) => t.compress || t.role === 'compress' || t.role === 'archive');
+  return list.filter((t) => t.compress || (t.category === 'archive' && t.role !== 'extract'));
 }
 
 function scoreEntry(entry, q) {
@@ -128,7 +134,11 @@ function scoreEntry(entry, q) {
  * ordered by match quality, then by their original order.
  */
 export function searchEntries(entries, query) {
-  const words = String(query || '').toLowerCase().replace(/^\./, '').split(/\s+/).filter(Boolean);
+  const words = String(query || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/^\.+/, ''))
+    .filter(Boolean);
   const list = entries || [];
   if (!words.length) return list.slice();
   const scored = [];
@@ -145,35 +155,91 @@ export function searchEntries(entries, query) {
   return scored.map((s) => s.entry);
 }
 
+function categoryRank(c) {
+  const i = CATEGORY_ORDER.indexOf(c);
+  return i < 0 ? CATEGORY_ORDER.length : i;
+}
+
 /**
  * Groups the catalogue for the formats browser:
- * [{category, label, formats, readable, writable}] in canonical order, each
- * group most popular first (the catalogue's order).
+ * [{category, label, formats, readable, writable}]. Without a query the
+ * groups come in canonical order, each most popular first; with a query the
+ * group holding the best match comes first and each group keeps the match
+ * order. `category` (optional) keeps that category only.
  */
-export function catalogueGroups(formats, query = '') {
-  const filtered = searchEntries(formats, query);
-  const map = new Map();
+export function catalogueGroups(formats, query = '', { category = null } = {}) {
+  const pool = category ? (formats || []).filter((f) => (f.category || 'other') === category) : formats;
+  const filtered = searchEntries(pool, query);
+  const map = new Map(); // insertion order = order of each category's best match
   for (const f of filtered) {
     const c = f.category || 'other';
     if (!map.has(c)) map.set(c, []);
     map.get(c).push(f);
   }
-  const rank = (c) => {
-    const i = CATEGORY_ORDER.indexOf(c);
-    return i < 0 ? CATEGORY_ORDER.length : i;
-  };
-  return [...map.entries()]
-    .sort((a, b) => rank(a[0]) - rank(b[0]))
-    .map(([category, list]) => ({
-      category,
-      label: categoryLabel(category),
-      formats: query ? list : list.slice().sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0)),
-      readable: list.filter((f) => f.readable).length,
-      writable: list.filter((f) => f.writable).length,
+  const entries = [...map.entries()];
+  if (!String(query || '').trim()) entries.sort((a, b) => categoryRank(a[0]) - categoryRank(b[0]));
+  return entries.map(([cat, list]) => ({
+    category: cat,
+    label: categoryLabel(cat),
+    formats: query ? list : list.slice().sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0)),
+    readable: list.filter((f) => f.readable).length,
+    writable: list.filter((f) => f.writable).length,
+  }));
+}
+
+/** [{category, label, count}] for every category present, in canonical order. */
+export function catalogueCategories(formats) {
+  const counts = new Map();
+  for (const f of formats || []) {
+    const c = f.category || 'other';
+    counts.set(c, (counts.get(c) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => categoryRank(a[0]) - categoryRank(b[0]))
+    .map(([category, count]) => ({ category, label: categoryLabel(category), count }));
+}
+
+/**
+ * Chromium accepts at most 300 file extensions across all of a manifest's
+ * file handlers and ignores the rest with a manifest error.
+ */
+export const FILE_HANDLER_EXTENSION_LIMIT = 300;
+
+const MIME_RE = /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/i;
+
+/**
+ * The manifest's file_handlers: one handler per category (in canonical
+ * order), each accepting its formats' extensions grouped by MIME type. The
+ * most popular readable formats are taken until the browser's limit; a
+ * format's extensions are either all in or all out. Files of the other
+ * formats still open through the file chooser, drag and drop, and sharing.
+ */
+export function fileHandlers(formats, { limit = FILE_HANDLER_EXTENSION_LIMIT, icons = [] } = {}) {
+  const readable = (formats || []).filter((f) => f.readable && f.extensions?.length);
+  readable.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0)); // stable: catalogue order on ties
+  const taken = new Set();
+  const byCategory = new Map();
+  for (const f of readable) {
+    const fresh = [...new Set(f.extensions.map((e) => `.${String(e).toLowerCase()}`))].filter((e) => !taken.has(e));
+    if (!fresh.length || taken.size + fresh.length > limit) continue;
+    for (const e of fresh) taken.add(e);
+    const category = f.category || 'other';
+    const mime = MIME_RE.test(f.mime || '') ? f.mime.toLowerCase() : 'application/octet-stream';
+    if (!byCategory.has(category)) byCategory.set(category, new Map());
+    const accept = byCategory.get(category);
+    accept.set(mime, [...(accept.get(mime) ?? []), ...fresh]);
+  }
+  return [...byCategory.entries()]
+    .sort((a, b) => categoryRank(a[0]) - categoryRank(b[0]))
+    .map(([category, accept]) => ({
+      action: './',
+      name: categoryLabel(category),
+      accept: Object.fromEntries([...accept.entries()].map(([mime, exts]) => [mime, exts.sort()])),
+      ...(icons.length ? { icons } : {}),
     }));
 }
 
-/** Extensions accepted by the file picker / file handlers: every readable format. */
+/** Extensions accepted by the file picker: every readable format. */
 export function acceptedExtensions(formats) {
   const set = new Set();
   for (const f of formats || []) if (f.readable) for (const e of f.extensions || []) set.add(`.${e.toLowerCase()}`);

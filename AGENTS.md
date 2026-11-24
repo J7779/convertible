@@ -65,7 +65,9 @@ tools/                   gen-formats-doc, gen-notices, privacy-audit, sync-skill
      floating-point `std::from_chars` (use `util::parse_double`), modules.
    - Size arithmetic in `std::uint64_t`, checked before narrowing (WASM, armeabi-v7a).
    - Imported C is compiled as strict C11: POSIX functions such as `strnlen` need
-     `_DEFAULT_SOURCE`/`_POSIX_C_SOURCE` on glibc, and GCC 14 rejects implicit declarations.
+     `_DEFAULT_SOURCE`/`_POSIX_C_SOURCE` on glibc, `alloca` needs `<alloca.h>` (e.g.
+     `HAVE_ALLOCA_H`), and GCC 14 and Clang reject implicit declarations. Put such defines in
+     the family's `family.cmake`; no CI job passes extra `CFLAGS`.
    - Windows: UTF-8 paths through `util::fs`, `wmain`, CRLF checkouts (fixtures are `-text`),
      long paths, `NOMINMAX`; MinGW needs GCC 14 (Debian trixie), not Ubuntu 24.04's GCC 13.
    - No SIMD intrinsics without a portable fallback; no unaligned pointer casts.
@@ -88,7 +90,8 @@ Desktop:
 ```sh
 cmake -S . -B build/desktop -DCVT_BUILD_DESKTOP=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build/desktop -j 6 --config Release
-ctest --test-dir build/desktop -L desktop -C Release --output-on-failure
+ctest --test-dir build/desktop -L '^desktop$' -C Release --output-on-failure     # unit tests
+ctest --test-dir build/desktop -L desktop-e2e -C Release --output-on-failure   # end-to-end
 cmake --build build/desktop --config Release --target package
 ```
 

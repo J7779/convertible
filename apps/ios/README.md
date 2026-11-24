@@ -74,7 +74,9 @@ are attached to every failure). `--clone` runs on a throw-away copy of the devic
 that another run on the same simulator cannot collide; the script shuts down what it
 booted and deletes what it cloned. **These tests are local only**: the repository has
 no iOS job in CI, because running on a device or archiving needs the owner's signing
-certificate.
+certificate. Simulators need an unlocked, logged-in Mac session: while the screen is
+locked they stay on the boot logo, and the unit tests and this suite cannot run (the
+builds still can).
 
 **How results are verified.** Under the Debug-only launch argument
 `-ConvertibleUITestHooks` (see `Convertible/App/UITestHooks.swift`; Release builds
@@ -191,6 +193,17 @@ project.yml    XcodeGen spec of the committed Convertible.xcodeproj
 - **State.** `QueueModel` is an `ObservableObject` on the main actor and owns no UI
   types. It never decides what a conversion means — formats, targets and options come
   from the core at run time, so new format families appear without app changes.
+- **A large catalogue.** The core knows ~1,500 formats and a source can have several
+  hundred targets. The JSON models ignore unknown fields, default missing ones and
+  skip an entry they cannot decode instead of dropping the whole list (`LossyArray`),
+  and read additive fields such as a target's `role` (`compress`, `archive`,
+  `extract`) when the core reports them. The picker and the formats browser are lazy
+  `List`s whose sections are computed outside `body` (the queue publishes progress
+  many times a second) and recomputed only when the search, the category filter or
+  the targets change; search ranks exact id/extension, then prefixes, words and
+  substrings, then popularity, and the formats browser shows the category of the
+  best match first. Option ranges wider than 1,000 steps (sample rates, sizes) and
+  unbounded options are typed into a clamped number field rather than a slider.
 - **Files.** Imported copies (drag and drop, paste, Photos, system inbox) and results
   live under the app's temporary directory and are deleted when a file is removed and
   at launch. Nothing about files or conversions is persisted; only the three settings

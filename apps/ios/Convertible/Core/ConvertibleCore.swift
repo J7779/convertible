@@ -17,17 +17,17 @@ enum ConvertibleCore {
 
     /// Every format the core knows, most popular first.
     static func formats() -> [FormatInfo] {
-        decodeOwned([FormatInfo].self, cvt_formats_json()) ?? []
+        decodeOwned(LossyArray<FormatInfo>.self, cvt_formats_json())?.elements ?? []
     }
 
     /// Formats `source` (id or extension) converts to, most relevant first.
     static func targets(for source: String) -> [TargetFormat] {
-        decodeOwned([TargetFormat].self, cvt_targets_json(source)) ?? []
+        decodeOwned(LossyArray<TargetFormat>.self, cvt_targets_json(source))?.elements ?? []
     }
 
     /// Options understood by the conversion `source` → `target`.
     static func optionsSchema(source: String, target: String) -> [OptionSpec] {
-        decodeOwned([OptionSpec].self, cvt_options_schema_json(source, target)) ?? []
+        decodeOwned(LossyArray<OptionSpec>.self, cvt_options_schema_json(source, target))?.elements ?? []
     }
 
     /// Detects the format of in-memory content. `filename` may help (only its extension is used).

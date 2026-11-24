@@ -86,8 +86,10 @@ enum TargetCatalog {
     /// The target a "Compress" action uses: the same-format re-encode when the
     /// core offers it, otherwise an archive target (zip first).
     static func compressTarget(_ targets: [TargetFormat]) -> TargetFormat? {
-        if let same = targets.first(where: \.compress) { return same }
-        let archives = targets.filter { $0.category == "archive" }
+        if let same = targets.first(where: { $0.compress || $0.role == "compress" }) { return same }
+        // Prefer the core's own "archive" role when it reports roles; otherwise the category.
+        let byRole = targets.filter { $0.role == "archive" }
+        let archives = byRole.isEmpty ? targets.filter { $0.category == "archive" && $0.role != "extract" } : byRole
         return archives.first(where: { $0.id == "zip" }) ?? archives.first
     }
 }
@@ -99,17 +101,43 @@ struct FormatSection: Identifiable, Equatable {
 }
 
 enum FormatsBrowser {
-    /// The whole catalogue grouped by category in the documented order, most popular first.
-    static func sections(_ formats: [FormatInfo], query: String = "") -> [FormatSection] {
+    /// The catalogue grouped by category. Without a query: categories in the
+    /// documented order, each most popular first. With a query: matches ranked
+    /// (exact, prefix, word, substring, then popularity) and the category holding
+    /// the best match first. `category` keeps a single category.
+    static func sections(_ formats: [FormatInfo], query: String = "", category: String? = nil) -> [FormatSection] {
         let q = TargetCatalog.normalize(query.trimmingCharacters(in: .whitespacesAndNewlines))
-        let matching = q.isEmpty ? formats : formats.filter {
-            TargetCatalog.matchScore(id: $0.id, name: $0.name, extensions: $0.extensions, query: q) != nil
-                || TargetCatalog.normalize(FileCategory.title($0.category)).hasPrefix(q)
+        let q2 = q.hasPrefix(".") ? String(q.dropFirst()) : q
+        let pool = category.map { c in formats.filter { FileCategory.known($0.category) == c } } ?? formats
+        guard !q2.isEmpty else {
+            let grouped = Dictionary(grouping: pool) { FileCategory.known($0.category) }
+            return grouped.keys.sorted { FileCategory.rank($0) < FileCategory.rank($1) }.map { key in
+                FormatSection(id: key, title: FileCategory.title(key),
+                              formats: grouped[key]!.sorted { $0.popularity != $1.popularity ? $0.popularity > $1.popularity : $0.id < $1.id })
+            }
         }
-        let grouped = Dictionary(grouping: matching) { FileCategory.known($0.category) }
-        return grouped.keys.sorted { FileCategory.rank($0) < FileCategory.rank($1) }.map { key in
-            FormatSection(id: key, title: FileCategory.title(key),
-                          formats: grouped[key]!.sorted { $0.popularity != $1.popularity ? $0.popularity > $1.popularity : $0.id < $1.id })
+        let scored: [(score: Int, format: FormatInfo)] = pool.compactMap { f in
+            if let s = TargetCatalog.matchScore(id: f.id, name: f.name, extensions: f.extensions, query: q2) { return (s, f) }
+            if TargetCatalog.normalize(FileCategory.title(f.category)).hasPrefix(q2) { return (5, f) }
+            return nil
         }
+        let ranked = scored.sorted { a, b in
+            if a.score != b.score { return a.score < b.score }
+            return a.format.popularity != b.format.popularity ? a.format.popularity > b.format.popularity : a.format.id < b.format.id
+        }.map(\.format)
+        var order: [String] = []
+        var grouped: [String: [FormatInfo]] = [:]
+        for f in ranked {
+            let key = FileCategory.known(f.category)
+            if grouped[key] == nil { order.append(key) }
+            grouped[key, default: []].append(f)
+        }
+        return order.map { FormatSection(id: $0, title: FileCategory.title($0), formats: grouped[$0]!) }
+    }
+
+    /// Categories present in the catalogue, in the documented order, with counts.
+    static func categories(_ formats: [FormatInfo]) -> [(id: String, count: Int)] {
+        let counts = Dictionary(grouping: formats) { FileCategory.known($0.category) }.mapValues(\.count)
+        return counts.keys.sorted { FileCategory.rank($0) < FileCategory.rank($1) }.map { ($0, counts[$0]!) }
     }
 }

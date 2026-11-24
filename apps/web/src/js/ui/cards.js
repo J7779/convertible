@@ -155,13 +155,14 @@ function optionsSection(item, model, settings, actions, openState) {
       'details',
       { class: 'advanced', 'data-testid': 'advanced', open: openState.get(item.key) || false },
       h('summary', { 'data-focus': 'advanced' }, icon('settings', { size: 18 }), h('span', {}, model.preset ? 'Advanced' : 'Options'), icon('chevron', { size: 16 })),
-      h('div', { class: 'advanced-body' }, basic, advanced.length && basic.length ? h('p', { class: 'field-group-label' }, 'More') : null, advanced, managed),
+      h('div', { class: 'advanced-body' }, basic, advanced.length && basic.length ? h('p', { class: 'field-group-label' }, 'More') : null, advanced),
     );
     details.addEventListener('toggle', () => openState.set(item.key, details.open));
     parts.push(details);
-  } else if (managed) {
-    parts.push(managed);
   }
+  // The metadata note reflects an app-wide setting: always visible, never
+  // hidden inside the collapsed options.
+  if (managed) parts.push(managed);
   return h('div', { class: 'card-options' }, parts);
 }
 

@@ -131,10 +131,20 @@ void App::build_picker() {
     for (int i = 0; i < target_row; ++i) yy += rows[static_cast<std::size_t>(i)].header ? header_h : row_h;
     ui_.scroll_to(list_id, std::max(0.0f, yy - body.h * 0.4f));
   }
-  ui_.begin_scroll(list_id, body, content);
+  const float offset = ui_.begin_scroll(list_id, body, content);
+  // Only rows inside the viewport are laid out, drawn and made interactive:
+  // a source can have several hundred targets.
+  const float view_top = body.y + offset - row_h;
+  const float view_bottom = body.y + offset + body.h + row_h;
   float yy = body.y + 4.0f;
   int sel_index = 0;
   for (const auto& r : rows) {
+    const float rh = r.header ? header_h : row_h;
+    if (yy + rh < view_top || yy > view_bottom) {
+      yy += rh;
+      if (!r.header) ++sel_index;
+      continue;
+    }
     if (r.header) {
       const Rect hr{body.x + 8.0f, yy, body.w - 16.0f, header_h};
       const Color c = t.category(r.category);

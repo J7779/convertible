@@ -2,6 +2,7 @@
 // and the target picker (grouping, search, keyboard, dismissal).
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
 #include <algorithm>
+#include <cctype>
 #include <set>
 
 #include "common.hpp"
@@ -9,6 +10,11 @@
 using namespace e2e;
 
 namespace {
+
+std::string upper(std::string s) {
+  for (auto& c : s) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+  return s;
+}
 
 std::vector<std::string> flat_targets(const Json& picker) {
   std::vector<std::string> out;
@@ -35,7 +41,10 @@ TEST_CASE("e2e/queue/one control sets the target of every file of a format") {
   }
   REQUIRE(group != nullptr);
   CHECK((*group)["role"].str() == "button");
-  CHECK((*group)["value"].str() == "BASE64");  // both share the default target
+  // Both share the default target (the core's first same-category target, so
+  // whatever the catalogue ranks first; never a hard-coded id).
+  REQUIRE(at(q0, "items.0.target").str() == at(q0, "items.1.target").str());
+  CHECK((*group)["value"].str() == upper(at(q0, "items.0.target").str()));
 
   const Json picker = s.state("q-picker.json");
   CHECK(picker["picker"]["open"].as_bool());

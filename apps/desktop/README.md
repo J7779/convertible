@@ -114,12 +114,13 @@ scripts and nothing else. One CTest entry per group, all labelled
 | `intro` | sampled intro frames differ over time; the last one equals the static mark that reduced motion shows at once; a key or a click skips it |
 | `add-files` | command line, a drop anywhere on the window (the overlay appears), the in-house file browser, the native-dialog seam; folders and missing files are refused with a message |
 | `queue`, `picker` | detected-format chips, the "All N files to…" control, remove and clear; the picker's grouping, search, keyboard navigation, Escape and outside clicks |
-| `options` | a slider, a switch, a menu and a text field found in the core's schemas change the saved output; presets and Compress where the catalogue offers them |
+| `options` | a slider, a switch, a menu (chosen with the keyboard) and a text field found in the core's schemas change the saved output; a wide numeric range is a stepper (typed value, + step); presets and Compress where the catalogue offers them |
 | `convert`, `cancel`, `errors` | monotonic per-file progress to 100 %; before/after sizes and percentages; Save, Save all (numbered on collisions, never overwriting), Convert again, Reveal and Open through the shell seam; saved bytes decoded or digested independently (Base64, hex, SHA-256/SHA-1/MD5/CRC-32, UTF-16LE with BOM); cancel one, cancel all, convert again; a friendly error with the queue intact |
 | `formats`, `settings` | the formats browser against the catalogue the app reports; every preference changed through the UI, persisted in `CONVERTIBLE_CONFIG_DIR` and restored after a restart |
 | `keyboard` | the main flow with the keyboard only, focus kept inside the file browser, a focus ring in the screenshot |
 | `layout`, `themes`, `text`, `a11y` | every screen from the minimum window to 1920×1200, at 1×/1.5×/2× and 130 % text: no clipped or partially overlapping controls (layout rectangles from the state dump); token colours at known pixels in both themes; no missing glyphs; every control named and given a role |
 | `catalog` | only when the core has the formats (skipped with a message otherwise): PNG → JPEG (JPEG markers, smaller at lower quality), any file → ZIP (central directory parsed here), WAV → another audio container |
+| `media` | only when the core has the formats, targets found by MIME type: a lossy image target is smaller at lower quality and converts back to a PNG of the same size; WAV → another audio format → WAV keeps the one-second duration; a YUV4MPEG2 clip → animated GIF (frames counted) or a still PNG; Markdown and DOCX → PDF (`%PDF-`, `%%EOF`, pages counted through the compressed object streams); CSV → XLSX → CSV and CSV → JSON cell for cell; a PNG claiming 60000 × 60000 pixels is refused with the size-limit message |
 | `window` | the real Cocoa/Win32/X11 window; opt-in with `CVD_E2E_WINDOWED=1` |
 
 Determinism: headless runs use a virtual 60 Hz clock (frame *n* is at
@@ -144,10 +145,6 @@ Run one group or test: `ctest --test-dir build/desktop -R e2e_convert`, or
 `build/desktop/apps/desktop/convertible_desktop_e2e --app=<exe> --work=<dir>
 --e2e=apps/desktop/e2e --assets=assets --test-case="e2e/picker/*"` (the exact
 command line is printed by `ctest -V`).
-
-Linux with GCC 14 (`ubuntu:24.04`): configure with
-`-DCMAKE_C_FLAGS=-D_DEFAULT_SOURCE` for now; the core's imported H.264
-decoder calls `strnlen`, which strict C11 headers do not declare otherwise.
 
 Windows: the runner starts the app with `CreateProcessW` and needs no POSIX
 shell; the suite runs with `ctest -L desktop-e2e -C Release` on a GitHub
@@ -250,6 +247,18 @@ presents the resulting BGRA bitmap (CoreAnimation layer contents on macOS,
 frames while something animates or a timer (caret blink, tooltip) is due.
 HiDPI: the UI is laid out in points; the canvas scales by the display scale
 times the text-size setting (100/115/130 %, also Ctrl/Cmd +/−/0).
+
+Large catalogues (the core knows ~1,500 formats; a source can have several
+hundred targets): the target picker and the formats browser lay out, draw and
+hit-test only the rows inside their scroll viewport; the formats list is
+rebuilt only when the search or the category filter changes, and a search
+orders each group by match quality (exact id or extension first) with the
+group holding the best match on top. Numeric options with a range too wide to
+drag through (more than 1,000 integer steps, e.g. a sample rate of
+0..384000, or unbounded) are steppers (a number field with − and +, Up/Down,
+round steps of about 1/50 of the range) instead of sliders; option menus with
+many choices scroll, open on the current choice and take Up/Down,
+PageUp/PageDown, Home/End and Enter while open.
 
 Conversions run through `cvt_convert_file` (the input is memory-mapped by the
 core) on a pool of `std::jthread` workers; progress and cancellation go

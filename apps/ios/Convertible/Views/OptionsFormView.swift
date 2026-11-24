@@ -92,6 +92,8 @@ struct OptionFieldView: View {
                 }
             }
             .frame(minHeight: Sizes.touchTarget)
+        case .number(let lo, let hi, let integer):
+            NumberOptionField(spec: spec, lower: lo, upper: hi, integer: integer, value: $value)
         case .slider(let lo, let hi, let step):
             let current = value?.doubleValue ?? lo
             VStack(alignment: .leading, spacing: Space.s1) {
@@ -139,5 +141,68 @@ struct OptionFieldView: View {
                     .background(RoundedRectangle(cornerRadius: Radius.sm).fill(Palette.surfaceSunken))
             }
         }
+    }
+}
+
+/// A typed number, clamped to the option's bounds when committed (Return or
+/// leaving the field). Used for unbounded options and ranges too wide for a slider.
+private struct NumberOptionField: View {
+    let spec: OptionSpec
+    let lower: Double?
+    let upper: Double?
+    let integer: Bool
+    @Binding var value: OptionValue?
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: Space.s3) {
+            Text(spec.label).textStyle(.body).foregroundStyle(Palette.textPrimary)
+            Spacer(minLength: Space.s3)
+            TextField(rangeHint, text: $text)
+                .textStyle(.mono)
+                .keyboardType(integer ? .numberPad : .decimalPad)
+                .multilineTextAlignment(.trailing)
+                .focused($focused)
+                .onSubmit(commit)
+                .frame(maxWidth: 140, minHeight: Sizes.touchTarget)
+                .padding(.horizontal, Space.s3)
+                .background(RoundedRectangle(cornerRadius: Radius.sm).fill(Palette.surfaceSunken))
+                .accessibilityLabel(spec.label)
+                .accessibilityHint(rangeHint)
+        }
+        .frame(minHeight: Sizes.touchTarget)
+        .onAppear { text = display(value) }
+        .onChange(of: focused) { isFocused in if !isFocused { commit() } }
+        .onChange(of: value) { newValue in if !focused { text = display(newValue) } }
+    }
+
+    private var rangeHint: String {
+        switch (lower, upper) {
+        case let (lo?, hi?): return "\(format(lo))–\(format(hi))"
+        case let (lo?, nil): return "≥ \(format(lo))"
+        case let (nil, hi?): return "≤ \(format(hi))"
+        default: return integer ? "Whole number" : "Number"
+        }
+    }
+
+    private func format(_ x: Double) -> String { integer ? String(Int(x)) : String(x) }
+
+    private func display(_ v: OptionValue?) -> String {
+        guard let v else { return "" }
+        if integer, let i = v.intValue { return String(i) }
+        if let d = v.doubleValue { return String(d) }
+        return v.stringValue ?? ""
+    }
+
+    private func commit() {
+        let trimmed = text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
+        guard let parsed = Double(trimmed), parsed.isFinite else {
+            text = display(value) // not a number: show the current value again
+            return
+        }
+        let clamped = OptionsForm.clamp(parsed, spec)
+        value = integer ? .int(Int(clamped.rounded())) : .float(clamped)
+        text = display(value)
     }
 }

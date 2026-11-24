@@ -36,6 +36,8 @@ struct TargetInfo {
   std::string mime;
   bool lossy = false;
   bool compress = false;
+  /// Optional, from newer cores: "compress", "archive", "extract" or empty.
+  std::string role;
 };
 
 enum class OptionType { Int, Float, Bool, Enum, String };

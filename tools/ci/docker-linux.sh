@@ -8,7 +8,7 @@
 #   tools/ci/docker-linux.sh gcc        core, GCC 14, dev preset (+ formats doc check)
 #   tools/ci/docker-linux.sh clang      core, Clang 18 + libc++ 18, asan preset (ASan + UBSan)
 #   tools/ci/docker-linux.sh desktop    desktop app: build, desktop tests (+ e2e label), package
-#   tools/ci/docker-linux.sh hygiene    privacy audit, skills mirror, notices, workflow parse
+#   tools/ci/docker-linux.sh hygiene    privacy audit (+ self-test), skills mirror, notices, workflow parse
 #   tools/ci/docker-linux.sh mingw      MinGW-w64 cross build of core + CLI (smoke check)
 #   tools/ci/docker-linux.sh shell      interactive shell in the gcc environment
 #
@@ -56,6 +56,7 @@ CC=gcc-14 CXX=g++-14 CVT_JOBS='"${JOBS}"' tools/ci/desktop.sh' ;;
     script='tools/ci/install-linux-deps.sh hygiene
 apt-get install -y -qq --no-install-recommends python3-yaml >/dev/null
 git init -q . && git add -A >/dev/null && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm snapshot
+python3 tools/privacy-audit --self-test
 python3 tools/privacy-audit
 python3 tools/sync-skills --check
 python3 tools/gen-notices --check
@@ -86,9 +87,8 @@ esac
 
 echo "==> ${job} in ${IMAGE} (memory ${MEMORY}, -j ${JOBS})"
 start=$(date +%s)
-env_args=()
-# CFLAGS from the host is passed through, e.g. to try a fix before it lands in a CMake file.
-if [[ -n "${CFLAGS:-}" ]]; then env_args+=(-e "CFLAGS=${CFLAGS}"); fi
-docker run --rm --memory "${MEMORY}" ${env_args[@]+"${env_args[@]}"} \
+# Nothing from the host environment is passed in: every job builds with the flags in the
+# CMake files only, exactly like CI.
+docker run --rm --memory "${MEMORY}" \
   -v "${REPO}:/src:ro" -v "${FILE_LIST}:/work-files:ro" "${IMAGE}" bash -c "${prologue}${script}"
 echo "==> ${job}: passed in $(( $(date +%s) - start ))s"

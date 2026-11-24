@@ -28,6 +28,8 @@ script in `tools/ci/` or a documented command, so each one can be reproduced loc
    | `privacy-audit` findings | the `privacy-audit` skill |
    | actionlint / shellcheck findings | the workflow file and line printed |
    | apt, sdkmanager, Docker pull or Gradle download errors, runner lost | infrastructure: re-run the job (`gh run rerun <run-id> --failed`) before changing code |
+   | a build that passes locally but fails only after "Restore build directory" | a stale cached build directory: delete that cache (`gh cache list`, `gh cache delete <key>`) and re-run; report it, since `tools/ci/build-cache.sh` should make this impossible |
+   | `The job running on runner ... has exceeded the maximum execution time` | a cold cache rebuilds the full core: re-run once (the cache is then warm); raise `timeout-minutes` only if a warm run is slow too |
 3. **Reproduce locally** with the job's own command:
    | Job | Local command |
    | --- | --- |

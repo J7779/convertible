@@ -27,6 +27,10 @@ std::string upper(std::string s) {
 TEST_CASE("e2e/add-files/command line files are queued with detected-format chips") {
   Session s("add-cmdline");
   RunOptions o;
+  // Tall enough for all three cards: a card's height follows its default
+  // target's options, which depend on the catalogue (the dump lists what is
+  // on screen).
+  o.height = 1500;
   o.files = {s.fixture("hello.txt"), s.write_input("data.json", R"({"a": [1, 2, 3]})"),
              s.write_input("blob.zzq", pseudo_random(300, 7))};
   REQUIRE(s.ok(s.run("add_cmdline.json", {}, o)));

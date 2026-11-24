@@ -34,6 +34,17 @@ without ever leaving your computer or phone.
 | Windows 10+, Linux (X11/XWayland), macOS 13.3+ | C++ with an in-house UI toolkit | [`apps/desktop`](apps/desktop) | [![CI](https://github.com/J7779/convertible/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/J7779/convertible/actions/workflows/ci.yml) |
 | iPhone and iPad (iOS 16.4+) | SwiftUI | [`apps/ios`](apps/ios) | built and tested locally (no CI job: signing needs the owner's certificate) |
 
+Sizes and tests, measured on this version (1,485 formats: 699 readable, 514 writable):
+
+| Build | Size | App tests |
+| --- | --- | --- |
+| CLI, macOS arm64 Release | 47.1 MB | core suite + CLI smoke test |
+| CLI, Windows x64 (MinGW-w64 GCC 14) | 60 MB | (cross-compiled; core suite runs on the MSVC job) |
+| Web: `convertible.wasm` | 35.9 MB (13.2 MB gzip -9); whole site 38.4 MB | 62 unit + 61 end-to-end (Chrome) |
+| Desktop, macOS arm64 | 49.6 MB executable; 21.5 MB zip package | 2 unit + 18 end-to-end groups |
+| iOS, arm64 Release (unsigned) | 47 MB app | unit and UI tests (simulator) |
+| Android (arm64-v8a, armeabi-v7a, x86_64) | not yet measured: the native build waits on a core NDK fix | 68 JVM unit tests + lint; instrumented and end-to-end on an emulator |
+
 Release builds (CLI, desktop, Android APKs, web bundle, checksums) are attached to each
 [GitHub Release](https://github.com/J7779/convertible/releases).
 
@@ -64,25 +75,25 @@ the other encodings.
 
 | Category | Known | Read | Write | Most common it converts |
 | --- | ---: | ---: | ---: | --- |
-| Images | 50 | 46 | 45 | jpg, png, gif, tiff, bmp, psd, ico, qr |
-| Vector graphics | 2 | 0 | 0 | detected only, for now |
-| Audio | 24 | 21 | 21 | mp3, wav, flac, m4a, ogg, aac, opus, alac |
-| Video | 20 | 20 | 16 | mp4, mkv, mov, webm, avi, mpg, wmv, m4v |
-| Documents | 40 | 33 | 24 | pdf, html, txt, md, eml, ipynb, mediawiki, tex |
-| E-books | 3 | 1 | 1 | fb2 |
-| Spreadsheets and tables | 23 | 23 | 18 | csv, xlsx, tsv, xls, ods, csv-semicolon, xlsm, dbf |
-| Presentations | 3 | 0 | 0 | detected only, for now |
-| Data and configuration | 108 | 108 | 87 | json, yaml, xml, toml, sqlite, ini, m3u, m3u8 |
-| Archives and compression | 15 | 0 | 0 | detected only, for now |
-| Fonts | 4 | 0 | 0 | detected only, for now |
-| Subtitles | 21 | 21 | 20 | srt, vtt, ass, lrc, ttml, ssa, dfxp, microdvd |
-| 3D models | 30 | 29 | 19 | obj, stl, glb, gltf, 3mf, fbx, ply, dae |
-| Geospatial | 30 | 30 | 25 | geojson, gpx, kml, shp.zip, kmz, fit, geocsv, tcx |
-| Calendars and contacts | 11 | 11 | 10 | ics, vcf, google-contacts-csv, google-calendar-csv, ldif, outlook-contacts-csv, outlook-calendar-csv, vcs |
-| Source code | 121 | 105 | 33 | js, py, css, ts, c, cpp, java, cs |
+| Images | 128 | 92 | 59 | jpg, png, gif, webp, heic, avif, tiff, bmp |
+| Vector graphics | 41 | 16 | 11 | svg, dxf, emf, dwg, eps, wmf, lottie, vectordrawable |
+| Audio | 104 | 34 | 25 | mp3, wav, flac, m4a, ogg, aac, opus, alac |
+| Video | 68 | 26 | 17 | mp4, mkv, mov, webm, avi, mpegts, mpg, wmv |
+| Documents | 91 | 50 | 30 | pdf, docx, html, txt, md, doc, eml, odt |
+| E-books | 16 | 11 | 4 | epub, mobi, azw3, cbr, fb2, fbz, palmdoc, cb7 |
+| Spreadsheets and tables | 37 | 23 | 18 | csv, xlsx, tsv, xls, ods, csv-semicolon, xlsm, dbf |
+| Presentations | 19 | 10 | 2 | pptx, ppt, odp, ppsx, potx, pptm, fodp, otp |
+| Data and configuration | 193 | 108 | 87 | json, yaml, xml, toml, sqlite, ini, m3u, m3u8 |
+| Archives and compression | 124 | 48 | 35 | zip, 7z, gz, rar, tar, tar.gz, tar.xz, xz |
+| Fonts | 22 | 18 | 15 | ttf, otf, woff2, woff, ttc, eot, pfb, afm |
+| Subtitles | 25 | 21 | 20 | srt, vtt, ass, lrc, ttml, ssa, dfxp, microdvd |
+| 3D models | 77 | 29 | 19 | obj, stl, glb, gltf, 3mf, fbx, ply, dae |
+| Geospatial | 52 | 30 | 25 | geojson, gpx, kml, shp.zip, kmz, fit, geocsv, tcx |
+| Calendars and contacts | 16 | 11 | 10 | ics, vcf, google-contacts-csv, google-calendar-csv, ldif, outlook-contacts-csv, outlook-calendar-csv, vcs |
+| Source code | 205 | 105 | 32 | js, py, css, ts, c, cpp, java, cs |
 | Encodings and checksums | 106 | 67 | 105 | base64, hex, checksums, sha256, data-uri, hexdump, md5, base64url |
-| Other | 4 | 0 | 0 | detected only, for now |
-| **Total** | **615** | **515** | **424** | |
+| Other | 161 | 0 | 0 | detected only, for now |
+| **Total** | **1485** | **699** | **514** | |
 
 <!-- formats:end -->
 
@@ -190,7 +201,8 @@ a C++23 compiler (GCC 14, Clang 18 with libc++, Apple Clang 21, MSVC 2022 17.10,
 ```sh
 ctest --preset dev                                   # core unit tests + CLI smoke test
 cmake --preset asan && cmake --build --preset asan -j && ctest --preset asan   # ASan + UBSan
-ctest --test-dir build/desktop -L desktop -C Release --output-on-failure      # desktop
+ctest --test-dir build/desktop -L '^desktop$' -C Release --output-on-failure  # desktop unit
+ctest --test-dir build/desktop -L desktop-e2e -C Release --output-on-failure  # desktop end-to-end
 apps/web/test.sh                                     # web (Node, no packages)
 cd apps/android && ./gradlew testDebugUnitTest lint  # Android JVM tests and lint
 tools/ci/docker-linux.sh gcc                         # Linux CI job in a container
@@ -213,6 +225,12 @@ Convertible is honest about what it cannot do:
 - **Memory**: conversions run in memory (input is memory-mapped, output is assembled in
   memory, default ceiling 2 GiB). The web app runs in a 32-bit WebAssembly heap and refuses
   inputs above 1 GB.
+- **Download size**: every app carries the whole converter. The web app downloads a 35.9 MB
+  WebAssembly file once (about 13 MB compressed) before its first conversion and then works
+  offline; there is no smaller "documents only" build yet.
+- **Opening files from the OS (web)**: browsers accept at most 300 file extensions for an
+  installed web app, so only the most popular readable formats are registered; every format
+  still opens through the file chooser, drag and drop or sharing.
 - **Speed**: video codecs are portable C/C++ without SIMD assembly, so encoding video is
   much slower than with hand-tuned native encoders. The web app uses no threads.
 - **Platform limits**: the iOS app is not distributed as a binary (signing); macOS and

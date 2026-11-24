@@ -5,7 +5,10 @@
 import assert from 'node:assert/strict';
 import { chooseFiles, chooseTarget, convert, openAdvanced, openApp, outputName, save, tid, waitForCard, waitForReady } from './lib/app.mjs';
 import { TEXT, isJpeg, makePng, pseudoRandom, readZip, tempDir } from './lib/fixtures.mjs';
-import { core, e2e, needsFormats, server, suite } from './lib/harness.mjs';
+import { appModule, core, e2e, needsFormats, server, suite } from './lib/harness.mjs';
+
+const { buildControls, optionsFor } = await appModule('model/options.js');
+const { DEFAULT_SETTINGS } = await appModule('model/settings.js');
 
 const format = (id) => core?.formats().find((f) => f.id === id) ?? null;
 const canConvert = (from, to) => Boolean(format(from)?.readable) && (core?.targets(from) ?? []).some((t) => t.id === to);
@@ -116,7 +119,11 @@ suite('catalogue-dependent conversions', () => {
     await waitForReady(page, ['tone.wav']);
     await chooseTarget(page, 'tone.wav', audioTarget.id);
     await convert(page, 'tone.wav', { timeout: 60_000 });
-    const expected = core.convert(new Uint8Array(wav), { from: 'wav', to: audioTarget.id, filename: 'tone.wav' });
+    // The app sends what the user's settings say (default quality preset
+    // "balanced", metadata removed), not the core's own defaults: ask the core
+    // in Node for exactly that.
+    const options = optionsFor(buildControls(core.optionsSchema('wav', audioTarget.id)), {}, DEFAULT_SETTINGS);
+    const expected = core.convert(new Uint8Array(wav), { from: 'wav', to: audioTarget.id, filename: 'tone.wav', options });
     assert.equal(expected.status, 0, expected.message);
     const d = await save(page, ctx, 'tone.wav', outputName('tone.wav', expected.extension));
     const magic = MAGIC[audioTarget.id];

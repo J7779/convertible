@@ -81,8 +81,10 @@ test('every schema in the real catalogue builds a model whose defaults convert',
     const options = optionsFor(model, {}, { preset: 'small', stripMetadata: true });
     // 16 bytes: fits encodings with block sizes (Z85 needs a multiple of 4).
     const r = core.convert(enc.encode('Options test 12\n'), { from: 'txt', to: target.id, options });
-    // Content-dependent refusals (ENCODE) are fine; the options themselves must be accepted.
-    assert.ok(r.status === 0 || r.status === 5, `${target.id}: ${r.status} ${r.message}`);
+    // Content-dependent refusals are fine (DECODE: the text is not, say, a
+    // valid host name for IDNA; ENCODE: it cannot be represented), but the
+    // options themselves must be accepted: never INVALID_ARGUMENT.
+    assert.ok([0, 4, 5].includes(r.status), `${target.id}: ${r.status} ${r.message}`);
     checked += 1;
   }
   assert.ok(checked > 3);

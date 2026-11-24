@@ -32,6 +32,7 @@ object Icons {
     }
 
     val Plus by lazy { icon("plus", "M12 5v14M5 12h14") }
+    val Minus by lazy { icon("minus", "M5 12h14") }
     val Close by lazy { icon("close", "M6.5 6.5l11 11M17.5 6.5l-11 11") }
     val Settings by lazy {
         icon("settings", "M4 7h9M17 7h3M4 17h3M11 17h9", "M15 5a2 2 0 1 0 0 4a2 2 0 1 0 0-4z", "M9 15a2 2 0 1 0 0 4a2 2 0 1 0 0-4z")

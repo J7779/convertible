@@ -51,7 +51,7 @@ jobs:
     name: desktop + cli / ${{ matrix.label }}
     needs: version
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 75
+    timeout-minutes: 150 # the full core, release build, no cache (release builds start clean)
     strategy:
       fail-fast: true
       matrix:
@@ -60,11 +60,11 @@ jobs:
             label: linux-x64
             cli: build/desktop/core/convertible
             cmake_args: ""
-          - os: macos-latest
+          - os: macos-26
             label: macos-universal
             cli: build/desktop/core/convertible
             cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64;x86_64
-          - os: windows-latest
+          - os: windows-2025
             label: windows-x64
             cli: build/desktop/core/Release/convertible.exe
             cmake_args: ""
@@ -118,7 +118,7 @@ jobs:
     name: android
     needs: version
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 150 # three ABIs x debug + release builds of the full core
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-android
@@ -137,7 +137,7 @@ jobs:
     name: web
     needs: version
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       CVT_DOCKER_MEMORY: 12g
     steps:

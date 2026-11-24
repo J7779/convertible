@@ -10,8 +10,12 @@ Checks, on every tracked or untracked-but-not-ignored file (text and binary alik
   secret          common access-token and API-key shapes
   signing         signing material and machine-local files: keystores, .p12/.pfx, provisioning
                   profiles, .pem/.key, local.properties, .env, literal store passwords
-  email           e-mail addresses, except in core/src/imported/**, licence files and NOTICES.md
-                  (and example.com/.org/.net and GitHub noreply addresses anywhere)
+  email           e-mail addresses, except in core/src/imported/** and licence/credit files
+                  (and example.com/.org/.net, GitHub noreply and one-letter placeholder
+                  addresses such as a@b.co anywhere). NOTICES.md is checked: it carries
+                  copyright lines and licence texts, never contributor address lists
+                  (versions committed before that rule, which quoted upstream AUTHORS
+                  files, are exempt in --history: history is not rewritten).
   pattern         extra regular expressions supplied at run time (see below)
 
 With --history it also checks every commit reachable from any ref:
@@ -32,6 +36,7 @@ Usage (from anywhere in the repository; Python 3.8+ standard library and git onl
     tools/privacy-audit                  # working tree
     tools/privacy-audit --history        # working tree and all history
     tools/privacy-audit --history --local-identity --pattern 'my-secret-word'
+    tools/privacy-audit --self-test      # proves each rule still fires on planted problems
 Exit status: 0 clean, 1 findings, 2 usage or git error.
 """
 
@@ -55,7 +60,6 @@ ALLOW_MARKER = b"privacy-audit: allow"
 # Paths (fnmatch, '/' separators) where e-mail addresses are expected.
 EMAIL_ALLOWED_PATHS = [
     "core/src/imported/*",
-    "NOTICES.md",
     "LICENSE",
     "LICENSE.*",
     "*/LICENSE*",
@@ -63,11 +67,17 @@ EMAIL_ALLOWED_PATHS = [
     "*/COPYING*",
     "*/AUTHORS*",
     "*/CREDITS*",
+    "*/THANKS*",
+    "*/CONTRIBUTORS*",
+    "*/MAINTAINERS*",
     "*/NOTICE*",
     "*/PATENTS*",
     "*-LICENSE.txt",
 ]
-# Paths where private keys are deliberate test data.
+# Generated files whose old committed versions quoted upstream contributor lists.
+EMAIL_ALLOWED_IN_HISTORY = ["NOTICES.md"]
+# Paths where keys, certificates and keystores are deliberate test data (fixtures for the
+# formats that carry them: PEM/DER/PKCS#12/JKS/SSH/PGP readers and writers).
 FIXTURE_PATHS = ["core/tests/data/*", "*/fixtures/*", "*/testdata/*", "*/test-data/*"]
 
 # Placeholder names that are not anybody's account.
@@ -108,6 +118,8 @@ SECRETS = [
 ]
 EMAIL = re.compile(rb"(?<![A-Za-z0-9._%+\-/])[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.([A-Za-z]{2,})\b")
 # Reserved example domains, internationalised (xn--) test domains and GitHub noreply addresses.
+# One-letter local part and domain label ("a@b.co"): a placeholder, nobody's address.
+EMAIL_PLACEHOLDER = re.compile(rb"^[A-Za-z0-9]@[A-Za-z0-9]\.[A-Za-z]{2,3}$")
 EMAIL_OK = re.compile(rb"(?i)@(?:[a-z0-9-]+\.)*example\.(?:com|org|net)$|@(?:[a-z0-9-]+\.)*[a-z0-9-]+\.(?:test|example|invalid|localhost)$|@xn--|@openssh\.com$|@users\.noreply\.github\.com$|^noreply@github\.com$|^git@")
 
 SIGNING_NAMES = [
@@ -148,10 +160,11 @@ class Audit:
                 and not matches(path, FIXTURE_PATHS):
             self.add(where, "signing", "signing material or machine-local file must not be committed")
 
-    def scan_content(self, where: str, path: str, data: bytes) -> None:
+    def scan_content(self, where: str, path: str, data: bytes, historical: bool = False) -> None:
         if path == SELF:
             return
-        email_ok_path = matches(path, EMAIL_ALLOWED_PATHS)
+        email_ok_path = matches(path, EMAIL_ALLOWED_PATHS) or (
+            historical and matches(path, EMAIL_ALLOWED_IN_HISTORY))
         fixture = matches(path, FIXTURE_PATHS)
         for number, line in enumerate(data.split(b"\n"), 1):
             if not line or ALLOW_MARKER in line:
@@ -175,7 +188,8 @@ class Audit:
             if not email_ok_path:
                 for m in EMAIL.finditer(line):
                     address = m.group(0)
-                    if m.group(1).lower().decode() in FILE_EXTENSIONS or EMAIL_OK.search(address):
+                    if m.group(1).lower().decode() in FILE_EXTENSIONS or EMAIL_OK.search(address) \
+                            or EMAIL_PLACEHOLDER.match(address):
                         continue
                     self.add(here, "email", short(address))
             # LICENSE names the copyright holder; imported upstream code carries its own authors.
@@ -258,9 +272,66 @@ def history(audit: Audit) -> tuple[int, int]:
         offset = start + int(size) + 1
         path = seen[sha]
         audit.scan_name(f"history:{path}", path)
-        audit.scan_content(f"history:{path}@{sha[:10]}", path, content)
+        audit.scan_content(f"history:{path}@{sha[:10]}", path, content, historical=True)
         scanned += 1
     return commits, scanned
+
+
+def self_test() -> int:
+    """Plants one example of every problem and checks each is reported (and the allow-lists hold).
+
+    The samples are assembled at run time, so this file itself holds none of them."""
+    home = "/" + "Users" + "/" + "jdoeq/project/file.txt"
+    key = "-----BEGIN " + "RSA PRIVATE KEY-----"
+    mail = "j.doe" + "@" + "mail-host.org"
+    token = "gh" + "p_" + "A" * 36
+    cases = [
+        ("src/a.cpp", f"// path {home}", {"home-path"}),
+        ("src/b.cpp", "ping build-box" + ".local now", {"local-host"}),
+        ("docs/c.md", key, {"private-key"}),
+        ("src/d.py", f"contact = '{mail}'", {"email"}),
+        ("NOTICES.md", f"Copyright 2020 J. Doe <{mail}>", {"email"}),
+        ("tools/e.sh", f"TOKEN={token}", {"secret"}),
+        ("apps/android/release.keystore", "", {"signing"}),
+        ("apps/android/local.properties", "", {"signing"}),
+        ("apps/x/f.kts", 'storePassword = "hunter22"', {"secret"}),
+        # Allowed: fixtures, imported licences and credits, placeholders, marked lines.
+        ("core/tests/data/crypto/key.pem", key, set()),
+        ("core/tests/data/crypto/store.p12", "", set()),
+        ("core/src/imported/libfoo/AUTHORS", f"J. Doe <{mail}>", set()),
+        ("assets/fonts/Some-LICENSE.txt", f"Reserved Font Name, {mail}", set()),
+        ("src/g.cpp", 'auto e = "a' + '@b.co";', set()),
+        ("src/h.cpp", 'auto e = "x' + '@example.com";', set()),
+        ("src/i.cpp", f"// {home} privacy-audit: " + "allow", set()),
+    ]
+    failures = 0
+    for path, content, expected in cases:
+        audit = Audit([])
+        audit.scan_name(path, path)
+        audit.scan_content(path, path, content.encode())
+        got = {rule for _, rule, _ in audit.findings}
+        if got != expected:
+            failures += 1
+            print(f"self-test FAILED for {path}: expected {sorted(expected) or 'nothing'}, "
+                  f"got {sorted(got) or 'nothing'}")
+    audit = Audit([])
+    audit.scan_content("history:NOTICES.md", "NOTICES.md", f"<{mail}>".encode(), historical=True)
+    if audit.findings:
+        failures += 1
+        print("self-test FAILED for historical NOTICES.md")
+    audit = Audit([re.compile(rb"\bsecretword\b", re.I)])
+    audit.scan_content("src/j.txt", "src/j.txt", b"the SecretWord is here")
+    if {r for _, r, _ in audit.findings} != {"pattern"}:
+        failures += 1
+        print("self-test FAILED for --pattern")
+    if not TRAILERS.search(b"Fix\n\nCo-authored-" + b"by: X <x@example.com>"):
+        failures += 1
+        print("self-test FAILED for commit trailers")
+    if failures:
+        print(f"privacy-audit: self-test failed ({failures} case(s))", file=sys.stderr)
+        return 1
+    print(f"privacy-audit: self-test passed ({len(cases) + 3} cases)")
+    return 0
 
 
 def main() -> int:
@@ -271,7 +342,11 @@ def main() -> int:
     parser.add_argument("--local-identity", action="store_true",
                         help="forbid this machine's user name and host name")
     parser.add_argument("--quiet", action="store_true", help="print findings only")
+    parser.add_argument("--self-test", action="store_true",
+                        help="check that every rule still fires on planted samples, then exit")
     args = parser.parse_args()
+    if args.self_test:
+        return self_test()
 
     raw = list(args.pattern)
     raw += [p for p in os.environ.get("CVT_PRIVACY_PATTERNS", "").splitlines() if p.strip()]

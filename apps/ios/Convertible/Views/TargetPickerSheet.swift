@@ -6,6 +6,11 @@ struct TargetPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     let context: PickerContext
     @State private var query = ""
+    /// Sections are computed off the body (sources have up to ~400 targets and the
+    /// queue publishes progress many times a second while files convert).
+    @State private var sections: [TargetSection]?
+
+    private struct Key: Equatable { let query: String; let targets: [TargetFormat]; let source: String? }
 
     private var targets: [TargetFormat] {
         switch context {
@@ -29,17 +34,17 @@ struct TargetPickerSheet: View {
     }
 
     var body: some View {
-        let sections = TargetCatalog.sections(targets: targets, sourceCategory: sourceCategory,
-                                              popularity: queue.catalog.popularity, query: query)
+        let shown = sections ?? TargetCatalog.sections(targets: targets, sourceCategory: sourceCategory,
+                                                       popularity: queue.catalog.popularity, query: query)
         NavigationStack {
             List {
-                if sections.isEmpty {
+                if shown.isEmpty {
                     Text(query.isEmpty ? "No formats available." : "No format matches “\(query)”.")
                         .textStyle(.body)
                         .foregroundStyle(Palette.textSecondary)
                         .listRowBackground(Color.clear)
                 }
-                ForEach(sections) { section in
+                ForEach(shown) { section in
                     Section {
                         ForEach(section.targets) { target in
                             Button { choose(target) } label: { TargetRow(target: target, selected: target.id == selectedID) }
@@ -62,6 +67,12 @@ struct TargetPickerSheet: View {
                     Button("Done") { dismiss() }.accessibilityIdentifier("pickerDoneButton")
                 }
             }
+        }
+        .task(id: Key(query: query, targets: targets, source: sourceCategory)) {
+            if sections != nil, !query.isEmpty { try? await Task.sleep(nanoseconds: 80_000_000) }
+            if Task.isCancelled { return }
+            sections = TargetCatalog.sections(targets: targets, sourceCategory: sourceCategory,
+                                              popularity: queue.catalog.popularity, query: query)
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)

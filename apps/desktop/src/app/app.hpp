@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "app/file_browser.hpp"
@@ -119,6 +120,7 @@ class App : public AppHandler {
   float build_card(QueueItem& item, Rect r, int index, bool measure_only);
   float card_height(const QueueItem& item, float width) const;
   void build_card_options(QueueItem& item, Rect r);
+  void build_stepper(QueueItem& item, const OptionSpec& spec, Rect ctl);
   void build_group_bar(Rect r, const std::string& source);
   void build_action_bar(Rect r);
   void build_picker();
@@ -172,13 +174,29 @@ class App : public AppHandler {
     int highlight = 0;
     std::function<void(int)> on_pick;
     double opened_at = 0.0;
+    float scroll = 0.0f;         // the list's scroll offset last frame
+    bool scrolled_once = false;  // the current choice was scrolled into view
   } menu_;
+  // Number fields of steppers while they are being edited (text that may not
+  // parse yet, e.g. "" or "-"), by field id.
+  std::unordered_map<ui::WidgetId, std::string> number_drafts_;
+  struct MenuKeys {
+    bool down = false, up = false, page_down = false, page_up = false, home = false, end = false, pick = false;
+  } menu_keys_;
   void open_menu(ui::WidgetId owner, Rect anchor, std::vector<std::string> choices, int selected,
                  std::function<void(int)> on_pick);
   void build_menu();
 
   std::string formats_query_;
   std::string formats_category_;
+  struct FormatRow {
+    bool header;
+    std::string category;
+    const FormatInfo* format;
+    int count;
+  };
+  std::vector<FormatRow> formats_rows_;  // the formats list for formats_rows_key_
+  std::string formats_rows_key_;
   std::deque<Toast> toasts_;
   std::uint64_t next_toast_id_ = 1;
   std::vector<std::uint64_t> completed_seen_;

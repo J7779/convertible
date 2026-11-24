@@ -81,6 +81,9 @@
     <string name="picker_no_results">No format matches “%1$s”.</string>
     <string name="picker_clear_search">Clear search</string>
     <string name="picker_close">Close</string>
+    <string name="option_decrease">Decrease %1$s</string>
+    <string name="option_increase">Increase %1$s</string>
+    <string name="option_choose">%1$s: %2$s. Change</string>
     <string name="picker_compress_title">Compress %1$s</string>
     <string name="picker_compress_same">Smaller %1$s, same format</string>
 

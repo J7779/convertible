@@ -97,6 +97,21 @@ Json default_option_values(const std::vector<OptionSpec>& specs, const Settings&
   return values;
 }
 
+NumericControl numeric_control(const OptionSpec& spec) {
+  if (!spec.min || !spec.max || !(*spec.max > *spec.min)) return NumericControl::Stepper;
+  if (spec.type == OptionType::Int && *spec.max - *spec.min > kSliderMaxSteps) return NumericControl::Stepper;
+  return NumericControl::Slider;
+}
+
+double stepper_step(const OptionSpec& spec) {
+  double step = spec.type == OptionType::Int ? 1.0 : 0.1;
+  if (spec.min && spec.max && *spec.max > *spec.min) {
+    const double raw = (*spec.max - *spec.min) / 50.0;
+    if (raw > step) step = std::pow(10.0, std::floor(std::log10(raw)));
+  }
+  return step;
+}
+
 bool has_preset(const std::vector<OptionSpec>& specs) {
   for (const OptionSpec& s : specs) {
     if (s.key != "preset" || s.type != OptionType::Enum) continue;
@@ -185,8 +200,12 @@ std::vector<TargetGroup> group_targets(const std::vector<TargetInfo>& targets, c
 
 std::vector<const TargetInfo*> archive_targets(const std::vector<TargetInfo>& targets) {
   std::vector<const TargetInfo*> out;
+  // Newer cores mark packing targets with role "archive"; without roles, the
+  // archive category is the rule (but never an "extract" target).
+  const bool has_roles = std::any_of(targets.begin(), targets.end(), [](const TargetInfo& t) { return !t.role.empty(); });
   for (const auto& t : targets) {
-    if (t.category == "archive" && !t.compress) out.push_back(&t);
+    if (t.compress) continue;
+    if (has_roles ? t.role == "archive" : (t.category == "archive" && t.role != "extract")) out.push_back(&t);
   }
   return out;
 }

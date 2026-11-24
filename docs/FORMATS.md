@@ -2,7 +2,7 @@
 
 # Supported formats
 
-The core knows **615** formats: **515** can be read (decoded) and **424** can be written (encoded).
+The core knows **1485** formats: **699** can be read (decoded) and **514** can be written (encoded).
 
 - **Read**: the core has a reader for the format, so it can be the source of a conversion.
 - **Write**: the core has a writer, so it can be a conversion target.
@@ -17,258 +17,614 @@ What can be converted into what is decided at run time by the planner; ask the C
 
 | Category | Formats | Read | Write |
 | --- | ---: | ---: | ---: |
-| [Images](#images) | 50 | 46 | 45 |
-| [Vector graphics](#vector-graphics) | 2 | 0 | 0 |
-| [Audio](#audio) | 24 | 21 | 21 |
-| [Video](#video) | 20 | 20 | 16 |
-| [Documents](#documents) | 40 | 33 | 24 |
-| [E-books](#e-books) | 3 | 1 | 1 |
-| [Spreadsheets and tables](#spreadsheets-and-tables) | 23 | 23 | 18 |
-| [Presentations](#presentations) | 3 | 0 | 0 |
-| [Data and configuration](#data-and-configuration) | 108 | 108 | 87 |
-| [Archives and compression](#archives-and-compression) | 15 | 0 | 0 |
-| [Fonts](#fonts) | 4 | 0 | 0 |
-| [Subtitles](#subtitles) | 21 | 21 | 20 |
-| [3D models](#3d-models) | 30 | 29 | 19 |
-| [Geospatial](#geospatial) | 30 | 30 | 25 |
-| [Calendars and contacts](#calendars-and-contacts) | 11 | 11 | 10 |
-| [Source code](#source-code) | 121 | 105 | 33 |
+| [Images](#images) | 128 | 92 | 59 |
+| [Vector graphics](#vector-graphics) | 41 | 16 | 11 |
+| [Audio](#audio) | 104 | 34 | 25 |
+| [Video](#video) | 68 | 26 | 17 |
+| [Documents](#documents) | 91 | 50 | 30 |
+| [E-books](#e-books) | 16 | 11 | 4 |
+| [Spreadsheets and tables](#spreadsheets-and-tables) | 37 | 23 | 18 |
+| [Presentations](#presentations) | 19 | 10 | 2 |
+| [Data and configuration](#data-and-configuration) | 193 | 108 | 87 |
+| [Archives and compression](#archives-and-compression) | 124 | 48 | 35 |
+| [Fonts](#fonts) | 22 | 18 | 15 |
+| [Subtitles](#subtitles) | 25 | 21 | 20 |
+| [3D models](#3d-models) | 77 | 29 | 19 |
+| [Geospatial](#geospatial) | 52 | 30 | 25 |
+| [Calendars and contacts](#calendars-and-contacts) | 16 | 11 | 10 |
+| [Source code](#source-code) | 205 | 105 | 32 |
 | [Encodings and checksums](#encodings-and-checksums) | 106 | 67 | 105 |
-| [Other](#other) | 4 | 0 | 0 |
-| **Total** | **615** | **515** | **424** |
+| [Other](#other) | 161 | 0 | 0 |
+| **Total** | **1485** | **699** | **514** |
 
 ## Images
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
+| `3fr` | Hasselblad RAW image | `.3fr` | yes | - | Raw sensor data from Hasselblad cameras. |
+| `abr` | Photoshop brushes | `.abr` | - | - | Photoshop brush set. |
 | `aco` | Adobe Color Swatch | `.aco` | yes | yes | Photoshop colour swatches (.aco). |
 | `act` | Adobe Color Table | `.act` | yes | yes | Photoshop indexed-colour table (256 RGB entries). |
-| `apng` | Animated PNG | `.apng` | yes | yes | PNG with animation frames (APNG). |
+| `afphoto` | Affinity Photo document | `.afphoto` | - | - | Layered document of Affinity Photo. |
+| `ani` | Windows animated cursor | `.ani` | yes | - | Animated mouse pointer: a sequence of cursor or icon frames. |
+| `apng` | Animated PNG | `.apng`, `.png` | yes | yes | PNG with animation frames (APNG). |
+| `ari` | ARRIRAW image | `.ari` | - | - | Raw frame from ARRI digital cinema cameras. |
+| `arw` | Sony RAW image | `.arw` | yes | - | TIFF-based raw sensor data from Sony cameras. |
 | `ase` | Adobe Swatch Exchange | `.ase` | yes | yes | Swatches shared between Adobe applications. |
-| `avif` | AVIF image | `.avif` | - | - |  |
+| `astc` | ASTC texture | `.astc` | yes | - | Adaptive Scalable Texture Compression image (ARM .astc file). |
+| `avif` | AVIF image | `.avif`, `.avifs` | yes | yes | AV1-coded image in the HEIF container: small files, alpha, 10-bit, animation. |
+| `basis` | Basis Universal texture | `.basis` | - | - | Supercompressed GPU texture transcodable to any GPU format. |
+| `bigtiff` | BigTIFF image | `.tif`, `.tiff`, `.btf`, `.tf8` | yes | - | TIFF with 64-bit offsets for files larger than 4 GB. |
 | `bmp` | Windows bitmap | `.bmp`, `.dib`, `.rle` | yes | yes | Uncompressed (or RLE) Windows and OS/2 bitmap. |
+| `bpg` | BPG image | `.bpg` | - | - | Better Portable Graphics: HEVC-based still image format. |
+| `cin` | Cineon image | `.cin` | - | - | Kodak Cineon film-scan image. |
+| `clip` | CLIP STUDIO PAINT file | `.clip` | - | - | Illustration and comic file of CLIP STUDIO PAINT. |
 | `code128` | Code 128 barcode | `.png` | yes | yes | Code 128 linear barcode generated from text. |
+| `cr2` | Canon RAW 2 image | `.cr2` | yes | - | TIFF-based raw sensor data from Canon cameras (until 2018). |
+| `cr3` | Canon RAW 3 image | `.cr3` | yes | - | ISO-media-based raw sensor data from current Canon cameras. |
+| `crw` | Canon RAW image (CIFF) | `.crw` | yes | - | Raw sensor data from early Canon digital cameras. |
+| `cube` | 3D colour lookup table | `.cube`, `.3dl` | - | - | Colour grading LUT (Adobe / Resolve cube). |
 | `cur` | Windows cursor | `.cur` | yes | yes | Mouse pointer image with a hotspot. |
+| `czi` | Zeiss microscopy image | `.czi` | - | - | Carl Zeiss Image: multidimensional microscopy data. |
 | `datamatrix` | Data Matrix | `.png` | yes | yes | Data Matrix ECC 200 symbol generated from text. |
+| `dcm` | DICOM medical image | `.dcm`, `.dicom`, `.dic` | - | - | Digital Imaging and Communications in Medicine file. |
+| `dcr` | Kodak DCR RAW image | `.dcr` | yes | - | Raw sensor data from Kodak professional cameras. |
+| `dcx` | Multi-page PCX (DCX) | `.dcx` | yes | yes | ZSoft multi-page PCX, used by fax software. |
 | `dds` | DirectDraw Surface | `.dds` | yes | yes | GPU texture (uncompressed or BC1-BC5 block compressed). |
 | `dicom` | DICOM image | `.dcm`, `.dicom`, `.dic` | yes | yes | Digital Imaging and Communications in Medicine file. |
+| `dng` | Digital Negative | `.dng` | yes | - | Adobe's open TIFF-based raw image format, also used by phones. |
+| `dpx` | DPX image | `.dpx` | - | - | Digital Picture Exchange: film and VFX frames (SMPTE 268M). |
 | `ean13` | EAN-13 barcode | `.png` | yes | yes | EAN-13 retail barcode from 12 or 13 digits. |
-| `farbfeld` | farbfeld image | `.ff`, `.farbfeld` | yes | yes | Minimal 16-bit RGBA image format. |
+| `erf` | Epson RAW image | `.erf` | yes | - | Raw sensor data from the Epson R-D1. |
+| `exr` | OpenEXR image | `.exr` | yes | yes | High dynamic range image used in film, visual effects and 3D rendering. |
+| `ff` | farbfeld image | `.ff`, `.farbfeld` | yes | yes | Minimal 16-bit RGBA image format. |
+| `fff` | Hasselblad/Imacon RAW image | `.fff` | yes | - | Raw data from Hasselblad and Imacon scanners and backs. |
 | `fits` | FITS image/table | `.fits`, `.fit`, `.fts`, `.fz` | yes | yes | Flexible Image Transport System: astronomical images, cubes and tables. |
+| `flif` | FLIF image | `.flif` | - | - | Free Lossless Image Format (superseded by JPEG XL). |
 | `gif` | GIF image | `.gif` | yes | yes | 256-colour image or animation. |
 | `gpl` | GIMP palette | `.gpl` | yes | yes | GIMP/Inkscape/Krita colour palette. |
+| `gpr` | GoPro RAW image | `.gpr` | yes | - | DNG-based raw photo from GoPro cameras. |
 | `hdr` | Radiance HDR image | `.hdr`, `.pic`, `.rgbe` | yes | yes | High dynamic range RGBE image. |
-| `heic` | HEIF/HEIC image | `.heic`, `.heif` | - | - |  |
+| `heic` | HEIC image | `.heic`, `.heics`, `.hif`, `.heif`, `.heifs` | yes | yes | HEVC-coded image in the HEIF container, the iPhone photo format. |
+| `heif` | HEIF image | `.heif`, `.heifs` | yes | yes | High Efficiency Image File with the generic 'mif1' brand (HEVC-coded when written). |
 | `icns` | Apple icon image | `.icns` | yes | yes | macOS application icon with several sizes. |
 | `ico` | Windows icon | `.ico` | yes | yes | Icon with several sizes (favicon, application icon). |
+| `iiq` | Phase One RAW image | `.iiq` | yes | - | Raw sensor data from Phase One digital backs. |
+| `ilbm` | Amiga IFF image | `.iff`, `.ilbm`, `.lbm` | - | - | Interleaved bitmap in an IFF FORM (Amiga, Deluxe Paint). |
+| `j2k` | JPEG 2000 codestream | `.j2k`, `.j2c`, `.jpc` | yes | yes | Raw JPEG 2000 codestream without a file container. |
 | `jasc-pal` | JASC palette | `.pal` | yes | yes | Paint Shop Pro / Paint.NET style JASC-PAL palette. |
-| `jpg` | JPEG image | `.jpg`, `.jpeg`, `.jpe`, `.jfif`, `.jif` | yes | yes | Lossy compressed photograph (JFIF/EXIF). |
-| `jxl` | JPEG XL image | `.jxl` | - | - |  |
+| `jbig2` | JBIG2 image | `.jb2`, `.jbig2` | - | - | Bi-level image compression used inside PDF scans. |
+| `jls` | JPEG-LS image | `.jls` | yes | yes | Lossless / near-lossless JPEG (ITU-T T.87), used in medical imaging. |
+| `jng` | JNG image | `.jng` | - | - | JPEG Network Graphics: JPEG with PNG-style alpha. |
+| `jp2` | JPEG 2000 image | `.jp2` | yes | yes | Wavelet-based JPEG 2000 image in the JP2 container, lossy or lossless. |
+| `jpf` | JPEG 2000 extended image (.jpf) | `.jpf` | yes | yes | JPX file with the .jpf extension; written JP2-compatible. |
+| `jpg` | JPEG image | `.jpg`, `.jpeg`, `.jpe`, `.jfif`, `.jif`, `.jfi` | yes | yes | Lossy compressed photograph (JFIF/EXIF). |
+| `jpm` | JPEG 2000 compound image | `.jpm` | - | - | JPEG 2000 Part 6 compound document image (mixed raster content). |
+| `jpx` | JPEG 2000 extended image | `.jpx`, `.jpf` | yes | yes | JPEG 2000 Part 2 (JPX) file; written JP2-compatible. |
+| `jxl` | JPEG XL image | `.jxl` | yes | yes | Modern lossy and lossless image format (ISO/IEC 18181) with alpha, animation and HDR. |
+| `jxr` | JPEG XR image | `.jxr`, `.wdp`, `.hdp` | - | - | Microsoft HD Photo / JPEG XR image. |
+| `kdc` | Kodak RAW image | `.kdc` | yes | - | Raw sensor data from Kodak compacts. |
+| `kra` | Krita document | `.kra` | yes | - | Krita painting (the flattened image is read). |
+| `ktx` | KTX texture | `.ktx` | yes | - | Khronos texture container (OpenGL formats, BCn/ETC/ASTC compressed). |
+| `ktx2` | KTX2 texture | `.ktx2` | yes | yes | Khronos texture container version 2 (Vulkan formats). |
+| `mef` | Mamiya RAW image | `.mef` | yes | - | Raw sensor data from Mamiya medium-format cameras. |
 | `mha` | MetaImage | `.mha`, `.mhd` | yes | yes | ITK MetaImage with embedded data (.mha); .mhd headers name a separate file. |
+| `miff` | ImageMagick image | `.miff` | - | - | Magick Image File Format, ImageMagick's native format. |
+| `mng` | MNG animation | `.mng` | - | - | Multiple-image Network Graphics, PNG's animation sibling. |
+| `mos` | Leaf RAW image | `.mos` | yes | - | Raw sensor data from Leaf digital backs. |
 | `mpo` | Multi-picture JPEG (MPO) | `.mpo` | yes | - | Stereo or multi-view JPEG from 3D cameras; the first picture is read. |
+| `mrw` | Minolta RAW image | `.mrw` | - | - | Raw sensor data from Konica Minolta cameras. |
+| `ndpi` | Hamamatsu slide image | `.ndpi` | - | - | Whole-slide pathology image (Hamamatsu, TIFF-based). |
+| `nef` | Nikon RAW image | `.nef` | yes | - | TIFF-based raw sensor data from Nikon cameras. |
 | `nifti` | NIfTI-1 volume | `.nii`, `.hdr` | yes | yes | Neuroimaging Informatics Technology Initiative volume (.nii); Analyze 7.5 headers. |
+| `nii` | NIfTI image | `.nii` | - | - | Neuroimaging volume (NIfTI-1 or NIfTI-2, single file). |
 | `nii.gz` | NIfTI-1 volume (gzip) | `.nii.gz` | yes | yes | Gzip-compressed NIfTI-1 volume. |
 | `nrrd` | NRRD volume | `.nrrd`, `.nhdr` | yes | yes | Nearly Raw Raster Data (Teem, 3D Slicer). |
+| `nrw` | Nikon Coolpix RAW image | `.nrw` | yes | - | Raw sensor data from Nikon Coolpix compacts. |
+| `odi` | OpenDocument image | `.odi` | - | - | Image document (ODF). |
+| `ome.tiff` | OME-TIFF image | `.ome.tiff`, `.ome.tif` | - | - | Microscopy image: TIFF with Open Microscopy Environment XML metadata. |
+| `ora` | OpenRaster image | `.ora` | yes | yes | Layered raster image exchanged by MyPaint, Krita, GIMP and Pinta. |
+| `orf` | Olympus RAW image | `.orf`, `.ori` | yes | - | Raw sensor data from Olympus / OM System cameras. |
 | `pam` | Portable arbitrary map | `.pam` | yes | yes | Netpbm image with optional transparency. |
-| `pbm` | Portable bitmap | `.pbm` | yes | yes | Netpbm black-and-white image. |
+| `pat` | GIMP pattern | `.pat` | - | - | GIMP tileable pattern. |
+| `pbm` | Portable bitmap | `.pbm`, `.pnm` | yes | yes | Netpbm black-and-white image. |
 | `pcx` | PCX image | `.pcx`, `.pcc` | yes | yes | ZSoft Paintbrush image. |
+| `pdn` | Paint.NET image | `.pdn` | - | - | Layered image of Paint.NET. |
+| `pef` | Pentax RAW image | `.pef` | yes | - | Raw sensor data from Pentax cameras. |
 | `pfm` | Portable float map | `.pfm` | yes | yes | 32-bit floating point HDR image. |
-| `pgm` | Portable graymap | `.pgm` | yes | yes | Netpbm greyscale image. |
+| `pgm` | Portable graymap | `.pgm`, `.pnm` | yes | yes | Netpbm greyscale image. |
+| `photocd` | Kodak Photo CD image | `.pcd` | - | - | Multi-resolution image from a Kodak Photo CD. |
 | `png` | PNG image | `.png` | yes | yes | Lossless compressed raster image with transparency. |
 | `pnm` | Portable anymap | `.pnm` | yes | yes | Any Netpbm image. |
-| `ppm` | Portable pixmap | `.ppm` | yes | yes | Netpbm colour image. |
+| `ppm` | Portable pixmap | `.ppm`, `.pnm` | yes | yes | Netpbm colour image. |
+| `procreate` | Procreate document | `.procreate` | - | - | Layered painting of the iPad app Procreate (ZIP package). |
 | `psb` | Adobe Photoshop large document | `.psb` | yes | yes | Photoshop big document (PSB). |
 | `psd` | Adobe Photoshop document | `.psd` | yes | yes | Photoshop image (the flattened picture is read). |
+| `pspimage` | PaintShop Pro image | `.pspimage`, `.psp`, `.pspbrush`, `.tub` | - | - | Layered image of Corel PaintShop Pro. |
+| `pvr` | PowerVR texture | `.pvr` | yes | - | PowerVR SDK texture container, version 3. |
 | `qoi` | QOI image | `.qoi` | yes | yes | Quite OK Image: fast lossless compression. |
 | `qr` | QR Code | `.png` | yes | yes | QR Code symbol generated from text. |
+| `raf` | Fujifilm RAW image | `.raf` | yes | - | Raw sensor data from Fujifilm cameras. |
+| `ras` | Sun raster image | `.ras`, `.sun`, `.im1`, `.im8`, `.im24`, `.im32` | yes | yes | Sun Microsystems raster image. |
 | `riff-pal` | RIFF palette | `.pal` | yes | yes | Microsoft RIFF PAL colour palette. |
+| `rw2` | Panasonic RAW image | `.rw2`, `.raw` | yes | - | Raw sensor data from Panasonic Lumix cameras. |
+| `rwl` | Leica RAW image | `.rwl` | yes | - | Raw sensor data from Leica compacts (Panasonic-made). |
+| `sai` | PaintTool SAI document | `.sai`, `.sai2` | - | - | Layered painting of PaintTool SAI. |
+| `sbsar` | Substance material | `.sbsar`, `.sbs` | - | - | Adobe Substance procedural material. |
 | `sgi` | SGI image | `.sgi`, `.rgb`, `.rgba`, `.bw`, `.int`, `.inta` | yes | yes | Silicon Graphics raster image. |
-| `sun` | Sun raster image | `.ras`, `.sun`, `.im1`, `.im8`, `.im24`, `.im32` | yes | yes | Sun Microsystems raster image. |
+| `spp` | Substance Painter project | `.spp` | - | - | Adobe Substance 3D Painter texturing project. |
+| `sr2` | Sony RAW 2 image | `.sr2` | yes | - | Raw sensor data from early Sony cameras. |
+| `srf` | Sony RAW format image | `.srf` | yes | - | Raw sensor data from the Sony DSC-R1. |
+| `srw` | Samsung RAW image | `.srw` | yes | - | Raw sensor data from Samsung cameras. |
+| `svs` | Aperio slide image | `.svs` | - | - | Whole-slide pathology image (Aperio, TIFF-based). |
 | `tga` | Truevision TGA image | `.tga`, `.icb`, `.vda`, `.vst`, `.tpic` | yes | yes | Targa bitmap used by games and video tools. |
 | `tiff` | TIFF image | `.tiff`, `.tif` | yes | yes | Tagged image file: lossless, multi-page, high bit depth. |
 | `upca` | UPC-A barcode | `.png` | yes | yes | UPC-A retail barcode from 11 or 12 digits. |
+| `vtf` | Valve texture | `.vtf` | yes | - | Valve Texture Format used by Source engine games. |
 | `wbmp` | Wireless bitmap | `.wbmp` | yes | yes | Black-and-white image for early mobile phones (WAP). |
-| `webp` | WebP image | `.webp` | - | - |  |
+| `webp` | WebP image | `.webp` | yes | yes | Google's lossy and lossless web image format with transparency and animation. |
+| `x3f` | Sigma RAW image | `.x3f` | - | - | Raw sensor data from Sigma Foveon cameras. |
 | `xbm` | X BitMap | `.xbm` | yes | yes | Black-and-white X11 image stored as C source. |
+| `xcf` | GIMP image | `.xcf` | yes | - | GIMP's native layered document (the visible layers are flattened). |
+| `xmp` | XMP metadata | `.xmp` | - | - | Extensible Metadata Platform sidecar (XML). |
 | `xpm` | X PixMap | `.xpm` | yes | yes | Colour X11 image stored as C source. |
+| `xwd` | X window dump | `.xwd` | - | - | Screen capture written by the X11 xwd tool. |
 
 ## Vector graphics
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `eps` | Encapsulated PostScript | `.eps` | - | - |  |
-| `svg` | SVG vector image | `.svg` | - | - |  |
+| `afdesign` | Affinity Designer document | `.afdesign` | - | - | Vector document of Affinity Designer. |
+| `ai` | Adobe Illustrator (legacy) | `.ai` | yes | - | Adobe Illustrator drawing in the PostScript-based format of Illustrator 8 and earlier. |
+| `cdr` | CorelDRAW drawing | `.cdr`, `.cdt` | - | - | Vector drawing of CorelDRAW (RIFF, or ZIP since X4). |
+| `cgm` | Computer Graphics Metafile | `.cgm` | yes | - | ISO vector metafile used in technical documentation (binary and clear-text encodings). |
+| `dotlottie` | dotLottie animation | `.lottie` | - | - | One or more Lottie animations with assets in a ZIP package. |
+| `drawio` | draw.io diagram | `.drawio`, `.dio` | - | - | Diagram of diagrams.net / draw.io. |
+| `dwg` | AutoCAD DWG drawing | `.dwg` | yes | - | Native binary drawing of AutoCAD (detected; not readable yet). |
+| `dxf` | AutoCAD DXF drawing | `.dxf` | yes | yes | Drawing Exchange Format of CAD programs (ASCII or binary, R12 to 2018). |
+| `emf` | Enhanced Metafile | `.emf` | yes | yes | 32-bit Windows vector picture (EMF), including EMF+ (GDI+) records. |
+| `emz` | Compressed Enhanced Metafile | `.emz` | yes | yes | An EMF picture compressed with gzip (as used by Microsoft Office). |
+| `eps` | Encapsulated PostScript | `.eps`, `.epsf`, `.epsi` | yes | yes | Single-page PostScript drawing with a bounding box, for placing in other documents. |
+| `excalidraw` | Excalidraw drawing | `.excalidraw` | - | - | Hand-drawn style whiteboard drawing (JSON). |
+| `fig` | Figma document | `.fig` | - | - | Design file exported from Figma. |
+| `fodg` | Flat OpenDocument drawing | `.fodg` | - | - | OpenDocument drawing as one XML file. |
+| `hpgl` | HP-GL plotter file | `.plt`, `.hpgl`, `.hgl`, `.hp2`, `.hpg` | yes | yes | Hewlett-Packard Graphics Language (HP-GL and HP-GL/2) for pen plotters and cutters. |
+| `idml` | InDesign Markup Language | `.idml` | - | - | XML-based InDesign interchange package. |
+| `indd` | Adobe InDesign document | `.indd`, `.indt` | - | - | Page layout document of InDesign. |
+| `lottie` | Lottie animation | `.json`, `.lottie` | yes | - | Bodymovin/Lottie vector animation (JSON or the zipped .lottie container). |
+| `odg` | OpenDocument drawing | `.odg` | - | - | Drawing of LibreOffice Draw. |
+| `otg` | OpenDocument drawing template | `.otg` | - | - | Template for OpenDocument drawings. |
+| `pict` | Apple PICT picture | `.pict`, `.pct`, `.pic` | yes | - | Classic Mac OS QuickDraw picture with vector shapes, text and bitmaps. |
+| `sketch` | Sketch document | `.sketch` | - | - | UI design file of the Sketch app (ZIP package). |
+| `std` | StarOffice drawing template | `.std` | - | - | OpenOffice.org 1 drawing template. |
+| `svg` | SVG vector image | `.svg` | yes | yes | Scalable Vector Graphics: the web's vector image format. |
+| `svgz` | Compressed SVG | `.svgz` | yes | yes | Scalable Vector Graphics compressed with gzip. |
+| `sxd` | StarOffice drawing | `.sxd` | - | - | OpenOffice.org 1 / StarOffice drawing. |
+| `tikz` | TikZ picture | `.tikz` | - | yes | LaTeX TikZ/PGF drawing commands for including vector graphics in TeX documents. |
+| `vdx` | Visio XML drawing | `.vdx` | - | - | Visio 2003-2010 XML drawing. |
+| `vectordrawable` | Android VectorDrawable | `.xml` | yes | yes | Android vector graphics resource (XML with path data), used for app icons. |
+| `vsd` | Visio 2003-2010 drawing | `.vsd` | - | - | Microsoft Visio binary diagram (OLE2). |
+| `vsdm` | Visio macro-enabled drawing | `.vsdm` | - | - | Visio diagram with VBA macros. |
+| `vsdx` | Visio drawing | `.vsdx` | yes | - | Microsoft Visio drawing (Office Open XML); its text is read. |
+| `vss` | Visio 2003-2010 stencil | `.vss` | - | - | Visio binary shape stencil. |
+| `vssm` | Visio macro-enabled stencil | `.vssm` | - | - | Visio stencil with VBA macros. |
+| `vssx` | Visio stencil | `.vssx` | - | - | Visio shape stencil (Office Open XML). |
+| `vst` | Visio 2003-2010 template | `.vst` | - | - | Visio binary drawing template. |
+| `vstm` | Visio macro-enabled template | `.vstm` | - | - | Visio template with VBA macros. |
+| `vstx` | Visio template | `.vstx` | - | - | Visio drawing template (Office Open XML). |
+| `wmf` | Windows Metafile | `.wmf` | yes | yes | Windows 3.x vector picture made of GDI drawing records, often with a placeable header. |
+| `wmz` | Compressed Windows Metafile | `.wmz` | yes | yes | A WMF picture compressed with gzip (as used by Microsoft Office). |
+| `xd` | Adobe XD document | `.xd` | - | - | UI design file of Adobe XD (ZIP package). |
 
 ## Audio
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `8svx` | Amiga 8SVX audio | `.8svx`, `.svx`, `.iff` | yes | yes | IFF 8-bit sampled voice from the Amiga. |
-| `aac` | AAC audio | `.aac` | - | yes |  |
+| `8svx` | Amiga 8SVX audio | `.8svx`, `.svx`, `.iff`, `.8sv` | yes | yes | IFF 8-bit sampled voice from the Amiga. |
+| `aa` | Audible audiobook | `.aa`, `.aax` | - | - | Audible audiobook (DRM protected). |
+| `aac` | AAC audio (ADTS) | `.aac`, `.adts` | yes | yes | Raw AAC stream with ADTS frame headers, as used by radio streams and some players. |
+| `abc-music` | ABC music notation | `.abc` | - | - | Text notation for folk tunes. |
+| `ac3` | Dolby Digital audio | `.ac3`, `.a52` | - | - | AC-3 surround audio (DVD, broadcast). |
+| `adx` | CRI ADX audio | `.adx` | - | - | CRI Middleware ADPCM game audio. |
 | `aifc` | AIFF-C audio | `.aifc` | yes | yes | AIFF with compression types: little-endian or float PCM, A-law, mu-law, IMA4. |
 | `aiff` | AIFF audio | `.aiff`, `.aif`, `.aifc` | yes | yes | Apple's uncompressed audio format (big-endian PCM). |
 | `alac` | Apple Lossless audio | `.m4a` | yes | yes | ALAC in an MPEG-4 (.m4a) file: lossless audio for Apple devices. |
+| `als` | Ableton Live set | `.als` | - | - | Ableton Live project (gzip-compressed XML). |
+| `amr` | AMR audio | `.amr` | yes | yes | Adaptive Multi-Rate narrowband speech, used by mobile phones. |
+| `ape` | Monkey's Audio | `.ape` | - | - | Monkey's Audio lossless compression. |
 | `au` | Sun/NeXT audio | `.au`, `.snd` | yes | yes | The classic Unix sound format (.au, .snd): mu-law, A-law, PCM or float. |
+| `aup` | Audacity 2 project | `.aup` | - | - | Audacity project description (XML). |
+| `aup3` | Audacity 3 project | `.aup3` | - | - | Audacity project database (SQLite). |
+| `awb` | AMR-WB audio | `.awb` | yes | yes | Adaptive Multi-Rate wideband (HD voice) speech. |
+| `ay` | ZX Spectrum AY music | `.ay` | - | - | AY-3-8910 music rip. |
+| `bcstm` | Nintendo BCSTM stream | `.bcstm` | - | - | 3DS streamed audio. |
+| `bfstm` | Nintendo BFSTM stream | `.bfstm` | - | - | Wii U / Switch streamed audio. |
+| `brstm` | Nintendo BRSTM stream | `.brstm` | - | - | Wii streamed audio. |
 | `caf` | Core Audio Format | `.caf`, `.caff` | yes | yes | Apple's flexible audio container: PCM, ALAC, IMA4, A-law/mu-law and more. |
+| `cpr` | Cubase project | `.cpr` | - | - | Steinberg Cubase / Nuendo project. |
+| `dff` | DSDIFF audio | `.dff`, `.dsdiff` | - | - | Philips Direct Stream Digital Interchange File Format. |
+| `dls` | Downloadable Sounds bank | `.dls` | - | - | DLS instrument collection (RIFF). |
+| `ds2` | Olympus DS2 dictation | `.ds2` | - | - | DSS Pro dictation recording. |
+| `dsf` | DSD Stream File | `.dsf` | - | - | Sony 1-bit Direct Stream Digital audio. |
+| `dss` | Olympus DSS dictation | `.dss` | - | - | Digital Speech Standard dictation recording. |
+| `dts` | DTS audio | `.dts` | - | - | DTS Coherent Acoustics surround audio. |
+| `dtshd` | DTS-HD audio | `.dtshd` | - | - | DTS-HD Master Audio stream file. |
+| `eac3` | Dolby Digital Plus audio | `.eac3`, `.ec3` | - | - | Enhanced AC-3 (streaming, Blu-ray). |
+| `f4a` | Flash MPEG-4 audio | `.f4a`, `.f4b` | - | - | Adobe Flash audio in an MPEG-4 container. |
 | `flac` | FLAC audio | `.flac` | yes | yes | Free Lossless Audio Codec: bit-exact compression to about half the size of WAV. |
-| `m4a` | MPEG-4 audio | `.m4a`, `.m4b` | yes | yes | AAC or ALAC audio in an MPEG-4 file. |
+| `flp` | FL Studio project | `.flp` | - | - | Image-Line FL Studio song. |
+| `fsb` | FMOD sound bank | `.fsb` | - | - | FMOD game sound bank. |
+| `fxp` | VST preset | `.fxp`, `.fxb` | - | - | VST plug-in preset or bank. |
+| `gbs` | Game Boy sound | `.gbs` | - | - | Game Boy music rip. |
+| `gp` | Guitar Pro 7 tab | `.gp` | - | - | Guitar Pro 7+ tablature (ZIP package). |
+| `gp3` | Guitar Pro 3 tab | `.gp3` | - | - | Guitar Pro 3 tablature. |
+| `gp4` | Guitar Pro 4 tab | `.gp4` | - | - | Guitar Pro 4 tablature. |
+| `gp5` | Guitar Pro 5 tab | `.gp5` | - | - | Guitar Pro 5 tablature. |
+| `gsm` | GSM 06.10 audio | `.gsm` | yes | - | Raw GSM full-rate speech frames (read only). |
+| `hes` | PC Engine music | `.hes` | - | - | HuC6280 music rip. |
+| `it` | Impulse Tracker module | `.it` | yes | - | Tracker music from Impulse Tracker, rendered to audio. |
+| `ly` | LilyPond score | `.ly`, `.ily` | - | - | LilyPond music engraving source. |
+| `m4a` | MPEG-4 audio | `.m4a`, `.m4b`, `.m4r`, `.3ga`, `.m4p` | yes | yes | AAC or ALAC audio in an MPEG-4 file. |
 | `m4b` | MPEG-4 audiobook | `.m4b` | yes | yes | MPEG-4 audio used for audiobooks. |
-| `mid` | MIDI music | `.mid`, `.midi` | - | - |  |
+| `med` | OctaMED module | `.med` | - | - | Amiga MED/OctaMED tracker module. |
+| `mid` | MIDI music | `.mid`, `.midi`, `.kar`, `.rmi`, `.smf` | yes | - | Standard MIDI File (also karaoke .kar and RIFF .rmi): notes rendered with a built-in synthesiser. |
 | `mka` | Matroska audio | `.mka` | yes | yes | Matroska file holding audio only. |
-| `mp3` | MP3 audio | `.mp3` | - | yes |  |
-| `ogg` | Ogg audio | `.ogg`, `.oga` | yes | yes |  |
+| `mlp` | Meridian Lossless Packing audio | `.mlp` | - | - | MLP lossless stream (DVD-Audio). |
+| `mmf` | Yamaha SMAF ringtone | `.mmf` | - | - | Synthetic music mobile application format (old phones). |
+| `mo3` | MO3 module | `.mo3` | - | - | Tracker module with compressed samples. |
+| `mod` | ProTracker module | `.mod` | yes | - | Amiga tracker music (samples and patterns), rendered to audio. |
+| `mp1` | MPEG Layer I audio | `.mp1`, `.m1a` | yes | - | MPEG-1/2 Audio Layer I (read only). |
+| `mp2` | MPEG Layer II audio | `.mp2`, `.mpa`, `.m2a` | yes | yes | MPEG-1/2 Audio Layer II, used by DAB radio, DVB television and Video CDs. |
+| `mp3` | MP3 audio | `.mp3` | yes | yes | MPEG-1/2 Audio Layer III: the most widely supported lossy audio format. |
+| `mpc` | Musepack audio | `.mpc`, `.mp+`, `.mpp` | - | - | Musepack transparent lossy audio. |
+| `mscx` | MuseScore uncompressed score | `.mscx` | - | - | MuseScore sheet music (XML). |
+| `mscz` | MuseScore score | `.mscz` | - | - | Compressed MuseScore sheet music. |
+| `mtm` | MultiTracker module | `.mtm` | - | - | Tracker music module. |
+| `musicxml` | MusicXML score | `.musicxml` | - | - | Sheet-music interchange format (XML). |
+| `mxl` | Compressed MusicXML | `.mxl` | - | - | MusicXML in a ZIP package. |
+| `nsf` | NES sound format | `.nsf`, `.nsfe` | - | - | Nintendo Entertainment System music rip. |
+| `ofr` | OptimFROG audio | `.ofr`, `.ofs` | - | - | OptimFROG lossless audio. |
+| `oga` | Ogg FLAC audio | `.oga` | - | - | FLAC-encoded audio in an Ogg container. |
+| `ogg` | Ogg Vorbis audio | `.ogg`, `.oga` | yes | yes | Vorbis in Ogg: the open lossy audio format. |
 | `ogg-flac` | Ogg FLAC audio | `.oga` | yes | - | FLAC audio in an Ogg container. |
-| `opus` | Opus audio | `.opus` | yes | yes |  |
-| `pcm` | Raw PCM audio | `.pcm` | yes | yes | Headerless sample data; the layout is given by options. |
+| `okt` | Oktalyzer module | `.okt`, `.okta` | - | - | Amiga 8-channel tracker module. |
+| `opus` | Opus audio | `.opus` | yes | yes | Opus in Ogg: the modern, efficient codec for music and speech. |
+| `pcm` | Raw PCM audio | `.pcm`, `.raw`, `.l16` | yes | yes | Headerless sample data; the layout is given by options. |
+| `ptx` | Pro Tools session | `.ptx`, `.ptf` | - | - | Avid Pro Tools session. |
+| `qcp` | Qualcomm PureVoice audio | `.qcp` | - | - | QCELP/EVRC speech in RIFF (old phones). |
+| `ra` | RealAudio | `.ra` | - | - | RealNetworks streaming audio. |
+| `ram` | RealAudio metafile | `.ram`, `.rpm` | - | - | Text pointer to a RealMedia stream. |
+| `rf64` | RF64 / BW64 audio | `.rf64`, `.wav` | - | - | 64-bit WAVE variant for recordings beyond 4 GB (EBU Tech 3306, ITU-R BS.2088). |
+| `rmi` | RIFF MIDI | `.rmi` | - | - | MIDI file wrapped in RIFF. |
+| `rpp` | REAPER project | `.rpp` | - | - | REAPER digital audio workstation project. |
+| `s3m` | Scream Tracker 3 module | `.s3m` | yes | - | Tracker music from Scream Tracker 3, rendered to audio. |
+| `sesx` | Audition session | `.sesx` | - | - | Adobe Audition multitrack session. |
+| `sf2` | SoundFont bank | `.sf2`, `.sf3`, `.sbk` | - | - | Sampled instrument bank for MIDI synthesis. |
+| `sfz` | SFZ instrument | `.sfz` | - | - | Text definition of a sampled instrument. |
+| `shn` | Shorten audio | `.shn` | - | - | Shorten lossless audio (live-music trading). |
+| `sib` | Sibelius score | `.sib` | - | - | Avid Sibelius sheet music. |
+| `sid` | Commodore 64 SID tune | `.sid`, `.psid` | - | - | C64 music program for the SID chip. |
+| `spc` | SNES SPC music | `.spc` | - | - | Super Nintendo sound-chip memory snapshot. |
 | `sph` | NIST SPHERE audio | `.sph`, `.nist` | yes | yes | Speech corpus audio with a text header. |
+| `spx` | Speex audio | `.spx` | yes | yes | Speex in Ogg: an older open speech codec. |
+| `tak` | TAK audio | `.tak` | - | - | Tom's lossless Audio Kompressor. |
+| `thd` | Dolby TrueHD audio | `.thd`, `.truehd` | - | - | Lossless Dolby TrueHD stream (Blu-ray). |
 | `tta` | True Audio | `.tta` | yes | yes | TTA lossless audio. |
+| `ult` | UltraTracker module | `.ult` | - | - | Tracker music module. |
+| `umx` | Unreal music package | `.umx` | - | - | Tracker music inside an Unreal package. |
+| `vgm` | Video Game Music | `.vgm` | - | - | Sound-chip register log of console and arcade music. |
+| `vgz` | Compressed Video Game Music | `.vgz` | - | - | gzip-compressed VGM log. |
 | `voc` | Creative Voice audio | `.voc` | yes | yes | Sound Blaster era sample format. |
+| `vqf` | TwinVQ audio | `.vqf` | - | - | Yamaha TwinVQ compressed audio. |
 | `w64` | Sony Wave64 audio | `.w64` | yes | yes | 64-bit variant of WAVE for recordings larger than 4 GB. |
 | `wav` | WAVE audio | `.wav`, `.wave`, `.bwf` | yes | yes | Uncompressed (or ADPCM) audio in a RIFF container; also RF64/BW64 for very long recordings. |
+| `wem` | Wwise encoded media | `.wem` | - | - | Audiokinetic Wwise game audio (RIFF). |
 | `wma` | Windows Media audio | `.wma` | yes | - | Advanced Systems Format (ASF) with audio only. |
-| `wv` | WavPack audio | `.wv` | yes | yes | WavPack lossless (or hybrid) compressed audio. |
+| `wv` | WavPack audio | `.wv`, `.wvc` | yes | yes | WavPack lossless (or hybrid) compressed audio. |
+| `xm` | FastTracker 2 module | `.xm` | yes | - | Tracker music with instruments and envelopes, rendered to audio. |
+| `xwma` | Xbox WMA audio | `.xwma` | - | - | XAudio2 WMA stream in RIFF. |
+| `ym` | Atari ST YM music | `.ym` | - | - | YM2149 register dump. |
 
 ## Video
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `3g2` | 3GPP2 video | `.3g2` | yes | yes | Mobile phone video (3GPP2). |
-| `3gp` | 3GPP video | `.3gp`, `.3g2` | yes | yes | Mobile phone video (3GPP). |
-| `avi` | AVI video | `.avi` | yes | yes | Microsoft Audio Video Interleave. |
+| `3g2` | 3GPP2 video | `.3g2`, `.3gpp2` | yes | yes | Mobile phone video (3GPP2). |
+| `3gp` | 3GPP video | `.3gp`, `.3gpp` | yes | yes | Mobile phone video (3GPP). |
+| `aaf` | Advanced Authoring Format | `.aaf` | - | - | Post-production project interchange (OLE2). |
+| `aep` | After Effects project | `.aep`, `.aet` | - | - | Adobe After Effects project (RIFX). |
+| `asf` | Advanced Systems Format | `.asf` | yes | - | Microsoft's streaming container for Windows Media. |
+| `avi` | AVI video | `.avi`, `.divx` | yes | yes | Microsoft Audio Video Interleave. |
+| `bdmv` | Blu-ray index | `.bdmv` | - | - | Blu-ray disc index and movie objects. |
+| `bik` | Bink video | `.bik` | - | - | RAD Game Tools Bink game video. |
+| `bk2` | Bink 2 video | `.bk2` | - | - | RAD Game Tools Bink 2 game video. |
+| `braw` | Blackmagic RAW video | `.braw` | - | - | Raw video from Blackmagic cameras. |
+| `clpi` | Blu-ray clip information | `.clpi` | - | - | Blu-ray stream clip information. |
+| `drp` | DaVinci Resolve project | `.drp` | - | - | Exported DaVinci Resolve project. |
+| `dv` | DV video | `.dv`, `.dif` | - | - | Digital Video (MiniDV, DVCPRO) DIF stream. |
+| `dvr-ms` | Microsoft DVR recording | `.dvr-ms` | - | - | Windows XP Media Center TV recording (ASF-based). |
+| `edl` | Edit decision list | `.edl` | - | - | CMX 3600 list of video edits. |
+| `f4m` | Flash HDS manifest | `.f4m` | - | - | Adobe HTTP Dynamic Streaming manifest (XML). |
+| `f4v` | Flash MPEG-4 video | `.f4v`, `.f4p` | yes | - | Adobe Flash video in an MPEG-4 container. |
+| `fcpxml` | Final Cut Pro XML | `.fcpxml` | - | - | Final Cut Pro project interchange (XML). |
+| `flc` | Autodesk FLC animation | `.flc` | - | - | Palette animation of any size (Autodesk Animator Pro). |
+| `fli` | Autodesk FLI animation | `.fli` | - | - | 320x200 palette animation (Autodesk Animator). |
 | `flv` | Flash video | `.flv` | yes | yes | Flash Video, used by older web players and RTMP. |
-| `h264` | H.264 video stream | `.h264`, `.264`, `.avc`, `.jsv` | yes | yes | Raw H.264/AVC elementary stream (Annex B), as written by encoders and camera tools. |
-| `hevc` | H.265/HEVC video stream | `.hevc`, `.h265`, `.265` | yes | yes | Raw High Efficiency Video Coding bitstream (Annex B), as written by encoders and cameras. |
+| `gxf` | General eXchange Format | `.gxf` | - | - | SMPTE 360M broadcast server container. |
+| `h264` | H.264 elementary stream | `.h264`, `.264`, `.avc`, `.jsv` | yes | yes | Raw H.264/AVC video (Annex B byte stream). |
+| `hevc` | HEVC elementary stream | `.hevc`, `.h265`, `.265` | yes | yes | Raw H.265/HEVC video (Annex B byte stream). |
+| `ifo` | DVD information file | `.ifo`, `.bup` | - | - | Navigation and menu data of a DVD-Video disc. |
+| `insv` | Insta360 video | `.insv` | - | - | 360-degree video from Insta360 cameras (MP4-based). |
+| `ism` | Smooth Streaming server manifest | `.ism` | - | - | IIS Smooth Streaming server manifest (SMIL). |
+| `ismc` | Smooth Streaming manifest | `.ismc` | - | - | Client manifest of Microsoft Smooth Streaming (XML). |
+| `ismv` | Smooth Streaming media | `.ismv`, `.isma` | yes | - | Fragmented MP4 for Microsoft Smooth Streaming. |
 | `ivf` | IVF video | `.ivf` | yes | yes | Simple container for VP8, VP9 and AV1 streams. |
-| `m2v` | MPEG video elementary stream | `.m2v`, `.m1v`, `.mpv` | yes | yes | Raw MPEG-1/MPEG-2 video. |
+| `kdenlive` | Kdenlive project | `.kdenlive` | - | - | Kdenlive video editor project (MLT XML). |
+| `lrv` | GoPro low-resolution video | `.lrv` | - | - | Preview copy recorded by GoPro cameras (MP4-based). |
+| `m1v` | MPEG-1 video stream | `.m1v` | yes | - | Elementary MPEG-1 video. |
+| `m2ts` | Blu-ray / AVCHD transport stream | `.m2ts`, `.mts` | - | - | Transport stream with 192-byte packets (Blu-ray, AVCHD camcorders). |
+| `m2v` | MPEG video elementary stream | `.m2v`, `.mpv` | yes | yes | Raw MPEG-1/MPEG-2 video. |
+| `m4s` | MPEG-DASH segment | `.m4s` | - | - | Media segment of a DASH or HLS stream (fragmented MP4). |
 | `m4v` | MPEG-4 video (iTunes) | `.m4v` | yes | yes | MPEG-4 video as used by Apple devices. |
-| `mkv` | Matroska video | `.mkv`, `.mk3d` | yes | yes | Open container that can hold almost any codec. |
+| `mj2` | Motion JPEG 2000 | `.mj2`, `.mjp2` | - | - | Frame-by-frame JPEG 2000 video (digital cinema, archives). |
+| `mjpeg` | Motion JPEG stream | `.mjpeg`, `.mjpg` | - | - | Concatenated JPEG frames. |
+| `mk3d` | Matroska 3D video | `.mk3d` | yes | - | Stereoscopic Matroska video. |
+| `mkv` | Matroska video | `.mkv` | yes | yes | Open container that can hold almost any codec. |
 | `mov` | QuickTime movie | `.mov`, `.qt` | yes | yes | Apple QuickTime movie. |
-| `mp4` | MPEG-4 video | `.mp4`, `.m4v` | yes | yes | The most widely supported video file (H.264/HEVC/AV1 with AAC). |
-| `mpg` | MPEG video | `.mpg`, `.mpeg` | yes | - | MPEG-1/MPEG-2 program stream. |
-| `obu` | AV1 OBU stream | `.obu` | yes | yes | Raw AV1 video (low-overhead bitstream). |
-| `ogv` | Ogg video | `.ogv` | yes | yes | Theora video in an Ogg file. |
-| `rm` | RealMedia | `.rm`, `.rmvb` | yes | - | RealNetworks RealMedia file. |
+| `mp4` | MPEG-4 video | `.mp4`, `.mp4v`, `.mpeg4` | yes | yes | The most widely supported video file (H.264/HEVC/AV1 with AAC). |
+| `mpd` | MPEG-DASH manifest | `.mpd` | - | - | Media Presentation Description of a DASH stream (XML). |
+| `mpegts` | MPEG transport stream | `.ts`, `.m2ts`, `.mts`, `.m2t`, `.trp`, `.tp` | yes | yes | Broadcast and streaming video (MPEG-TS, M2TS). |
+| `mpg` | MPEG video | `.mpg`, `.mpeg`, `.mpe`, `.m2p`, `.vro`, `.mod` | yes | - | MPEG-1/MPEG-2 program stream. |
+| `mpls` | Blu-ray playlist | `.mpls` | - | - | Blu-ray movie playlist. |
+| `mve` | Interplay MVE video | `.mve` | - | - | Interplay game cut-scene video. |
+| `mxf` | Material Exchange Format | `.mxf` | - | - | SMPTE broadcast and professional camera container. |
+| `nsv` | Nullsoft streaming video | `.nsv` | - | - | Winamp streaming video. |
+| `nut` | NUT video | `.nut` | - | - | FFmpeg's NUT container. |
+| `obu` | AV1 OBU stream | `.obu`, `.av1` | yes | yes | Raw AV1 video (low-overhead bitstream). |
+| `ogv` | Ogg video | `.ogv`, `.ogm` | yes | yes | Theora video in an Ogg file. |
+| `omf` | Open Media Framework | `.omf` | - | - | Legacy editing project interchange. |
+| `prproj` | Premiere Pro project | `.prproj` | - | - | Adobe Premiere Pro project (gzip-compressed XML). |
+| `r3d` | REDCODE RAW video | `.r3d` | - | - | Raw video from RED digital cinema cameras. |
+| `rm` | RealMedia | `.rm`, `.rmvb`, `.rv` | yes | - | RealNetworks RealMedia file. |
+| `smil` | SMIL presentation | `.smil`, `.smi`, `.sml` | - | - | Synchronized Multimedia Integration Language (XML). |
+| `smk` | Smacker video | `.smk` | - | - | RAD Game Tools Smacker game video. |
+| `swf` | Flash animation | `.swf` | - | - | Adobe Flash movie (vector animation and code). |
+| `tivo` | TiVo recording | `.tivo` | - | - | Recording copied from a TiVo DVR. |
+| `veg` | Vegas Pro project | `.veg` | - | - | MAGIX Vegas Pro project. |
 | `vob` | DVD video object | `.vob` | yes | - | MPEG-2 program stream from a DVD. |
-| `webm` | WebM video | `.webm` | yes | yes | Royalty-free web video (VP9/AV1 with Opus). |
-| `wmv` | Windows Media video | `.wmv`, `.asf` | yes | - | Advanced Systems Format (ASF) with video. |
+| `webm` | WebM video | `.webm`, `.weba` | yes | yes | Royalty-free web video (VP9/AV1 with Opus). |
+| `wmv` | Windows Media video | `.wmv` | yes | - | Advanced Systems Format (ASF) with video. |
+| `wtv` | Windows Recorded TV | `.wtv` | - | - | Windows Media Center TV recording. |
 | `y4m` | YUV4MPEG2 video | `.y4m` | yes | yes | Uncompressed YCbCr frames with a text header. |
+| `yuv` | Raw YUV video | `.yuv`, `.nv12` | - | - | Headerless planar video frames. |
 
 ## Documents
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
+| `abw` | AbiWord document | `.abw`, `.zabw` | yes | - | AbiWord word-processing document. |
 | `adoc` | AsciiDoc | `.adoc`, `.asciidoc` | yes | yes | AsciiDoc markup. |
 | `asciidoc` | AsciiDoc | `.adoc`, `.asciidoc` | yes | yes | AsciiDoc documentation markup (Asciidoctor syntax). |
 | `bbcode` | BBCode | `.bbcode`, `.bb` | yes | yes | Bulletin board markup used by web forums. |
+| `bib` | BibTeX bibliography | `.bib`, `.bibtex` | - | - | Bibliography database for LaTeX. |
 | `creole` | Creole wiki markup | `.creole` | yes | yes | The common wiki markup standard Creole 1.0 (with common additions). |
 | `djot` | Djot | `.dj`, `.djot` | yes | yes | Djot light markup (a successor of CommonMark by its author). |
-| `djvu` | DjVu document | `.djvu`, `.djv` | - | - |  |
-| `doc` | Word 97-2003 document | `.doc` | - | - |  |
+| `djvu` | DjVu document | `.djvu`, `.djv` | - | - | Compressed scanned documents and books. |
+| `doc` | Word 97-2003 document | `.doc` | yes | - | Microsoft Word binary document (Word 97 to 2003; text of Word 6 and 95). |
 | `docbook` | DocBook | `.dbk`, `.docbook`, `.xml` | yes | yes | DocBook 5 (and 4) XML documentation. |
-| `docx` | Word document | `.docx` | - | - |  |
+| `docm` | Word macro-enabled document | `.docm` | yes | - | Word document with macros (the macros are never run or kept). |
+| `docx` | Word document | `.docx` | yes | yes | Microsoft Word document (Office Open XML). |
 | `dokuwiki` | DokuWiki markup | `.dokuwiki`, `.dw` | yes | yes | Page markup of the DokuWiki wiki engine. |
-| `eml` | E-mail message | `.eml` | yes | - | Internet e-mail message (RFC 5322 / MIME). |
+| `dot` | Word 97-2003 template | `.dot` | yes | - | Microsoft Word binary template (Word 97 to 2003). |
+| `dotm` | Word macro-enabled template | `.dotm` | yes | - | Word template with macros (the macros are never run or kept). |
+| `dotx` | Word template | `.dotx` | yes | - | Microsoft Word template (Office Open XML). |
+| `dvi` | TeX DVI | `.dvi` | - | - | Device-independent output of TeX. |
+| `eml` | E-mail message | `.eml`, `.nws` | yes | - | Internet e-mail message (RFC 5322 / MIME). |
 | `emlx` | Apple Mail message | `.emlx` | yes | - | Message file of Apple Mail (.emlx). |
 | `enex` | Evernote export | `.enex` | yes | - | Notes exported from Evernote (read). |
+| `fm` | FrameMaker document | `.fm`, `.book` | - | - | Adobe FrameMaker document. |
+| `fodt` | Flat OpenDocument text | `.fodt` | yes | yes | OpenDocument text as a single XML file. |
+| `gdoc` | Google Docs shortcut | `.gdoc` | - | - | Link to a Google Docs document (JSON stub from Drive). |
+| `hlp` | WinHelp file | `.hlp` | - | - | Windows 3.x / 95 help file. |
 | `html` | HTML page | `.html`, `.htm`, `.shtml`, `.xhtml` | yes | yes | Web page; read with a tolerant HTML5 parser, written as clean standalone HTML5. |
+| `hwp` | Hangul HWP document | `.hwp` | yes | - | Hancom Office word-processing document (HWP 5). |
+| `hwpx` | Hangul HWPX document | `.hwpx` | yes | - | Hancom Office word-processing document (OWPML). |
+| `info` | GNU Info manual | `.info` | - | - | Compiled Texinfo manual. |
 | `ipynb` | Jupyter notebook | `.ipynb` | yes | yes | Jupyter notebook: Markdown, code cells and their outputs. |
 | `jats` | JATS article | `.jats`, `.nxml`, `.xml` | yes | - | Journal Article Tag Suite XML (read). |
+| `lwp` | Lotus Word Pro document | `.lwp` | - | - | IBM Lotus Word Pro document. |
+| `maff` | Mozilla archive | `.maff` | - | - | Saved web pages in a ZIP package. |
 | `man` | Manual page | `.man`, `.1`, `.2`, `.3`, `.4`, `.5`, `.6`, `.7`, `.8`, `.9`, `.mdoc` | yes | yes | Unix manual page in roff (man and mdoc macros). |
 | `mbox` | Mailbox | `.mbox`, `.mbx` | yes | - | Unix mbox file holding many e-mail messages. |
 | `md` | Markdown | `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`, `.mdwn`, `.mdtxt`, `.mdtext` | yes | yes | Lightweight markup (CommonMark, GitHub Flavored Markdown and common extensions). |
+| `mdx` | MDX document | `.mdx` | - | - | Markdown with embedded JSX components. |
 | `mediawiki` | MediaWiki markup | `.wiki`, `.mediawiki`, `.mw` | yes | yes | Wikitext as used by Wikipedia and other MediaWiki sites. |
 | `mhtml` | MHTML web archive | `.mht`, `.mhtml` | yes | - | Web page saved with its pictures as a MIME multipart file (read). |
-| `odt` | OpenDocument text | `.odt` | - | - |  |
+| `mmap` | MindManager map | `.mmap` | - | - | Mind map of Mindjet MindManager (ZIP package). |
+| `mml` | MathML | `.mml`, `.mathml` | - | - | Mathematical Markup Language (XML). |
+| `mpp` | Microsoft Project plan | `.mpp` | - | - | Project schedule of Microsoft Project (OLE2). |
+| `msg` | Outlook message | `.msg` | yes | - | Microsoft Outlook e-mail message (compound file). |
+| `mspdi` | Microsoft Project XML | `.xml` | - | - | Microsoft Project data interchange (XML). |
+| `nfo` | Info text | `.nfo`, `.diz` | - | - | Release notes or system information text, often with ASCII art. |
+| `odc` | OpenDocument chart | `.odc` | - | - | Chart document (ODF). |
+| `odf` | OpenDocument formula | `.odf` | - | - | Mathematical formula of LibreOffice Math. |
+| `odm` | OpenDocument master document | `.odm` | - | - | ODF document made of sub-documents. |
+| `odt` | OpenDocument text | `.odt` | yes | yes | Word-processing document of LibreOffice and OpenOffice. |
+| `one` | OneNote section | `.one` | - | - | Microsoft OneNote notebook section. |
+| `onepkg` | OneNote package | `.onepkg` | - | - | Packed OneNote notebook (cabinet). |
 | `opml` | OPML outline | `.opml` | yes | yes | Outline Processor Markup Language: outlines as nested lists. |
 | `org` | Org-mode | `.org` | yes | yes | Emacs Org-mode outline markup. |
+| `oth` | OpenDocument web page | `.oth` | - | - | ODF HTML document template. |
+| `ott` | OpenDocument text template | `.ott` | yes | - | Template for OpenDocument text documents. |
 | `oxps` | OpenXPS document | `.oxps` | yes | - | XML Paper Specification: fixed-layout pages in a ZIP package. |
+| `pages` | Apple Pages document | `.pages` | - | - | Word-processing document of Apple Pages. |
+| `pcl` | PCL print job | `.pcl`, `.prn` | - | - | Hewlett-Packard Printer Command Language job. |
 | `pdf` | PDF document | `.pdf` | yes | yes | Portable Document Format: fixed-layout pages with text, graphics and images. |
 | `pod` | Perl POD | `.pod` | yes | yes | Plain Old Documentation, the markup of Perl documentation. |
-| `ps` | PostScript | `.ps` | - | - |  |
+| `ps` | PostScript | `.ps` | yes | yes | PostScript page description document (one or more pages). |
+| `pub` | Microsoft Publisher document | `.pub` | - | - | Desktop publishing document of Publisher (OLE2). |
+| `qxd` | QuarkXPress document | `.qxd`, `.qxp` | - | - | QuarkXPress page layout. |
+| `rd` | R documentation | `.rd` | - | - | R package help page source. |
+| `roff` | roff document | `.roff`, `.man`, `.me`, `.ms`, `.mom`, `.tr` | - | - | troff/groff typesetting source, the format of manual pages. |
 | `rst` | reStructuredText | `.rst`, `.rest` | yes | yes | reStructuredText markup (Docutils, Sphinx). |
-| `rtf` | Rich Text Format | `.rtf` | - | - |  |
+| `rtf` | Rich Text Format | `.rtf` | yes | yes | Word-processing document in Microsoft's Rich Text Format. |
+| `sla` | Scribus document | `.sla` | - | - | Page layout of Scribus (XML). |
+| `stw` | StarOffice Writer template | `.stw` | - | - | OpenOffice.org 1 text template. |
+| `sty` | LaTeX package | `.sty`, `.cls`, `.dtx` | - | - | LaTeX style, class or documented source. |
+| `sxg` | StarOffice master document | `.sxg` | - | - | OpenOffice.org 1 master document. |
+| `sxm` | StarOffice formula | `.sxm` | - | - | OpenOffice.org 1 formula. |
+| `sxw` | StarOffice Writer document | `.sxw` | - | - | OpenOffice.org 1 / StarOffice text document. |
 | `t2t` | txt2tags | `.t2t` | yes | yes | txt2tags lightweight markup. |
 | `tei` | TEI document | `.tei`, `.xml` | yes | - | Text Encoding Initiative XML (read). |
 | `tex` | LaTeX source | `.tex`, `.latex`, `.ltx` | yes | yes | LaTeX document: written as a complete, compilable article; read for its structure and text. |
+| `texi` | Texinfo | `.texi`, `.texinfo`, `.txi` | - | - | GNU Texinfo documentation source. |
 | `texinfo` | Texinfo | `.texi`, `.texinfo`, `.txi` | - | yes | GNU Texinfo documentation source (written). |
 | `textile` | Textile | `.textile` | yes | yes | Textile lightweight markup. |
+| `tnef` | TNEF attachment (winmail.dat) | `.dat`, `.tnef` | yes | - | Transport Neutral Encapsulation Format, the winmail.dat attachment of Outlook mail. |
 | `txt` | Plain text | `.txt`, `.text`, `.log` | yes | yes | Unformatted text in a choice of character encodings. |
 | `typst` | Typst | `.typ` | yes | yes | Typst typesetting markup (written in full; read for common markup). |
 | `webarchive` | Safari web archive | `.webarchive` | yes | - | Web page saved by Safari with its resources (read). |
+| `wiki` | MediaWiki markup | `.wiki`, `.mediawiki`, `.wikitext` | - | - | Wikipedia-style wiki text. |
+| `wordml` | Word XML document | `.xml` | yes | yes | Word 2003 XML or flat Office Open XML: a whole Word document in one XML file. |
+| `wpd` | WordPerfect document | `.wpd`, `.wp`, `.wp5`, `.wp6` | - | - | Corel WordPerfect document. |
+| `wps` | Microsoft Works document | `.wps` | - | - | Microsoft Works word processor document. |
+| `wri` | Microsoft Write document | `.wri` | - | - | Windows 3.x Write document. |
 | `xhtml` | XHTML page | `.xhtml`, `.xht` | yes | yes | HTML in XML syntax (XHTML5 polyglot markup). |
+| `xmind` | XMind mind map | `.xmind` | - | - | Mind map of XMind (ZIP package). |
+| `xopp` | Xournal++ notebook | `.xopp` | - | - | Handwritten notes and PDF annotations (gzip-compressed XML). |
 | `xps` | XPS document | `.xps` | yes | - | XML Paper Specification: fixed-layout pages in a ZIP package. |
 
 ## E-books
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `epub` | EPUB e-book | `.epub` | - | - |  |
+| `azw3` | Kindle KF8 e-book | `.azw3`, `.kf8` | yes | - | Kindle Format 8 e-book (AZW3). |
+| `cb7` | Comic book (7-Zip) | `.cb7` | yes | - | Pages of a comic as pictures in an archive. |
+| `cbr` | Comic book (RAR) | `.cbr` | yes | - | Pages of a comic as pictures in an archive. |
+| `cbt` | Comic book (tar) | `.cbt` | yes | - | Pages of a comic as pictures in an archive. |
+| `epub` | EPUB e-book | `.epub` | yes | yes | Reflowable e-book (EPUB 2 and 3). |
 | `fb2` | FictionBook e-book | `.fb2` | yes | yes | FictionBook 2 XML e-book with embedded pictures. |
-| `mobi` | Mobipocket e-book | `.mobi`, `.azw`, `.azw3` | - | - |  |
+| `fbz` | FictionBook (zipped) | `.fbz`, `.fb2.zip` | yes | yes | FictionBook e-book in a ZIP archive. |
+| `ibooks` | Apple iBooks book | `.ibooks` | - | - | EPUB-based book made with iBooks Author. |
+| `kfx` | Kindle KFX e-book | `.kfx`, `.azw8` | - | - | Current Kindle e-book format. |
+| `lit` | Microsoft Reader e-book | `.lit` | yes | - | Microsoft LIT e-book (books without DRM). Read only. |
+| `lrf` | Sony BBeB e-book | `.lrf` | - | - | Sony Reader broadband e-book. |
+| `mobi` | Mobipocket e-book | `.mobi`, `.prc`, `.azw`, `.azw3` | yes | yes | Kindle / Mobipocket e-book (MOBI, PRC, AZW). |
+| `ncx` | NCX table of contents | `.ncx` | - | - | Navigation control file of EPUB 2 / DAISY books. |
+| `opf` | Open Packaging Format | `.opf` | - | - | EPUB package document: metadata, manifest and spine. |
+| `palmdoc` | Palm e-book | `.pdb` | yes | - | PalmDOC e-book (Palm database). |
+| `tcr` | TCR e-book | `.tcr` | yes | - | Psion text-compressed e-book. |
 
 ## Spreadsheets and tables
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
+| `123` | Lotus 1-2-3 workbook | `.123` | - | - | Lotus 1-2-3 97 and later workbook. |
 | `csv` | Comma-separated values | `.csv` | yes | yes | Plain-text table with one record per line. |
 | `csv-semicolon` | CSV (semicolon) | `.csv` | yes | yes | Comma-separated values with ';' between fields, as Excel writes them in locales with a decimal comma. |
 | `dbf` | dBase table | `.dbf` | yes | yes | dBase / FoxPro database table, also used for the attributes of shapefiles. |
 | `dif` | Data Interchange Format | `.dif` | yes | yes | DIF spreadsheet interchange file (VisiCalc lineage). |
+| `et` | WPS Spreadsheets workbook | `.et`, `.ett` | - | - | Kingsoft WPS Office spreadsheet. |
 | `fods` | Flat OpenDocument spreadsheet | `.fods` | yes | yes | OpenDocument spreadsheet as a single uncompressed XML file. |
 | `fwf` | Fixed-width text table | `.fwf`, `.prn` | yes | yes | Columns aligned with spaces, as printed reports and mainframe exports are laid out. |
 | `gnumeric` | Gnumeric spreadsheet | `.gnumeric`, `.gnm` | yes | - | Workbook of the Gnumeric spreadsheet (gzip-compressed XML). |
+| `gsheet` | Google Sheets shortcut | `.gsheet` | - | - | Link to a Google Sheets spreadsheet. |
 | `jira` | Jira wiki table | `.jira`, `.confluence` | yes | yes | Table in the wiki markup of Jira and Confluence. |
+| `numbers` | Apple Numbers spreadsheet | `.numbers` | - | - | Spreadsheet of Apple Numbers. |
 | `ods` | OpenDocument spreadsheet | `.ods` | yes | yes | Spreadsheet of LibreOffice, OpenOffice and other OpenDocument applications. |
 | `ots` | OpenDocument spreadsheet template | `.ots` | yes | yes | Template for OpenDocument spreadsheets. |
 | `psv` | Pipe-separated values | `.psv` | yes | yes | Plain-text table with fields separated by '\|'. |
+| `qpw` | Quattro Pro spreadsheet | `.qpw`, `.wb3`, `.wb2`, `.wb1` | - | - | Corel Quattro Pro notebook. |
 | `slk` | SYLK spreadsheet | `.slk`, `.sylk` | yes | yes | Symbolic Link interchange format of Multiplan and Excel. |
 | `spreadsheetml` | Excel 2003 XML spreadsheet | `.xml` | yes | yes | SpreadsheetML 2003 ("XML Spreadsheet"), Excel's XML workbook format before XLSX. |
+| `stc` | StarOffice Calc template | `.stc` | - | - | OpenOffice.org 1 spreadsheet template. |
+| `sxc` | StarOffice Calc spreadsheet | `.sxc` | - | - | OpenOffice.org 1 spreadsheet. |
 | `text-table` | Text table | `.txt` | yes | yes | Table drawn with box-drawing characters for terminals and plain text. |
 | `tsv` | Tab-separated values | `.tsv`, `.tab` | yes | yes | Plain-text table with tab-separated fields. |
 | `wk1` | Lotus 1-2-3 worksheet | `.wk1`, `.wks` | yes | - | DOS-era spreadsheet (read only). |
+| `wk3` | Lotus 1-2-3 worksheet (WK3) | `.wk3` | - | - | Lotus 1-2-3 release 3 worksheet. |
+| `wk4` | Lotus 1-2-3 worksheet (WK4) | `.wk4` | - | - | Lotus 1-2-3 release 4/5 worksheet. |
+| `wks` | Lotus 1-2-3 worksheet (WKS) | `.wks` | - | - | Lotus 1-2-3 release 1 / Works worksheet. |
 | `wq1` | Quattro Pro worksheet | `.wq1` | yes | - | DOS-era spreadsheet (read only). |
+| `xla` | Excel 97-2003 add-in | `.xla` | - | - | Excel binary add-in. |
+| `xlam` | Excel add-in | `.xlam` | - | - | Excel add-in with VBA code. |
 | `xls` | Excel 97-2003 workbook | `.xls`, `.xlt` | yes | yes | Binary Excel workbook (BIFF8), as written by Excel 97 to 2003. |
 | `xlsb` | Excel binary workbook | `.xlsb` | yes | - | Excel workbook stored as binary records (BIFF12) in a ZIP package. |
 | `xlsm` | Excel macro-enabled workbook | `.xlsm` | yes | yes | Excel workbook that may contain macros (the macros are not run or kept). |
 | `xlsx` | Excel workbook | `.xlsx` | yes | yes | Microsoft Excel spreadsheet (Office Open XML). |
+| `xlt` | Excel 97-2003 template | `.xlt` | - | - | Excel binary workbook template. |
 | `xltm` | Excel macro-enabled template | `.xltm` | yes | - | Excel workbook template that may contain macros. |
 | `xltx` | Excel template | `.xltx` | yes | yes | Excel workbook template. |
+| `xmlss` | Excel 2003 XML spreadsheet | `.xml` | - | - | SpreadsheetML of Excel 2002/2003 (single XML file). |
 
 ## Presentations
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `odp` | OpenDocument presentation | `.odp` | - | - |  |
-| `ppt` | PowerPoint 97-2003 presentation | `.ppt` | - | - |  |
-| `pptx` | PowerPoint presentation | `.pptx` | - | - |  |
+| `dps` | WPS Presentation | `.dps`, `.dpt` | - | - | Kingsoft WPS Office presentation. |
+| `fodp` | Flat OpenDocument presentation | `.fodp` | yes | - | OpenDocument presentation as a single XML file. |
+| `gslides` | Google Slides shortcut | `.gslides` | - | - | Link to a Google Slides presentation. |
+| `key` | Apple Keynote presentation | `.key` | - | - | Presentation of Apple Keynote. |
+| `odp` | OpenDocument presentation | `.odp` | yes | yes | Slide presentation of LibreOffice Impress and OpenOffice. |
+| `otp` | OpenDocument presentation template | `.otp` | yes | - | Template for OpenDocument presentations. |
+| `pot` | PowerPoint 97-2003 template | `.pot` | - | - | PowerPoint binary template. |
+| `potm` | PowerPoint macro-enabled template | `.potm` | yes | - | Microsoft PowerPoint presentation (Office Open XML). |
+| `potx` | PowerPoint template | `.potx` | yes | - | Microsoft PowerPoint presentation (Office Open XML). |
+| `ppam` | PowerPoint add-in | `.ppam` | - | - | PowerPoint add-in with VBA code. |
+| `pps` | PowerPoint 97-2003 show | `.pps` | - | - | PowerPoint binary slide show. |
+| `ppsm` | PowerPoint macro-enabled slide show | `.ppsm` | yes | - | Microsoft PowerPoint presentation (Office Open XML). |
+| `ppsx` | PowerPoint slide show | `.ppsx` | yes | - | Microsoft PowerPoint presentation (Office Open XML). |
+| `ppt` | PowerPoint 97-2003 presentation | `.ppt`, `.pps`, `.pot` | yes | - | Microsoft PowerPoint binary presentation (PowerPoint 97 to 2003). |
+| `pptm` | PowerPoint macro-enabled presentation | `.pptm` | yes | - | Microsoft PowerPoint presentation (Office Open XML). |
+| `pptx` | PowerPoint presentation | `.pptx` | yes | yes | Microsoft PowerPoint presentation (Office Open XML). |
+| `sti` | StarOffice Impress template | `.sti` | - | - | OpenOffice.org 1 presentation template. |
+| `sxi` | StarOffice Impress presentation | `.sxi` | - | - | OpenOffice.org 1 presentation. |
+| `thmx` | Office theme | `.thmx` | - | - | Microsoft Office colour, font and effect theme. |
 
 ## Data and configuration
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `arrow` | Apache Arrow IPC / Feather | `.arrow`, `.feather`, `.ipc` | yes | - | Arrow columnar file (also Feather version 2), as written by pandas, R and Arrow libraries (read only). |
+| `2bit` | 2bit genome | `.2bit` | - | - | Compact two-bit-per-base genome sequence. |
+| `abf` | Axon binary data | `.abf` | - | - | Axon Instruments electrophysiology recording. |
+| `accdb` | Access database | `.accdb`, `.accde`, `.accdr`, `.accdt` | - | - | Microsoft Access (ACE) database. |
+| `anki2` | Anki collection | `.anki2`, `.anki21` | - | - | Anki flashcard collection (SQLite). |
+| `apkg` | Anki deck package | `.apkg`, `.colpkg` | - | - | Shared Anki flashcard deck (ZIP). |
+| `arrow` | Apache Arrow IPC / Feather | `.arrow`, `.feather`, `.ipc`, `.arrows` | yes | - | Arrow columnar file (also Feather version 2), as written by pandas, R and Arrow libraries (read only). |
 | `arrows` | Apache Arrow IPC stream | `.arrows` | yes | - | Arrow streaming format (read only). |
 | `asx` | ASX playlist | `.asx`, `.wax`, `.wvx` | yes | yes | Windows Media advanced stream redirector. |
 | `atom` | Atom feed | `.atom`, `.xml` | yes | yes | Atom syndication feed (RFC 4287). |
 | `avro` | Apache Avro | `.avro` | yes | yes | Avro object container file: records with an embedded schema. |
 | `bam` | BAM alignments | `.bam` | yes | - | Binary (BGZF-compressed) Sequence Alignment/Map. |
+| `bcf` | Binary VCF | `.bcf` | - | - | BGZF-compressed binary variant calls. |
 | `bed` | BED intervals | `.bed` | yes | yes | Browser Extensible Data genomic intervals. |
 | `bencode` | Bencode | `.bencode` | yes | yes | The encoding of BitTorrent metadata. |
 | `bibtex` | BibTeX bibliography | `.bib`, `.bibtex` | yes | yes | BibTeX / BibLaTeX database of references. |
+| `bigbed` | bigBed track | `.bb`, `.bigbed` | - | - | Indexed binary genome intervals. |
+| `bigwig` | bigWig track | `.bw`, `.bigwig` | - | - | Indexed binary genome coverage track. |
+| `biosemi` | BioSemi data | `.bdf` | - | - | 24-bit biosignal recording of BioSemi systems. |
 | `bjdata` | Binary JData | `.bjd`, `.bjdata`, `.jdb` | yes | yes | BJData, a little-endian extension of UBJSON for scientific data. |
 | `bplist` | Apple property list (binary) | `.plist`, `.bplist` | yes | yes | Apple's compact binary property list format (bplist00). |
+| `bpmn` | BPMN diagram | `.bpmn` | - | - | Business Process Model and Notation diagram (XML). |
 | `browser-bookmarks` | Browser bookmarks (JSON) | `.json` | yes | - | Chrome / Edge "Bookmarks" file or Firefox JSON backup. |
 | `bson` | BSON | `.bson` | yes | yes | Binary JSON, the document format of MongoDB. |
+| `caffemodel` | Caffe model | `.caffemodel` | - | - | Trained Caffe network weights (protobuf). |
 | `cbor` | CBOR | `.cbor` | yes | yes | Concise Binary Object Representation (RFC 8949). |
-| `cif` | Crystallographic Information File | `.cif` | yes | yes | Small-molecule crystal structure (CIF 1.1). |
+| `cdf` | NASA Common Data Format | `.cdf` | - | - | Self-describing scientific data of NASA missions. |
+| `cif` | Crystallographic Information File | `.cif`, `.mmcif` | yes | yes | Small-molecule crystal structure (CIF 1.1). |
+| `ckpt` | Model checkpoint | `.ckpt` | - | - | Machine-learning training checkpoint. |
 | `clustal` | Clustal alignment | `.aln`, `.clustal`, `.clw` | yes | yes | Clustal W/X/Omega multiple sequence alignment. |
 | `cml` | Chemical Markup Language | `.cml` | yes | yes | XML description of molecules (CML). |
 | `color-tokens` | Colour design tokens | `.tokens.json`, `.tokens` | yes | yes | Design-token JSON ({"name": {"$type": "color", "$value": "#hex"}}). |
+| `cram` | CRAM alignments | `.cram` | - | - | Reference-compressed sequence alignments. |
 | `csl-json` | CSL-JSON citations | `.json` | yes | yes | Citation Style Language JSON items. |
 | `cson` | CSON | `.cson` | yes | - | CoffeeScript Object Notation, used for Atom editor settings and packages. |
 | `cue` | CUE sheet | `.cue` | yes | yes | Track layout of a CD image or album file. |
+| `desktop` | Desktop entry | `.desktop` | - | - | Application launcher of Linux desktops (freedesktop.org). |
 | `desktop-link` | Desktop link | `.desktop` | yes | yes | freedesktop.org desktop entry of type Link. |
 | `dta` | Stata data file | `.dta` | yes | - | Data set of the Stata statistics package (read only). |
+| `dtd` | XML DTD | `.dtd` | - | - | Document Type Definition for XML or SGML. |
+| `edf` | European Data Format | `.edf`, `.rec` | - | - | Biosignal recording (EEG, polysomnography). |
 | `edn` | EDN | `.edn` | yes | yes | Extensible Data Notation, the data format of Clojure. |
 | `embl` | EMBL flat file | `.embl`, `.emb` | yes | yes | EMBL/ENA nucleotide sequence record with annotations and features. |
 | `endnote-xml` | EndNote XML | `.xml` | yes | yes | EndNote library exported as XML. |
@@ -276,81 +632,149 @@ What can be converted into what is decided at run time by the planner; ask the C
 | `enw` | EndNote tagged citation | `.enw` | yes | yes | EndNote / refer tagged citations (%A, %T, ...). |
 | `fasta` | FASTA sequences | `.fasta`, `.fa`, `.fna`, `.faa`, `.ffn`, `.frn`, `.fas`, `.mpfa` | yes | yes | Nucleotide or protein sequences with '>' title lines. |
 | `fastq` | FASTQ reads | `.fastq`, `.fq` | yes | yes | Sequencing reads with per-base quality scores. |
+| `fcs` | Flow cytometry data | `.fcs` | - | - | Flow Cytometry Standard measurement. |
+| `fdb` | Firebird database | `.fdb`, `.gdb` | - | - | Firebird / InterBase database. |
 | `fdf` | Forms Data Format | `.fdf` | yes | - | Values of PDF form fields in PDF syntax. |
+| `feather` | Feather v1 table | `.feather` | - | - | Original Feather data frame format. |
 | `flexbuffers` | FlexBuffers | `.flexbuf`, `.flexbuffers`, `.flx` | yes | - | The schema-less binary format of the FlatBuffers project. |
+| `fmp12` | FileMaker Pro database | `.fmp12`, `.fp7`, `.fp5`, `.fmp` | - | - | Claris FileMaker database. |
+| `gbk` | GenBank record | `.gbk`, `.gb`, `.genbank` | - | - | Annotated sequence record of NCBI GenBank. |
+| `gdf` | General Data Format | `.gdf` | - | - | Biosignal recording (GDF 1/2). |
+| `ged` | GEDCOM genealogy | `.ged`, `.gedcom` | - | - | Family tree data exchange. |
 | `genbank` | GenBank flat file | `.gb`, `.gbk`, `.genbank`, `.gbff` | yes | yes | NCBI GenBank sequence record with annotations and features. |
+| `gexf` | GEXF graph | `.gexf` | - | - | Graph Exchange XML Format (Gephi). |
 | `gff3` | GFF3 annotation | `.gff3`, `.gff` | yes | yes | Generic Feature Format version 3 genome annotation. |
+| `gguf` | GGUF model | `.gguf` | - | - | Quantised language model for llama.cpp and similar runtimes. |
+| `graphml` | GraphML graph | `.graphml` | - | - | Graph description in XML. |
 | `gtf` | GTF annotation | `.gtf` | yes | yes | Gene Transfer Format (GFF2 dialect) genome annotation. |
+| `h5` | HDF5 data | `.h5`, `.hdf5`, `.he5`, `.hdf` | - | - | Hierarchical Data Format 5: arrays and groups for science. |
+| `har` | HTTP Archive | `.har` | - | - | Browser network log (HAR 1.2). |
+| `hdf` | HDF4 data | `.hdf`, `.h4`, `.hdf4` | - | - | Hierarchical Data Format 4. |
 | `hdf5` | HDF5 file | `.h5`, `.hdf5`, `.he5`, `.hdf` | yes | - | Hierarchical Data Format 5: groups of datasets with attributes (also MATLAB 7.3). |
 | `hjson` | Hjson | `.hjson` | yes | yes | Human JSON: a relaxed JSON syntax for configuration files. |
 | `hocon` | HOCON | `.hocon`, `.conf` | yes | - | Human-Optimized Config Object Notation (Lightbend Config). |
 | `http-headers` | HTTP headers | `.headers`, `.http` | yes | yes | A block of HTTP header lines (Name: value), optionally with the request or status line. |
 | `icc` | ICC colour profile | `.icc`, `.icm` | yes | - | International Color Consortium device profile. |
+| `inf` | Setup information file | `.inf` | - | - | Windows driver and setup instructions. |
 | `ini` | INI configuration | `.ini`, `.cfg`, `.conf`, `.inf`, `.cnf`, `.desktop`, `.gitconfig`, `.editorconfig` | yes | yes | Sections of key = value settings (INI, CFG and CONF files). |
 | `ion` | Amazon Ion | `.ion` | yes | yes | Amazon's richly typed data format, in text or binary form. |
 | `isi` | Web of Science export | `.isi`, `.ciw` | yes | yes | ISI / Clarivate Web of Science tagged records. |
 | `itunes-xml` | iTunes library | `.xml` | yes | - | iTunes / Music library export (property list XML). |
 | `jcamp` | JCAMP-DX spectrum | `.jdx`, `.dx`, `.jcamp`, `.jcm` | yes | yes | IUPAC JCAMP-DX spectrum (IR, UV-Vis, NMR, MS ...). |
+| `jdx` | JCAMP-DX spectrum | `.jdx`, `.dx`, `.jcamp` | - | - | Spectroscopy data exchange text. |
+| `joblib` | joblib dump | `.joblib` | - | - | Python objects saved with joblib (scikit-learn models). |
 | `json` | JSON | `.json`, `.har`, `.jsonld`, `.webmanifest` | yes | yes | JavaScript Object Notation, the common interchange format for structured data. |
 | `json-feed` | JSON Feed | `.json` | yes | yes | JSON Feed syndication format (jsonfeed.org). |
 | `json-seq` | JSON text sequence | `.json-seq` | yes | yes | RFC 7464 sequence of JSON texts, each introduced by a record separator. |
 | `json5` | JSON5 | `.json5` | yes | yes | JSON for humans: comments, unquoted keys, single quotes, hexadecimal numbers and more. |
 | `jsonc` | JSON with comments | `.jsonc` | yes | yes | JSON that allows // and /* */ comments and trailing commas (editor settings files). |
+| `jsonl` | JSON Lines | `.jsonl`, `.ndjson` | - | - | One JSON value per line, for logs and datasets. |
+| `jsonld` | JSON-LD | `.jsonld` | - | - | Linked data in JSON. |
 | `kdl` | KDL | `.kdl` | yes | yes | The KDL document language: nodes with arguments, properties and children. |
+| `keras` | Keras model | `.keras` | - | - | Keras 3 model (ZIP with config and HDF5 weights). |
+| `laccdb` | Access lock file | `.laccdb`, `.ldb` | - | - | Record-locking information of an open Access database. |
 | `lua-table` | Lua table | `.lua` | yes | yes | Data written as a Lua table constructor (configuration and save files). |
 | `m3u` | M3U playlist | `.m3u` | yes | yes | Media playlist (extended M3U with #EXTINF). |
 | `m3u8` | M3U8 playlist | `.m3u8` | yes | yes | UTF-8 M3U playlist, including HLS media and master playlists. |
 | `mat` | MATLAB MAT-file | `.mat` | yes | yes | MATLAB workspace variables (level 5 / v7, level 4). |
+| `mdb` | Access 97-2003 database | `.mdb`, `.mde` | - | - | Microsoft Access (Jet) database. |
+| `metalink` | Metalink | `.metalink`, `.meta4` | - | - | Download description with mirrors and checksums (XML). |
+| `mgf` | Mascot generic format | `.mgf` | - | - | Peak lists for protein identification. |
+| `mlmodel` | Core ML model | `.mlmodel` | - | - | Apple Core ML model (protobuf). |
 | `mmcif` | PDBx/mmCIF structure | `.cif`, `.mmcif` | yes | yes | Macromolecular structure in the PDBx/mmCIF format. |
 | `mods` | MODS XML | `.mods`, `.xml` | yes | yes | Metadata Object Description Schema records. |
 | `mol` | MDL Molfile | `.mol` | yes | yes | MDL/Accelrys connection table (V2000; V3000 read). |
 | `mol2` | Tripos MOL2 | `.mol2`, `.ml2` | yes | yes | Tripos/SYBYL molecule with atom types and partial charges. |
 | `msgpack` | MessagePack | `.msgpack`, `.mpk`, `.mpack` | yes | yes | Compact binary serialisation of JSON-like data. |
+| `mtx` | Matrix Market | `.mtx` | - | - | Sparse or dense matrix exchange text. |
 | `mzml` | mzML mass spectra | `.mzml` | yes | - | HUPO-PSI mzML mass-spectrometry run. |
 | `mzxml` | mzXML mass spectra | `.mzxml` | yes | - | mzXML mass-spectrometry run. |
 | `nbib` | MEDLINE / PubMed citations | `.nbib`, `.medline` | yes | yes | MEDLINE-format citations as exported by PubMed. |
+| `nc` | NetCDF data | `.nc`, `.nc3`, `.netcdf` | - | - | Network Common Data Form (classic and 64-bit offset). |
 | `ndjson` | Newline-delimited JSON | `.ndjson`, `.jsonl` | yes | yes | One JSON value per line (JSON Lines), common for logs and data exports. |
 | `netcdf` | NetCDF classic | `.nc`, `.cdf`, `.netcdf` | yes | yes | Network Common Data Form, classic / 64-bit offset / CDF-5 encoding. |
 | `netscape-bookmarks` | Browser bookmarks (HTML) | `.html`, `.htm` | yes | yes | Netscape bookmark file, the HTML export of every browser. |
 | `newick` | Newick tree | `.nwk`, `.newick`, `.tree`, `.tre` | yes | yes | Phylogenetic tree(s) in Newick/New Hampshire notation. |
+| `nex` | NEXUS phylogenetics | `.nex`, `.nexus`, `.nxs` | - | - | Phylogenetic data and trees. |
 | `nexus` | NEXUS file | `.nex`, `.nexus`, `.nxs` | yes | yes | NEXUS character matrix and/or phylogenetic trees. |
 | `npy` | NumPy array | `.npy` | yes | yes | One NumPy array (.npy format 1.0-3.0). |
 | `npz` | NumPy array archive | `.npz` | yes | yes | Several named NumPy arrays in a ZIP archive (savez). |
+| `nq` | N-Quads | `.nq` | - | - | Line-based RDF quads. |
+| `nt` | N-Triples | `.nt` | - | - | Line-based RDF triples. |
+| `nzb` | NZB index | `.nzb` | - | - | List of Usenet articles making up a download (XML). |
+| `odb` | OpenDocument database | `.odb` | - | - | Database front end of LibreOffice Base. |
+| `onnx` | ONNX model | `.onnx` | - | - | Open Neural Network Exchange model (protobuf). |
+| `openapi` | OpenAPI description | `.openapi` | - | - | Description of an HTTP API (OpenAPI / Swagger). |
 | `openstep-plist` | OpenStep property list | `.plist`, `.strings` | yes | - | The old-style ASCII property list of NeXTSTEP, OpenStep and GNUstep, and .strings files. |
-| `parquet` | Apache Parquet | `.parquet`, `.pq` | yes | yes | Columnar data file used by data-analysis tools (Spark, pandas, DuckDB, Arrow). |
+| `orc` | ORC table | `.orc` | - | - | Apache ORC columnar data file. |
+| `owl` | OWL ontology | `.owl` | - | - | Web Ontology Language (usually RDF/XML). |
+| `parquet` | Apache Parquet | `.parquet`, `.pq`, `.pqt` | yes | yes | Columnar data file used by data-analysis tools (Spark, pandas, DuckDB, Arrow). |
+| `pb` | Protocol Buffers message | `.pb` | - | - | Serialised protobuf message (often a TensorFlow graph). |
 | `pdb` | Protein Data Bank file | `.pdb`, `.ent` | yes | yes | Macromolecular structure in the legacy PDB format. |
+| `pgn` | Portable Game Notation | `.pgn` | - | - | Recorded chess games. |
 | `php-serialized` | PHP serialized data | `.phpser`, `.phpserialized` | yes | yes | Values stored with PHP's serialize() function. |
 | `phylip` | PHYLIP alignment | `.phy`, `.phylip` | yes | yes | PHYLIP sequential or interleaved multiple sequence alignment. |
+| `phyloxml` | phyloXML tree | `.phyloxml` | - | - | Phylogenetic tree in XML. |
 | `pickle` | Python pickle | `.pkl`, `.pickle` | yes | - | Python's object serialisation; read as plain data only, never executed. |
+| `pkl` | Python pickle | `.pkl`, `.pickle` | - | - | Serialised Python objects. |
 | `plist` | Apple property list (XML) | `.plist` | yes | yes | Apple's XML property list format, used for settings and app metadata. |
 | `pls` | PLS playlist | `.pls` | yes | yes | Winamp / Shoutcast playlist. |
+| `pmml` | PMML model | `.pmml` | - | - | Predictive Model Markup Language. |
+| `por` | SPSS portable data | `.por` | - | - | SPSS portable (text) data file. |
 | `properties` | Java properties | `.properties` | yes | yes | Java .properties key = value settings and resource bundles. |
 | `protobuf` | Protocol Buffers message | `.pb`, `.protobuf`, `.binpb` | yes | yes | A serialised Protocol Buffers message (binary wire format), decoded without a schema. |
+| `prototxt` | Caffe network definition | `.prototxt`, `.pbtxt` | - | - | Protocol Buffers text format (Caffe, TensorFlow). |
+| `pt` | PyTorch model | `.pt`, `.pth` | - | - | Saved PyTorch tensors or TorchScript model (ZIP package). |
 | `python-literal` | Python literal | `.pyon`, `.pylit` | yes | yes | Data written as Python literals (dict, list, str, int, ...), as repr() prints them. |
 | `querystring` | URL query string | `.qs`, `.urlencoded`, `.form` | yes | yes | Form data and URL query parameters (application/x-www-form-urlencoded). |
+| `rdata` | R workspace | `.rdata`, `.rda` | - | - | Saved R workspace objects. |
+| `rdf` | RDF/XML | `.rdf` | - | - | Resource Description Framework graph in XML. |
+| `rds` | R data object | `.rds` | - | - | One serialised R object. |
+| `realm` | Realm database | `.realm` | - | - | Realm mobile database. |
 | `refworks` | RefWorks tagged citations | `.txt` | yes | yes | RefWorks tagged export format. |
 | `reg` | Windows registry file | `.reg` | yes | yes | Registry keys and values exported by the Windows Registry Editor. |
 | `ris` | RIS citations | `.ris` | yes | yes | Research Information Systems tagged citations. |
 | `ron` | RON | `.ron` | yes | - | Rusty Object Notation, a data format for Rust programs. |
 | `rss` | RSS feed | `.rss`, `.xml` | yes | yes | Really Simple Syndication news feed (RSS 0.9x, 1.0 and 2.0). |
+| `safetensors` | SafeTensors weights | `.safetensors` | - | - | Tensors with a JSON header, safe to load. |
 | `sam` | SAM alignments | `.sam` | yes | yes | Sequence Alignment/Map text format. |
+| `sas7bdat` | SAS dataset | `.sas7bdat` | - | - | SAS data set. |
 | `sav` | SPSS data file | `.sav`, `.zsav` | yes | - | Data set of IBM SPSS Statistics (read only). |
+| `sbml` | SBML model | `.sbml` | - | - | Systems Biology Markup Language. |
 | `sdf` | Structure-data file | `.sdf`, `.sd` | yes | yes | MDL SD file: several Molfiles with data items. |
+| `service` | systemd unit | `.service`, `.socket`, `.timer`, `.target`, `.mount`, `.path`, `.slice` | - | - | systemd unit configuration. |
 | `sexp` | S-expression | `.sexp`, `.sexpr` | yes | yes | Lisp-style nested lists of atoms. |
+| `sfv` | Simple file verification | `.sfv` | - | - | CRC32 checksums of a file set. |
+| `sgf` | Smart Game Format | `.sgf` | - | - | Recorded Go (and other board) games. |
 | `smile` | Smile | `.sml`, `.smile` | yes | yes | Jackson's binary JSON format. |
-| `sqlite` | SQLite database | `.sqlite`, `.sqlite3`, `.db`, `.db3` | yes | yes | SQLite 3 database file; every table becomes a sheet. |
+| `sqlite` | SQLite database | `.sqlite`, `.sqlite3`, `.db`, `.db3`, `.s3db`, `.sl3`, `.sqlitedb` | yes | yes | SQLite 3 database file; every table becomes a sheet. |
+| `ssml` | SSML speech markup | `.ssml` | - | - | Speech Synthesis Markup Language. |
+| `sto` | Stockholm alignment | `.sto`, `.stk` | - | - | Multiple sequence alignment (Pfam, Rfam). |
 | `stockholm` | Stockholm alignment | `.sto`, `.stk`, `.stockholm` | yes | yes | Stockholm multiple sequence alignment with markup (Pfam, Rfam). |
+| `strings` | Apple strings file | `.strings`, `.stringsdict` | - | - | Localised UI strings of Apple apps. |
+| `tflite` | TensorFlow Lite model | `.tflite` | - | - | FlatBuffer model for on-device inference. |
+| `tfrecord` | TFRecord dataset | `.tfrecord`, `.tfrecords` | - | - | TensorFlow record file of serialised examples. |
 | `toml` | TOML | `.toml` | yes | yes | Tom's Obvious Minimal Language, a configuration file format with typed values. |
 | `torrent` | BitTorrent metainfo | `.torrent` | yes | yes | A .torrent file: tracker, file names and piece hashes in bencode. |
+| `ttl` | Turtle RDF | `.ttl` | - | - | Terse RDF Triple Language. |
 | `ubjson` | Universal Binary JSON | `.ubj`, `.ubjson` | yes | yes | UBJSON, a binary form of JSON with typed containers. |
 | `uniprot` | UniProt flat file | `.swiss`, `.sprot`, `.uniprot` | yes | - | UniProtKB/Swiss-Prot protein entry in text format. |
 | `url-shortcut` | Internet shortcut | `.url` | yes | yes | Windows Internet Shortcut file. |
 | `vcf-variant` | VCF variants | `.vcf` | yes | yes | Variant Call Format: genomic variants with per-sample genotypes. |
+| `vhdr` | BrainVision header | `.vhdr` | - | - | Header of a BrainVision EEG recording. |
+| `vxml` | VoiceXML | `.vxml` | - | - | Voice dialogue markup. |
 | `webloc` | Web location | `.webloc` | yes | yes | macOS web location file (property list). |
+| `webmanifest` | Web app manifest | `.webmanifest` | - | - | Metadata of a progressive web app. |
+| `weights` | Darknet weights | `.weights` | - | - | Trained Darknet / YOLO weights. |
 | `wpl` | Windows Media playlist | `.wpl` | yes | yes | Windows Media Player playlist (SMIL). |
+| `wsdl` | WSDL service description | `.wsdl` | - | - | Web Services Description Language. |
 | `xfdf` | XML Forms Data Format | `.xfdf` | yes | - | Values of PDF form fields in XML. |
+| `xlf` | XLIFF translation | `.xlf`, `.xliff` | - | - | XML Localisation Interchange File Format. |
+| `xmi` | XMI model | `.xmi` | - | - | XML Metadata Interchange (UML models). |
 | `xml` | XML | `.xml` | yes | yes | Extensible Markup Language document. |
 | `xpt` | SAS transport file | `.xpt` | yes | - | SAS XPORT (version 5) data set transport file (read only). |
+| `xsd` | XML Schema | `.xsd` | - | - | W3C XML Schema definition. |
+| `xslt` | XSLT stylesheet | `.xsl`, `.xslt` | - | - | XML transformation stylesheet. |
 | `xspf` | XSPF playlist | `.xspf` | yes | yes | XML Shareable Playlist Format. |
 | `xyz` | XYZ coordinates | `.xyz`, `.pts`, `.xyzn`, `.xyzrgb`, `.txt` | yes | yes | Element symbols and Cartesian coordinates, one or more frames. |
 | `yaml` | YAML | `.yaml`, `.yml` | yes | yes | Human-friendly data serialisation language used for configuration files. |
@@ -359,30 +783,157 @@ What can be converted into what is decided at run time by the planner; ask the C
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `7z` | 7-Zip archive | `.7z` | - | - |  |
-| `apk` | Android package | `.apk` | - | - |  |
-| `bz2` | bzip2 compressed file | `.bz2` | - | - |  |
-| `cab` | Microsoft Cabinet archive | `.cab` | - | - |  |
-| `deb` | Debian package | `.deb` | - | - |  |
-| `dmg` | Apple disk image | `.dmg` | - | - |  |
-| `gz` | gzip compressed file | `.gz` | - | - |  |
-| `iso` | ISO 9660 disc image | `.iso` | - | - |  |
-| `jar` | Java archive | `.jar` | - | - |  |
-| `rar` | RAR archive | `.rar` | - | - |  |
-| `tar` | tar archive | `.tar` | - | - |  |
-| `tar.gz` | gzip-compressed tar archive | `.tar.gz`, `.tgz` | - | - |  |
-| `xz` | xz compressed file | `.xz` | - | - |  |
-| `zip` | ZIP archive | `.zip` | - | - |  |
-| `zst` | Zstandard compressed file | `.zst` | - | - |  |
+| `7z` | 7-Zip archive | `.7z` | yes | yes | The 7-Zip archive format: solid LZMA2 compression by default, with optional AES-256 encryption of the data and the file names. |
+| `a` | Static library | `.a`, `.lib`, `.ar` | - | - | Unix ar archive of object files (static library). |
+| `aab` | Android App Bundle | `.aab` | - | - | Android publishing format for Google Play. |
+| `aar` | Android library | `.aar` | - | - | Android library archive (classes.jar, resources, manifest). |
+| `aar-apple` | Apple Archive | `.aar` | - | - | Apple's archive format (macOS 11+). |
+| `ace` | ACE archive | `.ace` | - | - | WinAce archive. |
+| `air` | Adobe AIR installer | `.air` | - | - | Adobe AIR application package. |
+| `alz` | ALZip archive | `.alz` | - | - | ESTsoft ALZip archive. |
+| `android-boot` | Android boot image | `.img` | - | - | Android kernel and ramdisk image. |
+| `apk` | Android package | `.apk` | yes | yes | An Android application package (a signed ZIP archive). |
+| `apks` | Android APK set | `.apks` | - | - | Split APKs produced by bundletool. |
+| `appimage` | AppImage | `.appimage` | - | - | Self-contained Linux application (ELF with an embedded image). |
+| `ar` | ar archive | `.ar`, `.a` | yes | yes | Unix ar archive (GNU or BSD flavour), the container of static libraries; it holds a flat list of files without directories. |
+| `arc` | ARC archive | `.arc`, `.ark`, `.pak` | yes | - | SEA ARC / PKPAK archive from the DOS era (stored, packed, squeezed, crunched and squashed entries). |
+| `arj` | ARJ archive | `.arj` | yes | - | ARJ archive from the DOS era (methods 0 to 4). |
+| `asice` | ASiC-E signature container | `.asice`, `.sce`, `.bdoc` | - | - | Digitally signed document container (ETSI). |
+| `asics` | ASiC-S signature container | `.asics`, `.scs` | - | - | Single signed document container (ETSI). |
+| `br` | Brotli compressed file | `.br` | yes | yes | A single file compressed with brotli. |
+| `bz2` | Bzip2 compressed file | `.bz2`, `.bzip2`, `.bz` | yes | yes | A single file compressed with bzip2. |
+| `cab` | Microsoft Cabinet archive | `.cab` | yes | - | Windows installer cabinet (stored, MSZIP, Quantum or LZX compressed). Read only. |
+| `cbz` | Comic book archive (ZIP) | `.cbz` | yes | yes | Comic book pages as images in a ZIP archive. |
+| `ccd` | CloneCD control file | `.ccd` | - | - | CloneCD disc layout (with .img and .sub). |
+| `cdi` | DiscJuggler image | `.cdi` | - | - | Padus DiscJuggler disc image. |
+| `chm` | Compiled HTML Help | `.chm` | yes | - | Windows help file (ITSF): its HTML pages, images and tables of contents, extracted as files. Read only. |
+| `cpio` | cpio archive | `.cpio` | yes | yes | Unix cpio archive (newc, crc, odc or old binary), as used by initramfs images and RPM payloads. |
+| `cramfs` | cramfs image | `.cramfs` | - | - | Compressed ROM file system. |
+| `crate` | Rust crate | `.crate` | - | - | Rust source package (gzip-compressed tar). |
+| `crx` | Chrome extension | `.crx` | yes | - | A Chromium browser extension: a signed header ('Cr24') followed by a ZIP archive. Read only (a valid package needs the publisher's signature). |
+| `cso` | Compressed ISO | `.cso`, `.ciso` | - | - | CISO-compressed disc image (PSP). |
+| `deb` | Debian package | `.deb`, `.udeb` | yes | - | A Debian/Ubuntu software package. Read as its installed files plus the package control files under DEBIAN/ (the layout of `dpkg-deb -R`). |
+| `dmg` | Apple disk image | `.dmg` | yes | - | macOS disk image (UDIF: raw, zlib, bzip2, LZFSE, LZMA or ADC) with an HFS+ volume. |
+| `ear` | Enterprise application archive | `.ear` | - | - | Java EE application (ZIP with META-INF/application.xml). |
+| `egg` | Python egg | `.egg` | - | - | Legacy built Python package (ZIP with EGG-INFO). |
+| `fla` | Adobe Animate document | `.fla`, `.xfl` | - | - | Flash / Animate source (ZIP since CS5). |
+| `flatpak` | Flatpak bundle | `.flatpak`, `.flatpakref`, `.flatpakrepo` | - | - | Linux Flatpak application bundle or reference. |
+| `gem` | Ruby gem | `.gem` | - | - | Ruby package (tar with metadata.gz and data.tar.gz). |
+| `ggb` | GeoGebra file | `.ggb` | - | - | GeoGebra construction (ZIP). |
+| `gz` | Gzip compressed file | `.gz`, `.gzip` | yes | yes | A single file compressed with gzip. |
+| `h5p` | H5P content | `.h5p` | - | - | Interactive HTML5 learning content package. |
+| `hdd` | Parallels disk image | `.hdd`, `.hds` | - | - | Parallels Desktop virtual disk. |
+| `img` | Raw disk image | `.img`, `.ima`, `.vfd`, `.flp` | - | - | Sector-by-sector image of a disk or partition. |
+| `ipa` | iOS application archive | `.ipa` | yes | yes | An iOS application bundle packed as a ZIP archive. |
+| `iscab` | InstallShield cabinet | `.cab`, `.hdr` | - | - | InstallShield setup data cabinet. |
+| `iso` | ISO 9660 disc image | `.iso` | yes | yes | CD/DVD image (ISO 9660 with Joliet and Rock Ridge names; UDF discs are read too). Written as ISO 9660 level 3 with Rock Ridge and Joliet, readable everywhere. |
+| `jar` | Java archive | `.jar` | yes | yes | A ZIP archive of Java classes and resources with a manifest. |
+| `jffs2` | JFFS2 image | `.jffs2` | - | - | Journalling Flash File System version 2. |
+| `jmod` | Java module | `.jmod` | - | - | JDK module file. |
+| `luks` | LUKS encrypted volume | `.luks` | - | - | Linux Unified Key Setup encrypted disk. |
+| `lz` | Lzip compressed file | `.lz` | yes | yes | A single file compressed with lzip. |
+| `lz4` | LZ4 compressed file | `.lz4` | yes | yes | A single file compressed with lz4. |
+| `lzfse` | LZFSE compressed file | `.lzfse` | - | - | Apple's LZFSE compression. |
+| `lzh` | LHA archive | `.lzh`, `.lha` | yes | - | LHA / LZH archive (header levels 0 to 3), common on Japanese systems, the Amiga and in old DOS software. |
+| `lzma` | LZMA compressed file | `.lzma` | yes | yes | A single file compressed with lzma. |
+| `lzo` | lzop compressed file | `.lzo` | - | - | Fast LZO compression of lzop. |
+| `mdf` | Media Disc image data | `.mdf` | - | - | Alcohol 120% disc image data. |
+| `mds` | Media Descriptor | `.mds` | - | - | Alcohol 120% image descriptor (with an .mdf data file). |
+| `msi` | Windows Installer package | `.msi` | - | - | Windows Installer database (OLE2). |
+| `msix` | MSIX / AppX package | `.msix`, `.appx` | - | - | Windows app package (ZIP with AppxManifest.xml). |
+| `msixbundle` | MSIX / AppX bundle | `.msixbundle`, `.appxbundle` | - | - | Bundle of Windows app packages. |
+| `msp` | Windows Installer patch | `.msp` | - | - | Windows Installer patch package (OLE2). |
+| `mst` | Windows Installer transform | `.mst` | - | - | Windows Installer transform (OLE2). |
+| `msu` | Windows Update package | `.msu` | - | - | Windows standalone update (cabinet). |
+| `nrg` | Nero disc image | `.nrg` | - | - | Nero Burning ROM disc image. |
+| `nupkg` | NuGet package | `.nupkg`, `.snupkg` | yes | yes | A .NET package (a ZIP archive with a .nuspec manifest). |
+| `nuspec` | NuGet specification | `.nuspec` | - | - | NuGet package manifest (XML). |
+| `osz` | osu! beatmap | `.osz`, `.osk` | - | - | osu! rhythm game beatmap package (ZIP). |
+| `ova` | Open Virtual Appliance | `.ova` | - | - | Virtual machine package (tar with an OVF descriptor). |
+| `ovf` | Open Virtualization Format | `.ovf` | - | - | Virtual machine descriptor (XML). |
+| `oxt` | LibreOffice extension | `.oxt` | - | - | OpenOffice / LibreOffice extension (ZIP). |
+| `pbix` | Power BI report | `.pbix`, `.pbit` | - | - | Microsoft Power BI report (ZIP package). |
+| `pkg` | macOS installer package | `.pkg`, `.mpkg` | - | - | macOS installer (XAR flat package). |
+| `pkg.tar.zst` | Arch Linux package | `.pkg.tar.zst`, `.pkg.tar.xz` | - | - | pacman package (compressed tar). |
+| `pkpass` | Apple Wallet pass | `.pkpass` | - | - | Boarding pass, ticket or card for Apple Wallet. |
+| `qcow2` | QEMU copy-on-write disk | `.qcow2`, `.qcow`, `.qcow3` | - | - | QEMU virtual disk with snapshots. |
+| `qed` | QEMU enhanced disk | `.qed` | - | - | QEMU enhanced disk format. |
+| `rar` | RAR archive | `.rar` | yes | - | A proprietary archive format (RAR 2.9 to 7) with strong compression, solid mode and AES encryption. Read only. |
+| `romfs` | romfs image | `.romfs` | - | - | Simple read-only Linux file system. |
+| `rpm` | RPM package | `.rpm` | yes | - | A Red Hat / Fedora / SUSE software package; read as the files of its payload. |
+| `sb3` | Scratch 3 project | `.sb3`, `.sb2` | - | - | Scratch programming project (ZIP). |
+| `shar` | Shell archive | `.shar` | - | yes | A POSIX shell script that recreates the files when run with sh (text as here-documents, binary files as base64). Write only. |
+| `simg` | Android sparse image | `.simg`, `.img` | - | - | Android sparse partition image. |
+| `sit` | StuffIt archive | `.sit` | - | - | Classic Mac OS StuffIt archive. |
+| `sitx` | StuffIt X archive | `.sitx` | - | - | StuffIt X archive. |
+| `snap` | Snap package | `.snap` | - | - | Ubuntu Snap package (SquashFS). |
+| `sparseimage` | Apple sparse disk image | `.sparseimage` | - | - | macOS growable disk image. |
+| `squashfs` | SquashFS image | `.sqfs`, `.squashfs`, `.snap`, `.sqsh`, `.sfs` | yes | - | Compressed read-only Linux file system image (SquashFS 4.0), as used by live CDs, snaps and AppImages. |
+| `sz` | Snappy framed file | `.sz` | yes | yes | A single file compressed with snappy-framed. |
+| `tar` | Tar archive | `.tar` | yes | yes | Unix tape archive (ustar, GNU or pax), uncompressed. |
+| `tar.br` | Brotli-compressed tar archive | `.tar.br` | yes | yes | A tar archive compressed with brotli. |
+| `tar.bz2` | Bzip2-compressed tar archive | `.tar.bz2`, `.tbz2`, `.tbz`, `.tb2` | yes | yes | A tar archive compressed with bzip2. |
+| `tar.gz` | Gzip-compressed tar archive | `.tar.gz`, `.tgz` | yes | yes | A tar archive compressed with gzip. |
+| `tar.lz` | Lzip-compressed tar archive | `.tar.lz`, `.tlz` | yes | yes | A tar archive compressed with lzip. |
+| `tar.lz4` | LZ4-compressed tar archive | `.tar.lz4` | yes | yes | A tar archive compressed with lz4. |
+| `tar.lzma` | LZMA-compressed tar archive | `.tar.lzma`, `.tlz`, `.tlzma` | yes | yes | A tar archive compressed with lzma. |
+| `tar.sz` | Snappy-compressed tar archive | `.tar.sz` | yes | yes | A tar archive compressed with snappy-framed. |
+| `tar.xz` | XZ-compressed tar archive | `.tar.xz`, `.txz` | yes | yes | A tar archive compressed with xz. |
+| `tar.z` | Compress (.Z) tar archive | `.tar.z`, `.taz` | yes | yes | A tar archive compressed with lzw. |
+| `tar.zst` | Zstandard-compressed tar archive | `.tar.zst`, `.tzst` | yes | yes | A tar archive compressed with zstd. |
+| `toast` | Toast disc image | `.toast` | - | - | Roxio Toast disc image. |
+| `twb` | Tableau workbook | `.twb` | - | - | Tableau workbook (XML). |
+| `twbx` | Tableau packaged workbook | `.twbx` | - | - | Tableau workbook with data (ZIP). |
+| `ubi` | UBI image | `.ubi` | - | - | Unsorted Block Images for raw flash. |
+| `vdi` | VirtualBox disk image | `.vdi` | - | - | Oracle VirtualBox virtual disk. |
+| `vhd` | Virtual Hard Disk | `.vhd` | - | - | Microsoft Virtual PC / Hyper-V disk. |
+| `vhdx` | Virtual Hard Disk v2 | `.vhdx` | - | - | Hyper-V disk with 4 KB sectors and journaling. |
+| `vmdk` | VMware virtual disk | `.vmdk` | - | - | VMware virtual disk (sparse extent or descriptor). |
+| `vmx` | VMware configuration | `.vmx` | - | - | VMware virtual machine settings. |
+| `vsix` | Visual Studio extension | `.vsix` | - | - | Visual Studio or VS Code extension package. |
+| `war` | Web application archive | `.war` | - | - | Java web application (ZIP with WEB-INF). |
+| `warc` | Web archive (WARC) | `.warc`, `.warc.gz` | yes | - | An ISO 28500 web archive (WARC 1.0 / 1.1, plain or gzip-compressed); read as the pages and files it captured, named after their URLs. |
+| `whl` | Python wheel | `.whl` | yes | yes | A built Python package (a ZIP archive with .dist-info metadata). |
+| `wim` | Windows Imaging archive | `.wim`, `.swm`, `.esd` | yes | - | Windows image file (WIM / ESD: XPRESS, LZX or LZMS compressed, solid or not). One image is read (option 'wim_image'). Read only. |
+| `xapk` | XAPK package | `.xapk`, `.apkm` | - | - | APK with OBB data or split APKs (third-party stores). |
+| `xar` | xar archive | `.xar`, `.pkg`, `.xip` | yes | - | eXtensible ARchive, the container of macOS installer packages (.pkg) and .xip files. |
+| `xpi` | Firefox extension | `.xpi` | yes | yes | A Mozilla add-on package (a signed ZIP archive). |
+| `xz` | XZ compressed file | `.xz` | yes | yes | A single file compressed with xz. |
+| `z` | Unix compress file | `.z` | yes | yes | A single file compressed with lzw. |
+| `zip` | ZIP archive | `.zip`, `.zipx` | yes | yes | The most widely used archive format; deflate by default, with optional bzip2, LZMA, Zstandard or xz compression and AES or ZipCrypto encryption. |
+| `zipx` | WinZip extended archive | `.zipx` | - | - | ZIP using newer compression methods (WinZip). |
+| `zlib` | zlib stream | `.zlib`, `.zz` | - | - | DEFLATE data with a zlib header (RFC 1950). |
+| `zoo` | Zoo archive | `.zoo` | - | - | Zoo archive of the 1980s. |
+| `zpaq` | ZPAQ archive | `.zpaq` | - | - | Journaling incremental archive of Matt Mahoney. |
+| `zst` | Zstandard compressed file | `.zst`, `.zstd` | yes | yes | A single file compressed with zstd. |
+| `zz` | Zlib compressed data | `.zz`, `.zlib` | yes | yes | A single file compressed with zlib. |
 
 ## Fonts
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `otf` | OpenType font | `.otf` | - | - |  |
-| `ttf` | TrueType font | `.ttf` | - | - |  |
-| `woff` | Web Open Font Format | `.woff` | - | - |  |
-| `woff2` | Web Open Font Format 2 | `.woff2` | - | - |  |
+| `afm` | Adobe font metrics | `.afm` | yes | yes | Glyph metrics of a PostScript font. |
+| `bdf` | Bitmap Distribution Format font | `.bdf` | yes | yes | X11 bitmap font (text). |
+| `cff` | Compact Font Format | `.cff` | yes | yes | Bare CFF table: PostScript outlines without an sfnt wrapper. |
+| `dfont` | Mac data-fork font | `.dfont`, `.suit` | yes | yes | Classic Mac OS font suitcase in a data fork. |
+| `eot` | Embedded OpenType font | `.eot` | yes | yes | Font for old Internet Explorer. |
+| `fnt` | Windows font resource | `.fnt` | yes | - | Raw Windows bitmap font. |
+| `fon` | Windows bitmap font | `.fon` | yes | - | Windows raster font resource (NE executable). |
+| `glyphs` | Glyphs font source | `.glyphs`, `.glyphspackage` | - | - | Font source of the Glyphs app. |
+| `otb` | OpenType bitmap font | `.otb` | yes | - | sfnt font holding only embedded bitmaps (EBDT/EBLC). |
+| `otf` | OpenType font | `.otf` | yes | yes | sfnt font with PostScript (CFF) outlines. |
+| `pcf` | Portable Compiled Format font | `.pcf` | yes | yes | X11 compiled bitmap font. |
+| `pfa` | PostScript Type 1 font (ASCII) | `.pfa` | yes | yes | Adobe Type 1 font as PostScript text. |
+| `pfb` | PostScript Type 1 font (binary) | `.pfb` | yes | yes | Adobe Type 1 font in PC binary segments. |
+| `psf` | PC screen font | `.psf`, `.psfu` | yes | yes | Linux console bitmap font. |
+| `sfd` | FontForge font | `.sfd` | - | - | FontForge source font. |
+| `svg-font` | SVG font | `.svg` | yes | yes | Glyph outlines in an SVG <font> element (SVG 1.1 fonts). |
+| `ttc` | TrueType collection | `.ttc`, `.otc` | yes | yes | Several sfnt fonts sharing tables in one file. |
+| `ttf` | TrueType font | `.ttf` | yes | yes | Outline font with quadratic curves (sfnt). |
+| `ttx` | TTX font dump | `.ttx` | - | - | fontTools XML dump of an sfnt font. |
+| `vfb` | FontLab font source | `.vfb`, `.vfc`, `.vfj` | - | - | FontLab Studio font source. |
+| `woff` | Web Open Font Format | `.woff` | yes | yes | Compressed sfnt font for the web. |
+| `woff2` | Web Open Font Format 2 | `.woff2` | yes | yes | Brotli-compressed sfnt font for the web. |
 
 ## Subtitles
 
@@ -395,60 +946,117 @@ What can be converted into what is decided at run time by the planner; ask the C
 | `json3` | YouTube json3 captions | `.json3`, `.json` | yes | yes | YouTube's JSON caption and transcript format. |
 | `lrc` | LRC lyrics | `.lrc` | yes | yes | Time-tagged song lyrics ([mm:ss.xx]line), including enhanced word timing. |
 | `microdvd` | MicroDVD subtitles | `.sub`, `.txt` | yes | yes | Frame-based subtitles ({start}{end}text). |
+| `mks` | Matroska subtitles | `.mks` | - | - | Matroska file with subtitle tracks only. |
 | `mpl2` | MPL2 subtitles | `.mpl`, `.txt` | yes | yes | Decisecond-timed subtitles ([start][end]text). |
 | `qttext` | QuickTime Text | `.txt`, `.qt.txt` | yes | yes | Apple QuickTime text track descriptions ({QTtext}). |
 | `sami` | SAMI captions | `.smi`, `.sami` | yes | yes | Microsoft Synchronized Accessible Media Interchange. |
 | `sbv` | YouTube SBV captions | `.sbv` | yes | yes | SubViewer-style captions as exported by YouTube. |
 | `scc` | Scenarist closed captions | `.scc` | yes | yes | CEA-608 line-21 captions in Scenarist SCC files. |
+| `smi` | SAMI captions | `.smi`, `.sami` | - | - | Microsoft Synchronized Accessible Media Interchange (HTML-like). |
 | `smpte-tt` | SMPTE-TT subtitles | `.smptett`, `.xml` | yes | - | SMPTE ST 2052-1 timed text (text only). |
 | `spruce-stl` | Spruce STL subtitles | `.stl` | yes | yes | Spruce / DVD Studio Pro text subtitles (hh:mm:ss:ff , ... , text). |
 | `srt` | SubRip subtitles | `.srt` | yes | yes | The most widely supported plain-text subtitle format. |
 | `srv3` | YouTube timed text (srv3) | `.srv3`, `.ytt` | yes | yes | YouTube's XML caption format 3. |
 | `ssa` | SubStation Alpha subtitles | `.ssa` | yes | yes | The original SubStation Alpha v4 script format. |
 | `subviewer` | SubViewer subtitles | `.sub` | yes | yes | SubViewer 1.0 and 2.0 text subtitles. |
+| `sup` | PGS subtitles | `.sup` | - | - | Blu-ray Presentation Graphic Stream bitmap subtitles. |
 | `tmplayer` | TMPlayer subtitles | `.tmp`, `.txt` | yes | yes | Start-time-only subtitles (hh:mm:ss:text). |
-| `ttml` | TTML timed text | `.ttml`, `.xml` | yes | yes | W3C Timed Text Markup Language (TTML, IMSC). |
+| `ttml` | TTML timed text | `.ttml`, `.xml`, `.dfxp` | yes | yes | W3C Timed Text Markup Language (TTML, IMSC). |
+| `vobsub` | VobSub subtitles | `.idx`, `.sub` | - | - | DVD bitmap subtitles: an .idx index and an MPEG .sub stream. |
 | `vtt` | WebVTT subtitles | `.vtt` | yes | yes | W3C Web Video Text Tracks, the subtitle format of HTML video. |
 
 ## 3D models
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
+| `3dm` | Rhino model | `.3dm` | - | - | Rhinoceros 3D model (openNURBS). |
 | `3ds` | 3D Studio model | `.3ds` | yes | yes | Legacy Autodesk 3D Studio mesh format. |
+| `3dxml` | 3D XML | `.3dxml` | - | - | Dassault lightweight 3D (ZIP package). |
 | `3mf` | 3D Manufacturing Format | `.3mf` | yes | yes | Modern 3D-printing package with units, colours, materials and multiple objects. |
+| `abc` | Alembic cache | `.abc` | - | - | Baked animated geometry (Ogawa). |
 | `amf` | Additive Manufacturing File | `.amf` | yes | yes | XML 3D-printing format (ISO/ASTM 52915), plain or zipped. |
+| `blend` | Blender file | `.blend` | - | - | Blender scene with everything in it. |
+| `bvh` | BioVision motion | `.bvh` | - | - | Skeleton hierarchy and motion capture data. |
+| `c4d` | Cinema 4D scene | `.c4d` | - | - | Maxon Cinema 4D scene. |
+| `catpart` | CATIA part | `.catpart`, `.catproduct`, `.catdrawing` | - | - | Dassault CATIA V5 document. |
 | `dae` | COLLADA model | `.dae` | yes | yes | XML interchange format for 3D scenes (Khronos COLLADA). |
+| `dgn` | MicroStation design | `.dgn` | - | - | Bentley MicroStation drawing. |
+| `dwf` | Design Web Format | `.dwf` | - | - | Autodesk published drawing. |
+| `dwfx` | DWFx drawing | `.dwfx` | - | - | Autodesk published drawing (XPS-based). |
+| `dwt` | AutoCAD template | `.dwt` | - | - | AutoCAD drawing template (DWG). |
 | `excellon` | Excellon drill file | `.drl`, `.xln`, `.exc`, `.drd` | yes | - | PCB drill tools and hit positions. |
+| `f3d` | Fusion 360 design | `.f3d`, `.f3z` | - | - | Autodesk Fusion 360 archive. |
 | `fbx` | Autodesk FBX model | `.fbx` | yes | yes | Widely used scene exchange format (binary and ASCII). |
 | `gcode` | G-code | `.gcode`, `.gco`, `.ngc`, `.nc`, `.tap`, `.cnc` | yes | - | CNC / 3D-printer toolpath program. |
 | `gerber` | Gerber layer | `.gbr`, `.ger`, `.gtl`, `.gbl`, `.gto`, `.gbo`, `.gts`, `.gbs`, `.gko`, `.gm1` | yes | - | RS-274X PCB artwork layer. |
 | `glb` | glTF model (binary) | `.glb` | yes | yes | Khronos glTF 2.0 scene packed into one binary file. |
 | `gltf` | glTF model (JSON) | `.gltf` | yes | yes | Khronos glTF 2.0 scene in JSON form with embedded buffers. |
+| `iam` | Inventor assembly | `.iam` | - | - | Autodesk Inventor assembly (OLE2). |
+| `ifc` | IFC building model | `.ifc` | - | - | Industry Foundation Classes BIM model (STEP). |
+| `igs` | IGES model | `.igs`, `.iges` | - | - | Initial Graphics Exchange Specification CAD data. |
+| `ipt` | Inventor part | `.ipt` | - | - | Autodesk Inventor part (OLE2). |
+| `jt` | JT visualisation | `.jt` | - | - | Siemens JT lightweight 3D (ISO 14306). |
 | `las` | LAS point cloud | `.las` | yes | yes | ASPRS LiDAR point cloud (versions 1.0-1.4). |
 | `lwo` | LightWave object | `.lwo` | yes | - | LightWave 3D object (LWO2). |
+| `lws` | LightWave scene | `.lws` | - | - | LightWave 3D scene (text). |
+| `ma` | Maya ASCII scene | `.ma` | - | - | Autodesk Maya scene as MEL text. |
+| `max` | 3ds Max scene | `.max` | - | - | Autodesk 3ds Max scene (OLE2). |
+| `mb` | Maya binary scene | `.mb` | - | - | Autodesk Maya scene (IFF). |
 | `md2` | Quake II model | `.md2` | yes | - | id Software MD2 model (first animation frame). |
 | `md3` | Quake III model | `.md3` | yes | - | id Software MD3 model (first animation frame). |
+| `mdl` | Quake / Half-Life model | `.mdl` | - | - | Game model of the Quake and GoldSrc/Source engines. |
 | `ms3d` | MilkShape 3D model | `.ms3d` | yes | - | MilkShape 3D binary model. |
 | `msh` | Gmsh mesh | `.msh` | yes | - | Finite-element mesh from Gmsh (format 2.2 and 4.1); surface elements are converted. |
+| `mtl` | Wavefront material library | `.mtl` | - | - | Materials referenced by OBJ models. |
+| `nif` | NetImmerse/Gamebryo model | `.nif`, `.kf` | - | - | Gamebryo engine scene (Bethesda games). |
+| `nwd` | Navisworks model | `.nwd`, `.nwc`, `.nwf` | - | - | Autodesk Navisworks review model. |
 | `obj` | Wavefront OBJ model | `.obj` | yes | yes | Widely supported text format for polygon meshes with texture coordinates and normals. |
 | `obj.zip` | Wavefront OBJ model with materials (ZIP) | `.obj.zip` | yes | yes | An OBJ model packed together with its .mtl materials and texture images. |
 | `off` | Object File Format model | `.off`, `.coff`, `.noff` | yes | yes | Simple text polygon mesh format from Geomview (OFF, COFF, NOFF). |
 | `pcd` | Point Cloud Data | `.pcd` | yes | yes | Point Cloud Library format (ASCII, binary or LZF-compressed). |
 | `ply` | Polygon File Format model | `.ply` | yes | yes | Stanford PLY meshes and point clouds with colours and custom properties. |
+| `pmd` | MikuMikuDance legacy model | `.pmd` | - | - | Polygon Model Data (MMD). |
+| `pmx` | MikuMikuDance model | `.pmx` | - | - | Polygon Model eXtended (MMD). |
+| `prt` | NX / Creo part | `.prt` | - | - | Siemens NX or PTC Creo part. |
+| `pts` | Point cloud text | `.pts` | - | - | Leica / laser-scanner point list. |
+| `rfa` | Revit family | `.rfa` | - | - | Autodesk Revit component family (OLE2). |
+| `rft` | Revit family template | `.rft` | - | - | Autodesk Revit family template (OLE2). |
+| `rte` | Revit template | `.rte` | - | - | Autodesk Revit project template (OLE2). |
+| `rvt` | Revit project | `.rvt` | - | - | Autodesk Revit BIM project (OLE2). |
+| `sat` | ACIS model | `.sat`, `.sab` | - | - | Spatial ACIS solid model. |
+| `skp` | SketchUp model | `.skp` | - | - | Trimble SketchUp model. |
+| `sldasm` | SolidWorks assembly | `.sldasm` | - | - | Dassault SolidWorks assembly. |
+| `slddrw` | SolidWorks drawing | `.slddrw` | - | - | Dassault SolidWorks drawing. |
+| `sldprt` | SolidWorks part | `.sldprt` | - | - | Dassault SolidWorks part. |
+| `smd` | Valve studio model data | `.smd` | - | - | Source engine model source (text). |
+| `step` | STEP model | `.step`, `.stp`, `.p21` | - | - | ISO 10303 product data exchange for CAD. |
 | `stl` | STL model | `.stl` | yes | yes | Triangle mesh format used by 3D printers and CAD (binary or ASCII). |
+| `u3d` | Universal 3D | `.u3d` | - | - | ECMA-363 3D data embedded in PDF. |
+| `usd` | USD scene | `.usd` | - | - | Pixar Universal Scene Description (text or binary). |
 | `usda` | USD scene (text) | `.usda`, `.usd` | yes | yes | Pixar Universal Scene Description in text form. |
 | `usdc` | USD scene (binary crate) | `.usdc` | - | - | Pixar USD binary crate layer (detection only; not readable). |
 | `usdz` | USDZ package | `.usdz` | yes | yes | USD scene packed with its textures (used by Apple AR Quick Look). |
+| `vdb` | OpenVDB volume | `.vdb` | - | - | Sparse volumetric data (smoke, clouds). |
 | `vox` | MagicaVoxel model | `.vox` | yes | - | Voxel model from MagicaVoxel, converted to a coloured mesh. |
+| `vrm` | VRM avatar | `.vrm` | - | - | Humanoid avatar based on binary glTF. |
 | `vtk` | VTK legacy file | `.vtk` | yes | yes | Visualization Toolkit legacy polygon data (ASCII or binary). |
 | `wrl` | VRML 2.0 world | `.wrl`, `.vrml` | yes | yes | VRML97 (VRML 2.0) scene, plain or gzip-compressed. |
 | `x` | DirectX model | `.x` | yes | - | DirectX .x model in text form. |
 | `x3d` | X3D scene | `.x3d` | yes | yes | Web3D X3D scene in XML encoding. |
+| `x3dv` | X3D classic scene | `.x3dv` | - | - | X3D in VRML-style syntax. |
+| `x_t` | Parasolid model | `.x_t`, `.x_b`, `.xmt_txt` | - | - | Siemens Parasolid transmit file. |
+| `ztl` | ZBrush tool | `.ztl`, `.zpr` | - | - | Pixologic ZBrush tool or project. |
 
 ## Geospatial
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
+| `asc-grid` | Esri ASCII grid | `.asc` | - | - | Raster elevation grid as text (AAIGrid). |
+| `cpg` | Shapefile code page | `.cpg` | - | - | Character encoding of a shapefile's attributes. |
+| `dem` | USGS DEM | `.dem` | - | - | USGS digital elevation model. |
+| `dted` | DTED elevation | `.dt0`, `.dt1`, `.dt2` | - | - | Digital Terrain Elevation Data. |
+| `e00` | Arc/Info export | `.e00` | - | - | Esri interchange file. |
+| `e57` | E57 point cloud | `.e57` | - | - | ASTM E57 3D imaging data. |
 | `esrijson` | Esri JSON | `.esrijson`, `.json` | yes | yes | ArcGIS REST API feature sets (attributes and geometries as Esri JSON). |
 | `fgb` | FlatGeobuf | `.fgb` | yes | yes | Binary geographic features with an optional packed spatial index, built on FlatBuffers. |
 | `fit` | Garmin FIT | `.fit` | yes | yes | Flexible and Interoperable Data Transfer activity files from sports watches and bike computers. |
@@ -458,21 +1066,37 @@ What can be converted into what is decided at run time by the planner; ask the C
 | `geojson` | GeoJSON | `.geojson`, `.json` | yes | yes | Geographic features as JSON (RFC 7946). |
 | `geojsonseq` | GeoJSON text sequence | `.geojsonl`, `.geojsons`, `.geojsonseq`, `.ndgeojson` | yes | yes | One GeoJSON feature per line (newline-delimited GeoJSON, RFC 8142 sequences). |
 | `georss` | GeoRSS feed | `.georss`, `.rss`, `.atom`, `.xml` | yes | - | RSS or Atom feed whose items carry GeoRSS or W3C Basic Geo positions (read only). |
+| `geotiff` | GeoTIFF | `.tif`, `.tiff`, `.gtiff` | - | - | TIFF raster with georeferencing tags. |
 | `gml` | Geography Markup Language | `.gml` | yes | yes | OGC GML simple-feature collections (GML 2, 3.1, 3.2), as served by WFS. |
+| `gpkg` | GeoPackage | `.gpkg` | - | - | OGC vector and raster data in SQLite. |
 | `gpx` | GPS Exchange Format | `.gpx` | yes | yes | Waypoints, routes and tracks from GPS devices and apps (GPX 1.0 / 1.1). |
+| `grib` | GRIB weather data | `.grib`, `.grb`, `.grib2`, `.grb2` | - | - | WMO gridded meteorological data. |
+| `hgt` | SRTM elevation tile | `.hgt` | - | - | Shuttle Radar Topography Mission 1 or 3 arc-second tile. |
 | `igc` | IGC flight log | `.igc` | yes | yes | FAI / IGC flight recorder files from gliders, paragliders and hang gliders. |
 | `kml` | Keyhole Markup Language | `.kml` | yes | yes | Placemarks, paths and polygons for Google Earth and other globes (KML 2.2 / 2.3). |
 | `kmz` | Zipped KML | `.kmz` | yes | yes | A KML document compressed in a ZIP archive with its icons and images. |
+| `landxml` | LandXML | `.xml` | - | - | Civil engineering and survey data (XML). |
+| `laz` | LAZ point cloud | `.laz` | - | - | Compressed lidar point cloud (LASzip). |
 | `mapinfo.zip` | Zipped MapInfo layer | `.mapinfo.zip`, `.zip` | yes | yes | A MapInfo layer (MIF + MID) in a ZIP archive. |
+| `mbtiles` | MBTiles | `.mbtiles` | - | - | Map tiles in an SQLite database. |
 | `mif` | MapInfo Interchange Format | `.mif` | yes | - | MapInfo MIF geometry file (its attributes are in a separate .mid file). |
+| `mrsid` | MrSID image | `.sid` | - | - | LizardTech wavelet-compressed aerial imagery. |
+| `mvt` | Mapbox vector tile | `.mvt` | - | - | Protobuf-encoded vector map tile. |
+| `mxd` | ArcMap document | `.mxd` | - | - | Esri ArcMap map document. |
 | `nmea` | NMEA 0183 log | `.nmea`, `.nma` | yes | yes | GPS receiver sentences (GGA, RMC, GLL, VTG, WPL) as logged by receivers and data loggers. |
 | `osm` | OpenStreetMap XML | `.osm` | yes | yes | OpenStreetMap nodes, ways and relations as XML (API 0.6, editor exports). |
 | `osm.pbf` | OpenStreetMap PBF | `.osm.pbf`, `.pbf` | yes | - | OpenStreetMap data in the compressed protocol-buffer format (planet and regional extracts). |
+| `ov2` | TomTom POI file | `.ov2` | - | - | TomTom points of interest. |
 | `pluscode` | Plus Code list | `.pluscode`, `.olc` | yes | yes | Open Location Codes (Plus Codes) of positions, one per line. |
+| `pmtiles` | PMTiles | `.pmtiles` | - | - | Single-file map tile archive for HTTP range requests. |
 | `polyline` | Encoded polyline | `.polyline` | yes | yes | Google's encoded polyline algorithm format (five decimals), one per line. |
 | `polyline6` | Encoded polyline (precision 6) | `.polyline6` | yes | yes | Encoded polylines with six decimals (OSRM, Valhalla), one per line. |
+| `prj` | Projection definition | `.prj` | - | - | Coordinate reference system as WKT (shapefile companion). |
+| `qgs` | QGIS project | `.qgs` | - | - | QGIS map project (XML). |
+| `qgz` | Compressed QGIS project | `.qgz` | - | - | QGIS map project in a ZIP archive. |
 | `shp` | Shapefile geometry | `.shp` | yes | - | The .shp part of an Esri shapefile on its own (geometry without attributes). |
 | `shp.zip` | Zipped shapefile | `.shp.zip`, `.zip` | yes | yes | Esri shapefile layers (.shp, .shx, .dbf, .prj, .cpg) in a ZIP archive. |
+| `shx` | Shapefile index | `.shx` | - | - | Esri shapefile geometry index. |
 | `takeout-location` | Google location history | `.json` | yes | - | Location history exported from Google Takeout or the Timeline app (read only). |
 | `tcx` | Training Center XML | `.tcx` | yes | yes | Garmin Training Center activities and courses with heart rate, cadence and power. |
 | `topojson` | TopoJSON | `.topojson`, `.json` | yes | yes | Geographic topology as JSON: shared, quantised arcs (D3, Mapshaper). |
@@ -484,14 +1108,19 @@ What can be converted into what is decided at run time by the planner; ask the C
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
+| `dbx` | Outlook Express folder | `.dbx` | - | - | Outlook Express 5/6 mail folder. |
 | `google-calendar-csv` | Google Calendar CSV | `.csv` | yes | yes | Events in the CSV layout Google Calendar imports. |
 | `google-contacts-csv` | Google Contacts CSV | `.csv` | yes | yes | Contacts in the CSV layout of Google Contacts. |
-| `ics` | iCalendar | `.ics`, `.ical`, `.icalendar` | yes | yes | Calendar events, tasks and journal entries (RFC 5545). |
+| `ics` | iCalendar | `.ics`, `.ical`, `.icalendar`, `.ifb` | yes | yes | Calendar events, tasks and journal entries (RFC 5545). |
 | `ifb` | iCalendar free/busy | `.ifb` | yes | yes | Free/busy time published as an iCalendar VFREEBUSY object. |
 | `jcard` | jCard | `.jcard`, `.json` | yes | yes | vCard data as JSON (RFC 7095). |
 | `ldif` | LDIF address book | `.ldif`, `.ldi` | yes | yes | LDAP Data Interchange Format entries, as exported by Thunderbird. |
+| `oft` | Outlook template | `.oft` | - | - | Microsoft Outlook item template (OLE2). |
+| `olm` | Outlook for Mac archive | `.olm` | - | - | Mail export of Outlook for Mac (ZIP package). |
+| `ost` | Outlook offline data file | `.ost` | - | - | Outlook offline copy of an Exchange mailbox. |
 | `outlook-calendar-csv` | Outlook calendar CSV | `.csv` | yes | yes | Events in the CSV layout Microsoft Outlook exports and imports. |
 | `outlook-contacts-csv` | Outlook contacts CSV | `.csv` | yes | yes | Contacts in the CSV layout of Microsoft Outlook. |
+| `pst` | Outlook data file | `.pst` | - | - | Outlook personal folders: mail, calendar and contacts. |
 | `vcf` | vCard | `.vcf`, `.vcard` | yes | yes | Address-book cards (vCard 2.1, 3.0 and 4.0). |
 | `vcs` | vCalendar 1.0 | `.vcs` | yes | - | The predecessor of iCalendar, still exported by some phones. |
 | `xcard` | xCard | `.xcard`, `.xml` | yes | yes | vCard data as XML (RFC 6351). |
@@ -500,23 +1129,36 @@ What can be converted into what is decided at run time by the planner; ask the C
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
+| `abap` | ABAP source | `.abap` | - | - | SAP ABAP program source. |
 | `ada` | Ada source | `.ada`, `.adb`, `.ads` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `ahk` | AutoHotkey script | `.ahk` | - | - | Windows automation script. |
 | `ansi` | ANSI-coloured text | `.ansi`, `.ans` | yes | yes | Text with terminal colour escape sequences, such as coloured logs or highlighted code. |
 | `apex` | Apex source | `.cls`, `.trigger`, `.apex` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `applescript` | AppleScript | `.applescript` | - | - | AppleScript source text. |
 | `asm` | Assembly source | `.asm`, `.s`, `.nasm` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `asp` | Active Server Pages | `.asp`, `.aspx`, `.ascx`, `.asmx` | - | - | Microsoft web page template. |
+| `astro` | Astro component | `.astro` | - | - | Astro web framework component. |
+| `au3` | AutoIt script | `.au3` | - | - | Windows automation script. |
 | `awk` | AWK source | `.awk` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `bas` | BASIC source | `.bas` | - | - | BASIC / Visual Basic module. |
 | `bash` | Bash script source | `.bash` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `bat` | Windows batch file source | `.bat`, `.cmd` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `bicep` | Bicep template | `.bicep` | - | - | Azure infrastructure template. |
+| `brd` | Eagle board | `.brd` | - | - | Autodesk Eagle board layout (XML). |
+| `bzl` | Starlark / Bazel file | `.bzl`, `.bazel`, `.star` | - | - | Bazel build rules. |
 | `c` | C source | `.c`, `.h` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `cabal` | Cabal package | `.cabal` | - | - | Haskell package description. |
 | `clj` | Clojure source | `.clj`, `.cljs`, `.cljc`, `.edn` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `cmake` | CMake script source | `.cmake` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `cob` | COBOL source | `.cob`, `.cbl`, `.cpy` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `coffee` | CoffeeScript source | `.coffee` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `color` | Colour notation | `.txt` | - | yes | A CSS colour converted between hex, rgb(), hsl(), hwb(), oklch() and names. |
-| `cpp` | C++ source | `.cpp`, `.cc`, `.cxx`, `.c++`, `.ino`, `.hpp`, `.hh`, `.hxx` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `cpp` | C++ source | `.cpp`, `.cc`, `.cxx`, `.c++`, `.ino`, `.hpp`, `.hh`, `.hxx`, `.h++`, `.ipp`, `.inl`, `.tpp` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `cr` | Crystal source | `.cr` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `cron` | Cron schedule | `.cron`, `.crontab` | yes | - | Cron expressions or a crontab; reads as English descriptions. |
 | `cs` | C# source | `.cs`, `.csx` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `csh` | C shell script | `.csh`, `.tcsh` | - | - | csh / tcsh script. |
+| `csproj` | C# project | `.csproj` | - | - | MSBuild project of a C# program. |
 | `css` | CSS stylesheet source | `.css` | yes | yes | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `css-min` | Minified CSS | `.min.css` | - | yes | CSS without comments and redundant whitespace. |
 | `css-pretty` | Formatted CSS | `.css` | - | yes | CSS re-indented with one declaration per line. |
@@ -525,100 +1167,171 @@ What can be converted into what is decided at run time by the planner; ask the C
 | `d` | D source | `.d`, `.di` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `dart` | Dart source | `.dart` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `datetime` | Date and time conversion | `.txt` | - | yes | Unix timestamps, ISO 8601 and RFC 2822 dates converted line by line (UTC or the written offset). |
-| `diff` | Diff | `.diff` | yes | - | Unified or context diff; renders as an inline or side-by-side document. |
+| `dhall` | Dhall configuration | `.dhall` | - | - | Programmable configuration language. |
+| `diff` | Diff | `.diff`, `.patch` | yes | - | Unified or context diff; renders as an inline or side-by-side document. |
+| `do` | Stata do-file | `.do`, `.ado` | - | - | Stata commands. |
 | `dockerfile` | Dockerfile | `.dockerfile`, `.containerfile` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `dockerignore` | Docker ignore file | `.dockerignore` | yes | yes | A .dockerignore pattern list; reads into a list of decoded patterns. |
 | `editorconfig` | EditorConfig file | `.editorconfig` | yes | yes | An .editorconfig: a root flag and properties per file glob. |
+| `ejs` | Embedded JavaScript | `.ejs` | - | - | JavaScript web template. |
 | `el` | Emacs Lisp source | `.el` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `elm` | Elm source | `.elm` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `erb` | Embedded Ruby | `.erb`, `.rhtml` | - | - | Ruby web template. |
 | `erl` | Erlang source | `.erl`, `.hrl` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `ex` | Elixir source | `.ex`, `.exs` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `f90` | Fortran source | `.f90`, `.f95`, `.f03`, `.f08`, `.f`, `.for`, `.ftn` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `feature` | Gherkin feature | `.feature` | - | - | Behaviour-driven test scenarios. |
 | `fetch-js` | JavaScript fetch() call | `.js` | - | yes | An HTTP request as a JavaScript fetch() snippet. |
 | `fish` | Fish script source | `.fish` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `fs` | F# source | `.fs`, `.fsi`, `.fsx` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `fsproj` | F# project | `.fsproj` | - | - | MSBuild project of an F# program. |
+| `ftl` | FreeMarker template | `.ftl`, `.ftlh` | - | - | Apache FreeMarker template. |
+| `g4` | ANTLR grammar | `.g4` | - | - | ANTLR 4 grammar. |
+| `gbr` | Gerber file | `.gbr`, `.ger`, `.gtl`, `.gbl`, `.gto`, `.gbo`, `.gts`, `.gbs`, `.gko` | - | - | PCB manufacturing layer (RS-274X). |
 | `gd` | GDScript source | `.gd` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `gitattributes` | Git attributes | `.gitattributes` | - | - | Per-path Git settings. |
 | `gitignore` | Git ignore file | `.gitignore` | yes | yes | A .gitignore pattern list; reads into a list of decoded patterns. |
+| `gleam` | Gleam source | `.gleam` | - | - | Gleam program source. |
 | `glsl` | GLSL shader source | `.glsl`, `.vert`, `.frag`, `.geom`, `.comp`, `.tesc`, `.tese` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `go` | Go source | `.go` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `gomod` | Go module file | `.mod` | - | - | Module definition of a Go project (go.mod). |
 | `gradle` | Gradle build script source | `.gradle` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `graphql` | GraphQL source | `.graphql`, `.gql`, `.graphqls` | yes | yes | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `graphql-min` | Minified GraphQL | `.graphql` | - | yes | GraphQL without comments, commas and redundant whitespace. |
 | `graphql-pretty` | Formatted GraphQL | `.graphql` | - | yes | GraphQL with one field per line. |
-| `groovy` | Groovy source | `.groovy`, `.gvy` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `groovy` | Groovy source | `.groovy`, `.gvy`, `.gradle` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `gv` | Graphviz graph | `.gv`, `.dot` | - | - | Graph description for Graphviz. |
 | `h` | C header source | `.h` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
-| `hlsl` | HLSL shader source | `.hlsl`, `.fx` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `haml` | Haml template | `.haml` | - | - | Ruby HTML abstraction markup. |
+| `hbs` | Handlebars template | `.hbs`, `.handlebars` | - | - | Handlebars / Mustache-style template. |
+| `hlsl` | HLSL shader source | `.hlsl`, `.fx`, `.fxh` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `hpp` | C++ header source | `.hpp`, `.hh`, `.hxx`, `.h++`, `.ipp`, `.tpp` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `hs` | Haskell source | `.hs`, `.lhs` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `htaccess` | Apache .htaccess | `.htaccess` | - | - | Per-directory Apache web server settings. |
 | `html-highlight` | Syntax-highlighted HTML | `.html`, `.htm` | - | yes | Source code as a web page with coloured syntax and light/dark themes. |
 | `html-min` | Minified HTML | `.html` | - | yes | HTML without comments and with collapsed whitespace; pre, textarea, script and style are kept as they are. |
 | `http` | HTTP request | `.http`, `.rest` | yes | yes | A raw HTTP/1.1 request: request line, headers and body. |
-| `hx` | Haxe source | `.hx` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `hx` | Haxe source | `.hx`, `.hxml` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `idr` | Idris source | `.idr` | - | - | Idris program source. |
+| `ino` | Arduino sketch | `.ino` | - | - | Arduino program source. |
+| `iss` | Inno Setup script | `.iss` | - | - | Inno Setup installer script. |
 | `java` | Java source | `.java` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `jinja` | Jinja template | `.jinja`, `.jinja2`, `.j2` | - | - | Python Jinja template. |
 | `jl` | Julia source | `.jl` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `js` | JavaScript source | `.js`, `.cjs`, `.mjs` | yes | yes | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `js-min` | Minified JavaScript | `.min.js` | - | yes | JavaScript without comments and redundant whitespace (no renaming, safe line breaks kept). |
 | `js-pretty` | Formatted JavaScript | `.js` | - | yes | JavaScript re-indented by braces and statements. |
 | `jsonnet` | Jsonnet source | `.jsonnet`, `.libsonnet` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `jsp` | JavaServer Pages | `.jsp`, `.jspx` | - | - | Java web page template. |
 | `jsx` | JavaScript JSX source | `.jsx` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `kicad_pcb` | KiCad board | `.kicad_pcb` | - | - | KiCad printed circuit board layout. |
+| `kicad_sch` | KiCad schematic | `.kicad_sch` | - | - | KiCad circuit schematic. |
 | `kt` | Kotlin source | `.kt`, `.kts` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `l` | Lex scanner | `.l`, `.lex` | - | - | Lex / Flex scanner specification. |
+| `lbr` | Eagle library | `.lbr` | - | - | Autodesk Eagle part library (XML). |
+| `lean` | Lean source | `.lean` | - | - | Lean theorem prover source. |
 | `less` | Less stylesheet source | `.less` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `liquid` | Liquid template | `.liquid` | - | - | Shopify / Jekyll template. |
 | `lisp` | Common Lisp source | `.lisp`, `.lsp`, `.cl`, `.asd` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `ll` | LLVM IR | `.ll` | - | - | LLVM intermediate representation (text). |
 | `lua` | Lua source | `.lua` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `m` | Objective-C source | `.m` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `m4` | m4 macros | `.m4`, `.ac` | - | - | m4 macro processor input (also autoconf). |
 | `makefile` | Makefile | `.mk`, `.mak`, `.make` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `matlab` | MATLAB source | `.m` | - | - | MATLAB / Octave script or function. |
+| `metal` | Metal shader | `.metal` | - | - | Apple Metal shader source. |
 | `mjs` | JavaScript module source | `.mjs` | yes | yes | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `ml` | OCaml source | `.ml`, `.mli` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `mm` | Objective-C++ source | `.mm` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `mmd` | Mermaid diagram | `.mmd`, `.mermaid` | - | - | Text description of a Mermaid diagram. |
+| `mojo` | Mojo source | `.mojo` | - | - | Mojo program source. |
+| `msbuild` | MSBuild file | `.props`, `.targets`, `.proj` | - | - | Shared MSBuild properties or targets. |
+| `mustache` | Mustache template | `.mustache` | - | - | Logic-less template. |
+| `nb` | Mathematica notebook | `.nb`, `.wl` | - | - | Wolfram Mathematica notebook. |
 | `nim` | Nim source | `.nim`, `.nims`, `.nimble` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `nix` | Nix expression source | `.nix` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `npmrc` | npm configuration file | `.npmrc` | yes | yes | An .npmrc (also .yarnrc and similar key=value files). |
+| `nsi` | NSIS script | `.nsi`, `.nsh` | - | - | Nullsoft installer script. |
+| `odin` | Odin source | `.odin` | - | - | Odin program source. |
 | `palette-css` | CSS colour variables | `.css` | yes | yes | Colours as CSS custom properties (:root { --name: #hex; }). |
 | `palette-less` | LESS colour variables | `.less` | yes | yes | Colours as LESS variables (@name: #hex;). |
 | `palette-scss` | SCSS colour variables | `.scss` | yes | yes | Colours as Sass variables ($name: #hex;). |
 | `pas` | Pascal source | `.pas`, `.pp`, `.dpr`, `.lpr` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `patch` | Patch | `.patch` | yes | - | Unified or context diff; renders as an inline or side-by-side document. |
+| `pbxproj` | Xcode project | `.pbxproj` | - | - | Xcode project file (inside .xcodeproj). |
+| `pde` | Processing sketch | `.pde` | - | - | Processing program source. |
 | `php` | PHP source | `.php`, `.phtml`, `.php3`, `.php4`, `.php5`, `.php7`, `.phps` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `pl` | Perl source | `.pl`, `.pm`, `.t`, `.pod` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `pom` | Maven project | `.pom` | - | - | Maven build description (pom.xml). |
 | `proto` | Protocol Buffers source | `.proto` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `ps1` | PowerShell script source | `.ps1`, `.psm1`, `.psd1` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `pug` | Pug template | `.pug`, `.jade` | - | - | Indentation-based HTML template. |
+| `puml` | PlantUML diagram | `.puml`, `.plantuml`, `.pu` | - | - | Text description of a UML diagram. |
+| `purs` | PureScript source | `.purs` | - | - | PureScript program source. |
 | `pwn` | Pawn source | `.pwn` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `py` | Python source | `.py`, `.pyw`, `.pyi` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `python-requests` | Python requests call | `.py` | - | yes | An HTTP request as a Python snippet using the requests library. |
-| `pyx` | Cython source | `.pyx`, `.pxd` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `pyx` | Cython source | `.pyx`, `.pxd`, `.pxi` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `qmd` | Quarto document | `.qmd` | - | - | Quarto Markdown with executable code. |
 | `qml` | QML source | `.qml` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `r` | R source | `.r`, `.rmd` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `raku` | Raku source | `.raku`, `.rakumod`, `.p6` | - | - | Raku (Perl 6) program. |
+| `razor` | Razor page | `.cshtml`, `.razor`, `.vbhtml` | - | - | ASP.NET Razor template. |
 | `rb` | Ruby source | `.rb`, `.rake`, `.gemspec`, `.ru` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `rkt` | Racket source | `.rkt` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `rmd` | R Markdown | `.rmd` | - | - | Markdown with executable R chunks. |
 | `rs` | Rust source | `.rs` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `rtf-highlight` | Syntax-highlighted RTF | `.rtf` | - | yes | Source code as rich text with coloured syntax for word processors. |
+| `sas` | SAS program | `.sas` | - | - | SAS statistics program. |
 | `sass` | Sass (indented) stylesheet source | `.sass` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `sbt` | sbt build file | `.sbt` | - | - | Scala build tool definition. |
 | `scala` | Scala source | `.scala`, `.sc` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `sch` | Eagle schematic | `.sch` | - | - | Autodesk Eagle schematic (XML). |
 | `scm` | Scheme source | `.scm`, `.ss`, `.sld` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `scpt` | Compiled AppleScript | `.scpt`, `.scptd` | - | - | Compiled AppleScript. |
 | `scss` | Sass (SCSS) stylesheet source | `.scss` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
-| `sh` | Shell script source | `.sh`, `.bash`, `.zsh` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `sed` | sed script | `.sed` | - | - | Stream editor script. |
+| `sh` | Shell script source | `.sh`, `.bash`, `.zsh`, `.ksh`, `.command` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `slim` | Slim template | `.slim` | - | - | Ruby Slim HTML template. |
+| `sln` | Visual Studio solution | `.sln` | - | - | List of projects of a Visual Studio solution. |
 | `sol` | Solidity source | `.sol` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `sps` | SPSS syntax | `.sps` | - | - | SPSS commands. |
 | `sql` | SQL script source | `.sql`, `.ddl`, `.dml` | yes | yes | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `sql-min` | Minified SQL | `.sql` | - | yes | SQL on one line without comments. |
 | `sql-pretty` | Formatted SQL | `.sql` | - | yes | SQL with one clause per line and upper-case keywords. |
 | `star` | Starlark (Bazel) source | `.bzl`, `.star` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `storyboard` | Interface Builder storyboard | `.storyboard` | - | - | iOS / macOS user interface flow (XML). |
+| `styl` | Stylus stylesheet | `.styl`, `.stylus` | - | - | Stylus CSS pre-processor stylesheet. |
 | `sv` | SystemVerilog source | `.sv`, `.svh` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `svelte` | Svelte component source | `.svelte` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `swift` | Swift source | `.swift` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `tbd` | Text-based stub library | `.tbd` | - | - | Apple text-based dynamic library stub (YAML). |
 | `tcl` | Tcl source | `.tcl`, `.tk` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `tf` | Terraform (HCL) source | `.tf`, `.tfvars`, `.hcl` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `thrift` | Apache Thrift source | `.thrift` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
-| `ts` | TypeScript source | `.ts`, `.mts`, `.cts`, `.m2ts`, `.tsx` | yes | yes | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `tpl` | Template file | `.tpl`, `.tmpl` | - | - | Generic text template. |
+| `ts` | TypeScript source | `.ts`, `.mts`, `.cts` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `tsx` | TypeScript JSX source | `.tsx` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `twig` | Twig template | `.twig` | - | - | PHP Twig template. |
 | `uuid-info` | UUID / ULID inspection | `.txt` | - | yes | What a UUID or ULID contains: version, variant, embedded time and other notations. |
 | `v` | Verilog source | `.v`, `.vh` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `vala` | Vala source | `.vala`, `.vapi` | - | - | Vala program source. |
 | `vb` | Visual Basic source | `.vb`, `.vbs`, `.bas` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `vbproj` | Visual Basic project | `.vbproj` | - | - | MSBuild project of a Visual Basic program. |
+| `vbs` | VBScript | `.vbs`, `.vbe`, `.wsf` | - | - | Visual Basic Scripting Edition script. |
+| `vcxproj` | Visual C++ project | `.vcxproj` | - | - | MSBuild project of a C++ program. |
 | `vhdl` | VHDL source | `.vhdl`, `.vhd` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `vim` | Vim script source | `.vim` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `vm` | Velocity template | `.vm` | - | - | Apache Velocity template. |
 | `vue` | Vue single-file component source | `.vue` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `wasm` | WebAssembly module | `.wasm` | yes | - | A compiled WebAssembly binary; converts to its text format (WAT) and to documents. |
 | `wat` | WebAssembly text source | `.wat`, `.wast` | yes | yes | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `wdl` | Workflow Description Language | `.wdl` | - | - | Bioinformatics workflow description. |
 | `wgsl` | WGSL shader source | `.wgsl` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
+| `xaml` | XAML markup | `.xaml` | - | - | User interface markup of WPF, UWP, MAUI. |
+| `xcconfig` | Xcode configuration | `.xcconfig` | - | - | Xcode build settings. |
+| `xib` | Interface Builder document | `.xib` | - | - | iOS / macOS user interface (XML). |
+| `y` | Yacc grammar | `.y`, `.yy`, `.ypp` | - | - | Yacc / Bison parser grammar. |
 | `zig` | Zig source | `.zig`, `.zon` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 | `zsh` | Zsh script source | `.zsh` | yes | - | Source code; converts to highlighted HTML, RTF or terminal text and to any document format. |
 
@@ -685,7 +1398,7 @@ What can be converted into what is decided at run time by the planner; ask the C
 | `known-hosts` | OpenSSH known_hosts | `.known_hosts` | yes | yes | Known host keys. |
 | `kotlin-array` | Kotlin ByteArray | `.kt` | - | yes | The file as a byteArrayOf(...) value for Kotlin. |
 | `lines` | Sorted or de-duplicated lines | `.txt` | - | yes | Sort, de-duplicate, reverse, trim or drop empty lines of a text. |
-| `md5` | MD5 checksum | `.md5` | - | yes | The MD5 digest of the file, as hex, a md5sum-style line, Base64 or another notation. |
+| `md5` | MD5 checksum | `.md5`, `.md5sum` | - | yes | The MD5 digest of the file, as hex, a md5sum-style line, Base64 or another notation. |
 | `mime-words` | MIME encoded words | `.mimewords` | yes | yes | Text as RFC 2047 encoded words (=?UTF-8?B?...?=), as used in e-mail subjects and names. |
 | `morse` | Morse code | `.morse` | yes | yes | Text spelled in dots and dashes of International Morse code. |
 | `nato` | NATO phonetic alphabet | `.nato` | yes | yes | Text spelled with the code words Alfa, Bravo, Charlie and so on. |
@@ -704,13 +1417,13 @@ What can be converted into what is decided at run time by the planner; ask the C
 | `rot47` | ROT47 text | `.rot47` | yes | yes | Every printable ASCII character replaced by the one 47 places further on. |
 | `ruby-bytes` | Ruby byte string | `.rb` | - | yes | The file as an array packed into a binary String for Ruby. |
 | `rust-array` | Rust byte array | `.rs` | - | yes | The file as a static [u8; N] array for Rust. |
-| `sha1` | SHA-1 checksum | `.sha1` | - | yes | The SHA-1 digest of the file, as hex, a sha1sum-style line, Base64 or another notation. |
+| `sha1` | SHA-1 checksum | `.sha1`, `.sha1sum` | - | yes | The SHA-1 digest of the file, as hex, a sha1sum-style line, Base64 or another notation. |
 | `sha224` | SHA-224 checksum | `.sha224` | - | yes | The SHA-224 digest of the file, as hex, a sha224sum-style line, Base64 or another notation. |
-| `sha256` | SHA-256 checksum | `.sha256` | - | yes | The SHA-256 digest of the file, as hex, a sha256sum-style line, Base64 or another notation. |
+| `sha256` | SHA-256 checksum | `.sha256`, `.sha256sum` | - | yes | The SHA-256 digest of the file, as hex, a sha256sum-style line, Base64 or another notation. |
 | `sha3-256` | SHA3-256 checksum | `.sha3-256` | - | yes | The SHA3-256 digest of the file, as hex, a sha3-256sum-style line, Base64 or another notation. |
 | `sha3-512` | SHA3-512 checksum | `.sha3-512` | - | yes | The SHA3-512 digest of the file, as hex, a sha3-512sum-style line, Base64 or another notation. |
 | `sha384` | SHA-384 checksum | `.sha384` | - | yes | The SHA-384 digest of the file, as hex, a sha384sum-style line, Base64 or another notation. |
-| `sha512` | SHA-512 checksum | `.sha512` | - | yes | The SHA-512 digest of the file, as hex, a sha512sum-style line, Base64 or another notation. |
+| `sha512` | SHA-512 checksum | `.sha512`, `.sha512sum` | - | yes | The SHA-512 digest of the file, as hex, a sha512sum-style line, Base64 or another notation. |
 | `slug` | URL slug | `.slug` | - | yes | Lower-case ASCII words joined by hyphens, one slug per line. |
 | `srec` | Motorola S-record | `.srec`, `.s19`, `.s28`, `.s37`, `.mot`, `.s3`, `.sx` | yes | yes | Firmware image as Motorola S-records (S19/S28/S37) with addresses and checksums. |
 | `ssh-pub` | OpenSSH public key | `.pub` | yes | yes | OpenSSH public key line (id_*.pub). |
@@ -737,7 +1450,164 @@ What can be converted into what is decided at run time by the planner; ask the C
 
 | ID | Name | Extensions | Read | Write | Notes |
 | --- | --- | --- | :---: | :---: | --- |
-| `class` | Java class file | `.class` | - | - |  |
-| `elf` | ELF executable | `.elf`, `.so` | - | - |  |
-| `exe` | Windows executable | `.exe`, `.dll`, `.sys` | - | - |  |
-| `macho` | Mach-O executable | `.dylib` | - | - |  |
+| `2mg` | Apple II disk image | `.2mg`, `.2img` | - | - | Apple II universal disk image. |
+| `a26` | Atari 2600 ROM | `.a26` | - | - | Atari 2600 cartridge image. |
+| `a78` | Atari 7800 ROM | `.a78` | - | - | Atari 7800 cartridge image. |
+| `ab` | Android backup | `.ab` | - | - | Backup made with adb backup. |
+| `adf` | Amiga disk image | `.adf` | - | - | Amiga floppy disk image. |
+| `age` | age encrypted file | `.age` | - | - | File encrypted with the age tool. |
+| `aria2` | aria2 control file | `.aria2` | - | - | Resume information of the aria2 downloader. |
+| `asc` | ASCII-armoured OpenPGP | `.asc` | - | - | OpenPGP key, signature or message in text armour. |
+| `ba2` | Bethesda archive 2 | `.ba2` | - | - | Fallout 4 / Skyrim SE game data archive. |
+| `bak` | Backup copy | `.bak`, `.backup`, `.old`, `.orig` | - | - | Backup copy kept by an editor or a program. |
+| `bc` | LLVM bitcode | `.bc` | - | - | LLVM intermediate representation (binary). |
+| `beam` | Erlang BEAM file | `.beam` | - | - | Compiled Erlang / Elixir module. |
+| `big` | EA BIG archive | `.big` | - | - | Electronic Arts game archive. |
+| `bkf` | Windows backup | `.bkf` | - | - | NTBackup tape-format backup. |
+| `bom` | Bill of materials | `.bom` | - | - | macOS installer bill of materials (also asset catalogs). |
+| `bps` | BPS patch | `.bps` | - | - | Beat patching system ROM patch. |
+| `bsa` | Bethesda archive | `.bsa` | - | - | Bethesda game data archive. |
+| `bsp` | Game map (BSP) | `.bsp` | - | - | Compiled level of Quake / Source engine games. |
+| `btsnoop` | Bluetooth HCI capture | `.btsnoop` | - | - | Bluetooth HCI packet log (Android). |
+| `bundle` | Mach-O bundle | `.bundle`, `.plugin` | - | - | macOS loadable plug-in code. |
+| `c64-crt` | Commodore 64 cartridge | `.crt` | - | - | C64 cartridge image. |
+| `cat` | Windows security catalog | `.cat` | - | - | Signed list of file hashes for drivers. |
+| `cci` | Nintendo 3DS ROM | `.3ds`, `.cci` | - | - | Nintendo 3DS cartridge image (NCSD). |
+| `cfb` | Compound File Binary | `.cfb`, `.ole` | - | - | OLE2 structured storage of an unknown application. |
+| `chd` | MAME compressed hunks | `.chd` | - | - | Compressed hard-disk or CD image of MAME. |
+| `class` | Java class file | `.class` | - | - | Compiled Java bytecode. |
+| `coff` | COFF object file | `.obj` | - | - | Compiled object file of the Microsoft toolchain. |
+| `com` | DOS program | `.com` | - | - | Small DOS program without a header. |
+| `core` | Core dump | `.core` | - | - | Memory image of a crashed process (ELF or Mach-O). |
+| `cpl` | Control Panel item | `.cpl` | - | - | Windows Control Panel applet (PE DLL). |
+| `crdownload` | Chrome partial download | `.crdownload` | - | - | Unfinished download of Chrome or Edge. |
+| `crl` | Certificate revocation list | `.crl` | - | - | List of revoked certificates. |
+| `crt` | X.509 certificate | `.crt`, `.cer`, `.der` | - | - | Public-key certificate (PEM or DER). |
+| `csr` | Certificate signing request | `.csr`, `.req`, `.p10` | - | - | PKCS #10 request for a certificate. |
+| `d64` | Commodore 64 disk image | `.d64` | - | - | 1541 floppy disk image. |
+| `dex` | Dalvik executable | `.dex` | - | - | Android bytecode. |
+| `dll` | Windows library | `.dll` | - | - | Windows dynamic-link library (PE). |
+| `dmp` | Windows memory dump | `.dmp`, `.mdmp`, `.hdmp` | - | - | Minidump or kernel crash dump. |
+| `drv` | Windows legacy driver | `.drv` | - | - | Windows user-mode driver library. |
+| `ds_store` | Finder metadata | `.ds_store` | - | - | macOS Finder folder view settings (.DS_Store). |
+| `dsk` | Amstrad CPC disk image | `.dsk` | - | - | Amstrad CPC / Spectrum +3 floppy image. |
+| `dsym` | Mach-O debug symbols | `.dsym`, `.dwarf` | - | - | Debug information of a macOS / iOS build. |
+| `dylib` | Mach-O dynamic library | `.dylib` | - | - | macOS / iOS shared library. |
+| `efi` | EFI application | `.efi` | - | - | UEFI boot loader or application (PE). |
+| `elc` | Emacs Lisp bytecode | `.elc` | - | - | Compiled Emacs Lisp. |
+| `elf` | ELF executable | `.elf`, `.axf`, `.prx` | - | - | Linux / Unix executable (Executable and Linkable Format). |
+| `esp` | Bethesda plugin | `.esp`, `.esm`, `.esl` | - | - | Elder Scrolls / Fallout game plugin. |
+| `etl` | Event trace log | `.etl` | - | - | Windows Event Tracing session log. |
+| `evt` | Windows event log (legacy) | `.evt` | - | - | Windows NT/XP event log. |
+| `evtx` | Windows event log | `.evtx` | - | - | Windows Vista+ event log. |
+| `exe` | Windows executable | `.exe` | - | - | Windows program (PE/MZ). |
+| `fds` | Famicom Disk System image | `.fds` | - | - | Famicom Disk System disk image. |
+| `gamesave` | Game save | `.srm`, `.state`, `.sav` | - | - | Emulator battery save or save state. |
+| `gb` | Game Boy ROM | `.gb` | - | - | Game Boy cartridge image. |
+| `gba` | Game Boy Advance ROM | `.gba`, `.agb` | - | - | Game Boy Advance cartridge image. |
+| `gbc` | Game Boy Color ROM | `.gbc`, `.cgb` | - | - | Game Boy Color cartridge image. |
+| `gcm` | GameCube disc image | `.gcm`, `.iso` | - | - | Nintendo GameCube disc image. |
+| `gdi` | Dreamcast GD-ROM index | `.gdi` | - | - | Track list of a Dreamcast disc dump. |
+| `gen` | Sega Genesis / Mega Drive ROM | `.gen`, `.md`, `.smd` | - | - | Sega Mega Drive cartridge image. |
+| `git-idx` | Git pack index | `.idx` | - | - | Index of a Git pack file. |
+| `git-pack` | Git pack file | `.pack` | - | - | Compressed Git objects. |
+| `gma` | Garry's Mod addon | `.gma` | - | - | Garry's Mod addon archive. |
+| `gpg` | OpenPGP data | `.gpg`, `.pgp` | - | - | Binary OpenPGP message or key ring. |
+| `hprof` | Java heap dump | `.hprof` | - | - | Java Virtual Machine heap snapshot. |
+| `inetloc` | macOS internet location | `.inetloc` | - | - | macOS link to an internet location (property list). |
+| `ips` | IPS patch | `.ips` | - | - | International Patching System ROM patch. |
+| `jceks` | Java JCE keystore | `.jceks` | - | - | Java Cryptography Extension keystore. |
+| `jfr` | Java Flight Recording | `.jfr` | - | - | Java Flight Recorder events. |
+| `jks` | Java keystore | `.jks`, `.keystore` | - | - | Java KeyStore of keys and certificates. |
+| `kbx` | GnuPG keybox | `.kbx` | - | - | GnuPG 2 public key store. |
+| `kdb` | KeePass 1 database | `.kdb` | - | - | KeePass 1 password database. |
+| `kdbx` | KeePass database | `.kdbx` | - | - | KeePass 2 password database. |
+| `keychain` | macOS keychain | `.keychain`, `.keychain-db` | - | - | macOS password and certificate store. |
+| `ko` | Linux kernel module | `.ko` | - | - | Loadable Linux kernel module (ELF). |
+| `lnk` | Windows shortcut | `.lnk` | - | - | Shell link pointing to a file or program. |
+| `lnx` | Atari Lynx ROM | `.lnx` | - | - | Atari Lynx cartridge image. |
+| `love` | LOVE game | `.love` | - | - | LOVE 2D game (ZIP of Lua sources). |
+| `luac` | Lua bytecode | `.luac` | - | - | Compiled Lua chunk. |
+| `macho` | Mach-O executable | `.macho` | - | - | macOS / iOS executable (Mach-O, thin or universal). |
+| `mca` | Minecraft region | `.mca`, `.mcr` | - | - | Minecraft Anvil world region. |
+| `mcpack` | Minecraft pack | `.mcpack`, `.mcaddon`, `.mcworld`, `.mctemplate` | - | - | Minecraft Bedrock add-on or world (ZIP). |
+| `mobileconfig` | Apple configuration profile | `.mobileconfig` | - | - | Settings profile for Apple devices. |
+| `mobileprovision` | iOS provisioning profile | `.mobileprovision`, `.provisionprofile` | - | - | Signed profile allowing an app to run on devices. |
+| `mpq` | MPQ archive | `.mpq` | - | - | Blizzard game data archive. |
+| `msa` | Atari ST disk image | `.msa` | - | - | Magic Shadow Archiver floppy image. |
+| `msc` | Management console | `.msc` | - | - | Microsoft Management Console snap-in file (XML). |
+| `mspdb` | Program database | `.pdb` | - | - | Microsoft debug symbols (MSF). |
+| `nbt` | Minecraft NBT data | `.nbt`, `.schematic`, `.schem`, `.litematic` | - | - | Named Binary Tag data (usually gzip-compressed). |
+| `nds` | Nintendo DS ROM | `.nds` | - | - | Nintendo DS cartridge image. |
+| `nes` | NES ROM | `.nes` | - | - | Nintendo Entertainment System cartridge image (iNES). |
+| `nro` | Switch homebrew executable | `.nro` | - | - | Nintendo Switch relocatable object. |
+| `nsp` | Nintendo Switch package | `.nsp` | - | - | Nintendo Switch installable package (PFS0). |
+| `o` | Object file | `.o` | - | - | Compiled object file (ELF or Mach-O relocatable). |
+| `ocx` | ActiveX control | `.ocx` | - | - | ActiveX / OLE control (PE DLL). |
+| `odex` | Optimised Dalvik executable | `.odex` | - | - | Pre-optimised Android bytecode. |
+| `opdownload` | Opera partial download | `.opdownload` | - | - | Unfinished download of Opera. |
+| `ovpn` | OpenVPN profile | `.ovpn` | - | - | OpenVPN client configuration. |
+| `p12` | PKCS #12 keystore | `.p12`, `.pfx` | - | - | Certificate with its private key, password-protected. |
+| `p7m` | PKCS #7 message | `.p7m` | - | - | Signed or encrypted CMS message. |
+| `p7s` | PKCS #7 signature | `.p7s` | - | - | Detached CMS signature (S/MIME). |
+| `pak` | Quake PAK archive | `.pak` | - | - | Game data archive of the Quake engines. |
+| `part` | Partial download | `.part`, `.partial` | - | - | Unfinished download (Firefox, wget, many tools). |
+| `pbp` | PSP package | `.pbp` | - | - | PlayStation Portable executable package. |
+| `pcap` | Packet capture | `.pcap`, `.cap`, `.dmp` | - | - | Network packets captured by tcpdump / Wireshark. |
+| `pcapng` | Packet capture (next generation) | `.pcapng`, `.ntar` | - | - | Wireshark's default capture format. |
+| `pce` | PC Engine ROM | `.pce` | - | - | PC Engine / TurboGrafx-16 HuCard image. |
+| `pck` | Godot pack | `.pck` | - | - | Exported Godot engine game data. |
+| `perf-data` | Linux perf recording | `.data` | - | - | Profile recorded by Linux perf (perf.data). |
+| `pf` | Windows prefetch file | `.pf` | - | - | Windows application prefetch trace. |
+| `pif` | Program information file | `.pif` | - | - | Settings for running a DOS program under Windows. |
+| `pk3` | Quake 3 PK3 archive | `.pk3`, `.pk4` | - | - | Game data of id Tech 3/4 engines (ZIP). |
+| `pol` | Group Policy registry file | `.pol` | - | - | Registry.pol policy settings. |
+| `ppk` | PuTTY private key | `.ppk` | - | - | PuTTY SSH key. |
+| `private-key` | Private key | `.key`, `.pk8`, `.p8` | - | - | Private key (PKCS #1, #8, SEC 1 or OpenSSH). |
+| `ps-pkg` | PlayStation package | `.pkg` | - | - | PlayStation 3 / Vita / PSP install package. |
+| `pvk` | Private key (PVK) | `.pvk` | - | - | Microsoft private key blob. |
+| `pyc` | Python bytecode | `.pyc`, `.pyo` | - | - | Compiled Python module. |
+| `qbpart` | qBittorrent partial file | `.!qb` | - | - | Unfinished qBittorrent download. |
+| `rbxl` | Roblox place | `.rbxl`, `.rbxlx`, `.rbxm`, `.rbxmx` | - | - | Roblox place or model. |
+| `regf` | Windows registry hive | `.dat`, `.hiv` | - | - | Binary registry hive (NTUSER.DAT, SYSTEM ...). |
+| `rpa` | Ren'Py archive | `.rpa` | - | - | Ren'Py visual novel data archive. |
+| `rvz` | Dolphin RVZ disc | `.rvz` | - | - | Compressed GameCube / Wii disc image. |
+| `scr` | Windows screen saver | `.scr` | - | - | Screen saver program (PE). |
+| `sfc` | SNES ROM | `.sfc`, `.smc` | - | - | Super Nintendo cartridge image. |
+| `sms` | Sega Master System ROM | `.sms`, `.gg` | - | - | Sega Master System or Game Gear cartridge image. |
+| `snoop` | Snoop capture | `.snoop` | - | - | Solaris snoop packet capture. |
+| `so` | Shared object | `.so` | - | - | Linux / Unix shared library (ELF). |
+| `ssh-pubkey` | SSH public key | `.pub` | - | - | OpenSSH public key line. |
+| `swp` | Vim swap file | `.swp`, `.swo` | - | - | Vim's crash-recovery copy of an open file. |
+| `sys` | Windows driver | `.sys` | - | - | Windows kernel-mode driver (PE). |
+| `t64` | Commodore 64 tape image | `.t64` | - | - | C64 tape archive. |
+| `theme` | Windows theme | `.theme`, `.themepack`, `.deskthemepack` | - | - | Windows desktop theme. |
+| `thumbsdb` | Windows thumbnail cache | `.db` | - | - | Thumbs.db folder thumbnail cache (OLE2). |
+| `tib` | Acronis backup | `.tib`, `.tibx` | - | - | Acronis True Image backup. |
+| `tmj` | Tiled JSON map | `.tmj` | - | - | Tiled tile map (JSON). |
+| `tmp` | Temporary file | `.tmp`, `.temp` | - | - | Temporary working file. |
+| `tmx` | Tiled map | `.tmx` | - | - | Tiled tile map (XML). |
+| `tracev3` | Apple unified log | `.tracev3` | - | - | macOS / iOS unified logging data. |
+| `tres` | Godot resource | `.tres` | - | - | Godot engine text resource. |
+| `tscn` | Godot scene | `.tscn` | - | - | Godot engine text scene. |
+| `tzx` | ZX Spectrum tape image | `.tzx` | - | - | ZX Spectrum tape image. |
+| `uasset` | Unreal asset | `.uasset`, `.umap`, `.upk` | - | - | Unreal Engine package. |
+| `unity` | Unity scene | `.unity`, `.prefab`, `.asset`, `.mat`, `.anim`, `.controller` | - | - | Unity scene or asset in YAML. |
+| `unity3d` | Unity asset bundle | `.unity3d`, `.assetbundle`, `.bundle` | - | - | Unity engine asset bundle. |
+| `unitypackage` | Unity package | `.unitypackage` | - | - | Unity assets for import (gzip-compressed tar). |
+| `ups` | UPS patch | `.ups` | - | - | Universal patching system ROM patch. |
+| `url` | Internet shortcut | `.url` | - | - | Windows link to a web page. |
+| `utpart` | uTorrent partial file | `.!ut` | - | - | Unfinished uTorrent download. |
+| `vcdiff` | VCDIFF delta | `.xdelta`, `.vcdiff`, `.vcd` | - | - | Binary delta (RFC 3284, xdelta3). |
+| `vpk` | Valve pak | `.vpk` | - | - | Source engine game data archive. |
+| `wad` | Doom WAD | `.wad` | - | - | Doom engine game data (IWAD / PWAD). |
+| `wbfs` | Wii backup file system | `.wbfs` | - | - | Compact Wii disc image. |
+| `wia` | Dolphin WIA disc | `.wia` | - | - | Compressed GameCube / Wii disc image. |
+| `wii-iso` | Wii disc image | `.iso` | - | - | Nintendo Wii disc image. |
+| `woz` | Apple II WOZ disk | `.woz` | - | - | Bit-accurate Apple II floppy image. |
+| `xbe` | Xbox executable | `.xbe` | - | - | Original Xbox game executable. |
+| `xci` | Nintendo Switch cartridge | `.xci` | - | - | Nintendo Switch game card image. |
+| `xex` | Xbox 360 executable | `.xex` | - | - | Xbox 360 game executable. |
+| `xiso` | Xbox disc image | `.xiso` | - | - | Xbox / Xbox 360 game disc image. |
+| `xnb` | XNA content | `.xnb` | - | - | Compiled XNA / MonoGame game asset. |
+| `z64` | Nintendo 64 ROM | `.z64`, `.n64`, `.v64` | - | - | Nintendo 64 cartridge image (any byte order). |

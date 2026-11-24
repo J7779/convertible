@@ -54,13 +54,14 @@ export function injectManifest(template, manifest) {
     manifest.files.map((f) => f.url),
     null,
     1,
-  )};\n${END}`;
+  )};\nconst PRECACHE_HASHES = ${JSON.stringify(Object.fromEntries(manifest.files.map((f) => [f.url, f.hash])), null, 1)};\n${END}`;
   return template.slice(0, a) + body + template.slice(b + END.length);
 }
 
-/** Reads {version, urls} back out of a generated sw.js. */
+/** Reads {version, urls, hashes} back out of a generated sw.js. */
 export function readManifestFromSw(text) {
   const version = /const CACHE_VERSION = "([^"]+)";/.exec(text)?.[1] ?? null;
   const list = /const PRECACHE = (\[[\s\S]*?\]);/.exec(text)?.[1];
-  return { version, urls: list ? JSON.parse(list) : [] };
+  const hashes = /const PRECACHE_HASHES = (\{[\s\S]*?\});/.exec(text)?.[1];
+  return { version, urls: list ? JSON.parse(list) : [], hashes: hashes ? JSON.parse(hashes) : {} };
 }

@@ -74,7 +74,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.convertible.R
 import app.convertible.state.ItemStatus
+import app.convertible.state.QueueAction
 import app.convertible.state.QueueState
+import app.convertible.state.queueActions
 import app.convertible.state.SourceGroup
 import app.convertible.ui.ConverterViewModel
 import app.convertible.ui.UiMessage
@@ -511,10 +513,14 @@ private fun QueueActions(state: QueueState, viewModel: ConverterViewModel, onSav
     val done = state.doneItems
     val noApp = stringResource(R.string.message_no_app)
     val activity = androidx.activity.compose.LocalActivity.current
-    val buttons: List<@Composable (Modifier) -> Unit> = buildList {
-        if (active > 0) add { m -> Button(stringResource(R.string.action_cancel_all), { viewModel.store.cancelAll() }, m.testTag("cancel_all"), kind = ButtonKind.SECONDARY, icon = Icons.Stop) }
-        if (convertible > 0) {
-            add { m ->
+    // The phone's bottom bar has room for two buttons; queueActions() picks them by importance.
+    val actions = state.queueActions(limit = if (vertical) Int.MAX_VALUE else 2)
+    val buttons: List<@Composable (Modifier) -> Unit> = actions.map { action ->
+        when (action) {
+            QueueAction.CANCEL_ALL -> { m: Modifier ->
+                Button(stringResource(R.string.action_cancel_all), { viewModel.store.cancelAll() }, m.testTag("cancel_all"), kind = ButtonKind.SECONDARY, icon = Icons.Stop)
+            }
+            QueueAction.CONVERT_ALL -> { m: Modifier ->
                 Button(
                     pluralStringResource(R.plurals.action_convert_n, convertible, convertible),
                     { viewModel.store.convertAll() },
@@ -522,10 +528,10 @@ private fun QueueActions(state: QueueState, viewModel: ConverterViewModel, onSav
                     kind = ButtonKind.PRIMARY,
                 )
             }
-        }
-        if (done.size > 1 || (done.isNotEmpty() && convertible == 0 && active == 0)) {
-            add { m -> Button(stringResource(R.string.action_save_all), onSaveAll, m.testTag("save_all"), kind = if (convertible == 0 && active == 0) ButtonKind.PRIMARY else ButtonKind.SECONDARY, icon = Icons.Save) }
-            add { m ->
+            QueueAction.SAVE_ALL -> { m: Modifier ->
+                Button(stringResource(R.string.action_save_all), onSaveAll, m.testTag("save_all"), kind = if (convertible == 0 && active == 0) ButtonKind.PRIMARY else ButtonKind.SECONDARY, icon = Icons.Save)
+            }
+            QueueAction.SHARE_ALL -> { m: Modifier ->
                 Button(
                     stringResource(R.string.action_share_all),
                     { activity?.startSafely(viewModel.shareIntent(done.map { it.id })) { viewModel.notify(UiMessage(noApp, true)) } },
@@ -548,7 +554,7 @@ private fun QueueActions(state: QueueState, viewModel: ConverterViewModel, onSav
             buttons.forEach { it(Modifier.fillMaxWidth()) }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(d.space3)) {
-                buttons.takeLast(2).forEach { it(Modifier.weight(1f)) }
+                buttons.forEach { it(Modifier.weight(1f)) }
             }
         }
     }

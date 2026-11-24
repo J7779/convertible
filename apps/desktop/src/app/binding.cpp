@@ -113,6 +113,7 @@ std::vector<TargetInfo> parse_targets(std::string_view json) {
     t.mime = f["mime"].str();
     t.lossy = f["lossy"].as_bool();
     t.compress = f["compress"].as_bool();
+    t.role = f["role"].str();
     out.push_back(std::move(t));
   }
   return out;

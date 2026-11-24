@@ -692,6 +692,10 @@ void App::build_card_options(QueueItem& item, Rect b) {
       switch (spec.type) {
         case OptionType::Int:
         case OptionType::Float: {
+          if (numeric_control(spec) == NumericControl::Stepper) {
+            build_stepper(item, spec, ctl);
+            break;
+          }
           double v = value.as_number();
           const double mn = spec.min.value_or(0.0);
           const double mx = spec.max.value_or(std::max(100.0, v * 2.0));
@@ -752,6 +756,95 @@ void App::build_card_options(QueueItem& item, Rect b) {
   };
   grid(basic);
   if (item.advanced_open) grid(adv);
+}
+
+namespace {
+
+std::string format_number(double v, bool integer) {
+  if (integer) return std::to_string(static_cast<long long>(std::llround(v)));
+  std::string s = std::to_string(std::round(v * 1000.0) / 1000.0);
+  while (!s.empty() && s.back() == '0') s.pop_back();
+  if (!s.empty() && s.back() == '.') s.pop_back();
+  return s;
+}
+
+std::optional<double> parse_number(const std::string& text) {
+  // Locale-independent: digits, one optional sign and one '.' only.
+  if (text.empty() || text.size() > 24) return std::nullopt;
+  double whole = 0.0;
+  double scale = 0.0;
+  std::size_t i = 0;
+  bool negative = false;
+  if (text[0] == '-' || text[0] == '+') {
+    negative = text[0] == '-';
+    i = 1;
+  }
+  bool digits = false;
+  for (; i < text.size(); ++i) {
+    const char c = text[i];
+    if (c >= '0' && c <= '9') {
+      digits = true;
+      if (scale > 0.0) {
+        whole += (c - '0') / scale;
+        scale *= 10.0;
+      } else {
+        whole = whole * 10.0 + (c - '0');
+      }
+    } else if (c == '.' && scale == 0.0) {
+      scale = 10.0;
+    } else {
+      return std::nullopt;
+    }
+  }
+  if (!digits) return std::nullopt;
+  return negative ? -whole : whole;
+}
+
+}  // namespace
+
+void App::build_stepper(QueueItem& item, const OptionSpec& spec, Rect ctl) {
+  const bool integer = spec.type == OptionType::Int;
+  const double v = item.values[spec.key].as_number();
+  const double step = stepper_step(spec);
+  const Rect minus = cut_left(ctl, 36.0f);
+  const Rect plus = cut_right(ctl, 36.0f);
+  ctl = ctl.inset(4.0f, 0.0f);
+  const bool can_down = !spec.min || v > *spec.min;
+  const bool can_up = !spec.max || v < *spec.max;
+  const auto commit = [&](double next) {
+    // Steps land on multiples of the step (3999 + 1000 -> 4000, not 4999).
+    state_->set_option(item.id, spec.key, Json(next));
+  };
+  if (icon_button(ui_, ui_.id("dec"), centered(minus, 32.0f, 32.0f), Icon::ChevronLeft, "Decrease " + spec.label, can_down)) {
+    commit(std::ceil(v / step - 1.0 - 1e-9) * step);
+  }
+  if (icon_button(ui_, ui_.id("inc"), centered(plus, 32.0f, 32.0f), Icon::ChevronRight, "Increase " + spec.label, can_up)) {
+    commit(std::floor(v / step + 1.0 + 1e-9) * step);
+  }
+  const WidgetId fid = ui_.id("number");
+  const bool editing = ui_.focused() == fid;
+  auto draft = number_drafts_.find(fid);
+  if (!editing && draft != number_drafts_.end()) {
+    number_drafts_.erase(draft);
+    draft = number_drafts_.end();
+  }
+  std::string text = draft != number_drafts_.end() ? draft->second : format_number(v, integer);
+  TextFieldOptions fo;
+  fo.placeholder = spec.min && *spec.min == 0.0 ? "0" : "";
+  fo.monospace = true;
+  fo.select_all_on_focus = true;
+  if (text_field(ui_, fid, ctl, text, spec.label, fo)) {
+    number_drafts_[fid] = text;
+    if (const auto parsed = parse_number(text)) state_->set_option(item.id, spec.key, Json(*parsed));
+  }
+  if (ui_.focused() == fid) {
+    const bool up = ui_.key_pressed(Key::Up);
+    const bool down = !up && ui_.key_pressed(Key::Down);
+    if (up || down) {
+      commit(up ? std::floor(v / step + 1.0 + 1e-9) * step : std::ceil(v / step - 1.0 - 1e-9) * step);
+      number_drafts_.erase(fid);
+    }
+  }
 }
 
 void App::build_action_bar(Rect r) {

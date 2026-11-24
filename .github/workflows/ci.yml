@@ -2,13 +2,25 @@
 #
 # Jobs: core (GCC 14, Clang 18 + ASan/UBSan, Apple Clang, MSVC), web (WebAssembly build in
 # the pinned Emscripten container, Node tests, end-to-end), android (build, unit tests,
-# lint; instrumented tests on an emulator nightly or on demand), desktop (Linux, macOS,
-# Windows: tests and packages) and hygiene (privacy audit, generated files, workflow lint).
+# lint; instrumented and end-to-end tests on an emulator nightly or on demand), desktop
+# (Linux, macOS, Windows: unit tests, end-to-end tests and packages) and hygiene (privacy
+# audit, generated files, script and workflow lint).
 #
 # There is no iOS job on purpose: building and testing the iOS app on a hosted runner is
 # possible, but anything worth shipping needs the owner's signing certificate, which is
 # never stored in this repository or its secrets. Run the iOS tests locally (see
 # apps/ios/README.md and docs/TESTING.md).
+#
+# Build caching: the full core (with libaom, libjxl, libvpx, libopus and the other imported
+# codecs) is a long compile, so the jobs that build it keep their build directory in the
+# Actions cache, keyed on the hash of everything the build reads. There is no compiler
+# cache: tools/ci/build-cache.sh back-dates exactly the sources that are unchanged since the
+# cache was saved, so make/MSBuild rebuild only what changed (an exact key hit rebuilds
+# nothing; an older cache restored through restore-keys rebuilds the changed files and
+# their dependants). Caches are saved after a successful build even when tests fail.
+#
+# Runner images are pinned (ubuntu-24.04, macos-26, windows-2025) rather than *-latest, so
+# toolchains change only when this file does.
 #
 # Only GitHub's own actions are used, pinned to full commit SHAs. Everything else is a
 # shell step calling tools/ci/*, which also run locally (tools/ci/docker-linux.sh).
@@ -19,7 +31,7 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    - cron: "17 3 * * *" # nightly: adds the Android instrumented tests
+    - cron: "17 3 * * *" # nightly: adds the Android instrumented and end-to-end tests
   workflow_dispatch:
     inputs:
       android_device_tests:
@@ -42,7 +54,7 @@ jobs:
   core-linux:
     name: core / ${{ matrix.name }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +75,8 @@ jobs:
             cxxflags: -stdlib=libc++
             ldflags: -stdlib=libc++
             # Ubuntu's shared libc++/libc++abi 18 allocate and free std::runtime_error's
-            # message with mismatched functions; see tools/ci/core.sh.
+            # message with mismatched functions (a toolchain issue, not ours); see
+            # tools/ci/core.sh.
             asan_extra: alloc_dealloc_mismatch=0
     env:
       CVT_ASAN_EXTRA_OPTIONS: ${{ matrix.asan_extra }}
@@ -71,22 +84,43 @@ jobs:
       CXX: ${{ matrix.cxx }}
       CXXFLAGS: ${{ matrix.cxxflags }}
       LDFLAGS: ${{ matrix.ldflags }}
-      CMAKE_C_COMPILER_LAUNCHER: ccache
-      CMAKE_CXX_COMPILER_LAUNCHER: ccache
-      CCACHE_DIR: ${{ github.workspace }}/../ccache
-      CCACHE_MAXSIZE: 2G
       ASAN_SYMBOLIZER_PATH: /usr/lib/llvm-18/bin/llvm-symbolizer # readable sanitizer stacks
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain
-        run: tools/ci/install-linux-deps.sh ${{ matrix.deps }} ccache
-      - name: Compiler cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        run: tools/ci/install-linux-deps.sh ${{ matrix.deps }}
+      - name: Restore build directory
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ github.workspace }}/../ccache
-          key: ccache-${{ matrix.name }}-${{ hashFiles('core/**', 'CMakeLists.txt', 'CMakePresets.json') }}
-          restore-keys: ccache-${{ matrix.name }}-
-      - name: Build and test (${{ matrix.preset }})
+          # The static library is re-archived from the objects (fast) instead of cached.
+          path: |
+            build/${{ matrix.preset }}
+            !build/${{ matrix.preset }}/**/*.a
+            !build/${{ matrix.preset }}/**/*.lib
+          key: build-${{ matrix.name }}-${{ hashFiles('core/**', 'assets/fonts/**', 'CMakeLists.txt', 'CMakePresets.json') }}
+          restore-keys: build-${{ matrix.name }}-
+      - name: Prepare restored build directory
+        run: tools/ci/build-cache.sh restore build/${{ matrix.preset }}
+      - name: Build (${{ matrix.preset }})
+        id: build
+        env:
+          CVT_SKIP_TESTS: "1"
+        run: tools/ci/core.sh ${{ matrix.preset }}
+      - name: Save build directory
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        run: tools/ci/build-cache.sh save build/${{ matrix.preset }}
+      - name: Upload build directory to the cache
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The static library is re-archived from the objects (fast) instead of cached.
+          path: |
+            build/${{ matrix.preset }}
+            !build/${{ matrix.preset }}/**/*.a
+            !build/${{ matrix.preset }}/**/*.lib
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - name: Test (${{ matrix.preset }})
         run: tools/ci/core.sh ${{ matrix.preset }}
       - name: Formats documentation is current
         if: matrix.preset == 'dev'
@@ -101,11 +135,42 @@ jobs:
 
   core-macos:
     name: core / macos-appleclang
-    runs-on: macos-latest
-    timeout-minutes: 60
+    runs-on: macos-26
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Build and test (dev)
+      - name: Restore build directory
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The static library is re-archived from the objects (fast) instead of cached.
+          path: |
+            build/dev
+            !build/dev/**/*.a
+            !build/dev/**/*.lib
+          key: build-macos-dev-${{ hashFiles('core/**', 'assets/fonts/**', 'CMakeLists.txt', 'CMakePresets.json') }}
+          restore-keys: build-macos-dev-
+      - name: Prepare restored build directory
+        run: tools/ci/build-cache.sh restore build/dev
+      - name: Build (dev)
+        id: build
+        env:
+          CVT_SKIP_TESTS: "1"
+        run: tools/ci/core.sh dev
+      - name: Save build directory
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        run: tools/ci/build-cache.sh save build/dev
+      - name: Upload build directory to the cache
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The static library is re-archived from the objects (fast) instead of cached.
+          path: |
+            build/dev
+            !build/dev/**/*.a
+            !build/dev/**/*.lib
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - name: Test (dev)
         run: tools/ci/core.sh dev
       - name: Upload test logs
         if: failure()
@@ -117,8 +182,8 @@ jobs:
 
   core-windows:
     name: core / windows-msvc
-    runs-on: windows-latest
-    timeout-minutes: 90
+    runs-on: windows-2025
+    timeout-minutes: 150
     defaults:
       run:
         shell: bash
@@ -132,7 +197,38 @@ jobs:
           git config --global core.autocrlf false
           git config --global core.eol lf
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Build and test (dev, Visual Studio generator, /W4)
+      - name: Restore build directory
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The static library is re-archived from the objects (fast) instead of cached.
+          path: |
+            build/dev
+            !build/dev/**/*.a
+            !build/dev/**/*.lib
+          key: build-windows-dev-${{ hashFiles('core/**', 'assets/fonts/**', 'CMakeLists.txt', 'CMakePresets.json') }}
+          restore-keys: build-windows-dev-
+      - name: Prepare restored build directory
+        run: tools/ci/build-cache.sh restore build/dev
+      - name: Build (dev, Visual Studio generator, /W4)
+        id: build
+        env:
+          CVT_SKIP_TESTS: "1"
+        run: tools/ci/core.sh dev
+      - name: Save build directory
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        run: tools/ci/build-cache.sh save build/dev
+      - name: Upload build directory to the cache
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The static library is re-archived from the objects (fast) instead of cached.
+          path: |
+            build/dev
+            !build/dev/**/*.a
+            !build/dev/**/*.lib
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - name: Test (dev)
         run: tools/ci/core.sh dev
       - name: Upload test logs
         if: failure()
@@ -146,7 +242,7 @@ jobs:
   web:
     name: web
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       CVT_DOCKER_MEMORY: 12g
     steps:
@@ -154,24 +250,43 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
-      - name: Emscripten system-library cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # The Emscripten system libraries and the core's WebAssembly objects. The container
+      # always mounts the checkout at the same path, so the build directory is reusable.
+      - name: Restore build directory
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: apps/web/build/emcache
-          key: emcache-${{ hashFiles('apps/web/build.sh', 'apps/web/CMakeLists.txt') }}
+          path: apps/web/build
+          key: build-web-${{ hashFiles('core/**', 'assets/fonts/**', 'apps/web/CMakeLists.txt', 'apps/web/build.sh', 'apps/web/wasm/**') }}
+          restore-keys: build-web-
+      - name: Prepare restored build directory
+        run: tools/ci/build-cache.sh restore apps/web/build
       - name: Build (pinned Emscripten container)
+        id: build
         run: apps/web/build.sh --docker
+      - name: Save build directory
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        run: tools/ci/build-cache.sh save apps/web/build
+      - name: Upload build directory to the cache
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/build
+          key: ${{ steps.cache.outputs.cache-primary-key }}
       - name: Unit tests
         run: apps/web/test.sh
       - name: End-to-end tests
+        # The runner's preinstalled Chrome; fail rather than skip when it is missing.
         run: |
-          if [[ -f apps/web/e2e.sh ]]; then
-            # The runner's preinstalled Chrome; fail rather than skip when it is missing.
-            CHROME_BIN="$(command -v google-chrome || command -v chromium || true)" \
-              E2E_REQUIRE_BROWSER=1 bash apps/web/e2e.sh
-          else
-            echo "apps/web/e2e.sh is not in this checkout; skipped"
-          fi
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || true)" \
+            E2E_REQUIRE_BROWSER=1 apps/web/e2e.sh
+      - name: Upload end-to-end failure artefacts
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: web-e2e-artifacts
+          path: apps/web/e2e/artifacts/
+          if-no-files-found: ignore
       - name: Upload site
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -183,7 +298,8 @@ jobs:
   android:
     name: android
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # Three ABIs x debug + release: six native builds of the full core.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-android
@@ -208,7 +324,7 @@ jobs:
     name: android / emulator
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.android_device_tests)
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Enable KVM
@@ -231,12 +347,7 @@ jobs:
         working-directory: apps/android
         run: ./gradlew --no-daemon --max-workers=4 -Pconvertible.abis=x86_64 -Pconvertible.nativeJobs=4 connectedDebugAndroidTest
       - name: End-to-end tests
-        run: |
-          if [[ -f apps/android/e2e.sh ]]; then
-            bash apps/android/e2e.sh
-          else
-            echo "apps/android/e2e.sh is not in this checkout; skipped"
-          fi
+        run: apps/android/e2e.sh
       - name: Stop emulator
         if: always()
         run: tools/ci/android-emulator.sh shutdown
@@ -252,11 +363,11 @@ jobs:
   desktop:
     name: desktop / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 75
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-26, windows-2025]
     defaults:
       run:
         shell: bash
@@ -270,18 +381,39 @@ jobs:
           git config --global core.eol lf
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain and X11 headers
-        if: runner.os == 'Linux' && hashFiles('apps/desktop/CMakeLists.txt') != ''
+        if: runner.os == 'Linux'
         run: |
           tools/ci/install-linux-deps.sh desktop
           {
             echo "CC=gcc-14"
             echo "CXX=g++-14"
           } >> "${GITHUB_ENV}"
-      - name: Build, test and package
-        if: hashFiles('apps/desktop/CMakeLists.txt') != ''
+      - name: Restore build directory
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/desktop
+          key: build-desktop-${{ matrix.os }}-${{ hashFiles('core/**', 'assets/**', 'apps/desktop/**', 'CMakeLists.txt') }}
+          restore-keys: build-desktop-${{ matrix.os }}-
+      - name: Prepare restored build directory
+        run: tools/ci/build-cache.sh restore build/desktop
+      - name: Build
+        id: build
+        env:
+          CVT_DESKTOP_STEPS: build
+        run: tools/ci/desktop.sh
+      - name: Save build directory
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        run: tools/ci/build-cache.sh save build/desktop
+      - name: Upload build directory to the cache
+        if: always() && steps.build.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/desktop
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - name: Unit tests (label ^desktop$), end-to-end tests (label desktop-e2e) and packages
         run: tools/ci/desktop.sh
       - name: Upload packages
-        if: hashFiles('apps/desktop/CMakeLists.txt') != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: desktop-${{ runner.os }}
@@ -298,6 +430,7 @@ jobs:
           path: |
             build/desktop/Testing/Temporary/
             build/desktop/apps/desktop/automation-smoke/
+            build/desktop/apps/desktop/e2e/failures/
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------------------
@@ -309,6 +442,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # the privacy audit reads every commit
+      - name: Privacy audit self-test (real problems are still caught)
+        run: python3 tools/privacy-audit --self-test
       - name: Privacy audit (tree and history)
         run: python3 tools/privacy-audit --history
       - name: Skills mirror is current
@@ -316,7 +451,7 @@ jobs:
       - name: Third-party notices are current
         run: python3 tools/gen-notices --check
       - name: Shell scripts parse
-        run: for f in tools/ci/*.sh; do bash -n "$f"; done
+        run: for f in tools/ci/*.sh apps/*/*.sh apps/ios/scripts/*.sh; do bash -n "$f"; done
       - name: Workflow lint (actionlint)
         run: |
           docker run --rm -v "${GITHUB_WORKSPACE}:/repo:ro" -w /repo \

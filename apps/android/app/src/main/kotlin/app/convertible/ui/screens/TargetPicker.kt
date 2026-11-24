@@ -2,9 +2,11 @@ package app.convertible.ui.screens
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -40,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -78,10 +81,13 @@ fun Sheet(onDismiss: () -> Unit, tag: String, content: @Composable () -> Unit) {
         val motion = AppTheme.motion
         val enter = remember { Animatable(0f) }
         LaunchedEffect(Unit) { enter.animateTo(1f, tween(motion.slow, easing = motion.decelerate)) }
+        // The scrim and the sheet take taps through pointerInput, not clickable(): a clickable node merges the
+        // semantics of everything inside it, so TalkBack read the whole sheet as one button and could not reach
+        // its headings and rows separately. Back and the Close button dismiss it for accessibility services.
         BoxWithConstraints(
             Modifier
                 .fillMaxSize()
-                .clickable(remember { MutableInteractionSource() }, null, onClick = onDismiss),
+                .pointerInput(onDismiss) { detectTapGestures(onTap = { onDismiss() }) },
         ) {
             val wide = maxWidth >= 600.dp
             Box(
@@ -97,7 +103,7 @@ fun Sheet(onDismiss: () -> Unit, tag: String, content: @Composable () -> Unit) {
                     .clip(if (wide) RoundedCornerShape(d.radiusXl) else RoundedCornerShape(topStart = d.radiusXl, topEnd = d.radiusXl))
                     .background(colors.surfaceElevated)
                     .border(1.dp, colors.border, if (wide) RoundedCornerShape(d.radiusXl) else RoundedCornerShape(topStart = d.radiusXl, topEnd = d.radiusXl))
-                    .clickable(remember { MutableInteractionSource() }, null) { } // swallow clicks inside the sheet
+                    .pointerInput(Unit) { detectTapGestures { } } // taps inside the sheet never reach the scrim
                     .imePadding()
                     .testTag(tag),
             ) {
@@ -120,6 +126,7 @@ fun Sheet(onDismiss: () -> Unit, tag: String, content: @Composable () -> Unit) {
 }
 
 /** Searchable target list grouped by category, from `cvt_targets_json`. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TargetPicker(
     title: String,
@@ -165,23 +172,41 @@ fun TargetPicker(
                     Modifier.fillMaxWidth().heightIn(max = 560.dp).testTag("picker_list"),
                     contentPadding = PaddingValues(start = d.space4, end = d.space4, bottom = d.space6),
                 ) {
-                    sections.forEachIndexed { index, section ->
+                    // Hundreds of targets: lazily composed rows with stable keys (section + id; a target may
+                    // appear both under "Popular" and in its category) and headers that stay visible.
+                    for (section in sections) {
+                        val sectionKey = section.category ?: "popular"
                         if (query.isBlank()) {
-                            item(key = "h$index") {
-                                Text(
-                                    (section.category?.let { categoryName(it) } ?: stringResource(R.string.picker_popular)).uppercase(),
-                                    AppTheme.type.overline,
-                                    colors.textSecondary,
-                                    Modifier.padding(start = d.space3, top = d.space5, bottom = d.space3).semantics { heading() },
-                                )
+                            stickyHeader(key = "h-$sectionKey", contentType = "header") {
+                                SectionHeader((section.category?.let { categoryName(it) } ?: stringResource(R.string.picker_popular)))
                             }
                         }
-                        items(section.targets, key = { "$index-${it.id}" }) { t ->
+                        items(section.targets, key = { "$sectionKey/${it.id}" }, contentType = { "target" }) { t ->
                             TargetRow(t, t.id == selected) { onPick(t) }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/** A section title in a long list: opaque (it stays pinned while its rows scroll under it) and a heading. */
+@Composable
+internal fun SectionHeader(title: String, modifier: Modifier = Modifier, trailing: String? = null) {
+    val d = AppTheme.dimens
+    val colors = AppTheme.colors
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(colors.surfaceElevated)
+            .padding(start = d.space3, end = d.space3, top = d.space5, bottom = d.space3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title.uppercase(), AppTheme.type.overline, colors.textSecondary, Modifier.semantics { heading() })
+        if (trailing != null) {
+            Spacer(Modifier.width(d.space3))
+            Text(trailing, AppTheme.type.caption, colors.textDisabled)
         }
     }
 }
@@ -237,8 +262,12 @@ fun CompressPicker(item: QueueItem, onPick: (TargetInfo) -> Unit, onDismiss: () 
                 )
                 IconButton(Icons.Close, stringResource(R.string.picker_close), onDismiss)
             }
-            Column(Modifier.padding(horizontal = d.space4)) {
-                choices.forEach { t ->
+            // The full catalogue offers over a hundred archive formats: a lazy list, not a Column.
+            LazyColumn(
+                Modifier.fillMaxWidth().heightIn(max = 560.dp).testTag("compress_list"),
+                contentPadding = PaddingValues(horizontal = d.space4),
+            ) {
+                items(choices, key = { it.id }, contentType = { "target" }) { t ->
                     TargetRow(if (t.compress) t.copy(name = stringResource(R.string.picker_compress_same, t.label)) else t, t.id == item.target?.id) { onPick(t) }
                 }
             }

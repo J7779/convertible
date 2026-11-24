@@ -384,6 +384,8 @@ void App::open_menu(WidgetId owner, Rect anchor, std::vector<std::string> choice
   menu_.highlight = std::max(0, selected);
   menu_.on_pick = std::move(on_pick);
   menu_.opened_at = now_;
+  menu_.scroll = 0.0f;
+  menu_.scrolled_once = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -400,6 +402,20 @@ void App::build() {
                 gfx::Paint::radial({size.x * 0.18f, -size.y * 0.15f}, r,
                                    {{0.0f, accent.fade(dark ? 0.16f : 0.09f)}, {1.0f, accent.fade(0.0f)}}));
   });
+
+  // An open menu owns the keyboard: take its keys before the views are built,
+  // so the (still focused) menu button does not re-activate on Enter.
+  menu_keys_ = {};
+  if (menu_.open) {
+    menu_keys_.down = ui_.key_pressed(Key::Down);
+    menu_keys_.up = ui_.key_pressed(Key::Up);
+    menu_keys_.page_down = ui_.key_pressed(Key::PageDown);
+    menu_keys_.page_up = ui_.key_pressed(Key::PageUp);
+    menu_keys_.home = ui_.key_pressed(Key::Home);
+    menu_keys_.end = ui_.key_pressed(Key::End);
+    menu_keys_.pick = ui_.key_pressed(Key::Enter);
+    menu_keys_.pick = ui_.key_pressed(Key::Space) || menu_keys_.pick;
+  }
 
   Rect top = cut_top(all, 64.0f);
   build_top_bar(top);
@@ -628,13 +644,32 @@ void App::build_menu() {
   ui_.push_opacity(appear);
   panel(ui_, ui_.id("menu-panel"), r, t.radius_md, 3);
   const int n = static_cast<int>(menu_.choices.size());
-  if (ui_.key_pressed(Key::Down)) menu_.highlight = std::min(n - 1, menu_.highlight + 1);
-  if (ui_.key_pressed(Key::Up)) menu_.highlight = std::max(0, menu_.highlight - 1);
-  bool pick = ui_.key_pressed(Key::Enter) || ui_.key_pressed(Key::Space);
+  const int page = std::max(1, static_cast<int>((h - 12.0f) / row_h) - 1);
+  const int before = menu_.highlight;
+  if (menu_keys_.down) menu_.highlight = std::min(n - 1, menu_.highlight + 1);
+  if (menu_keys_.up) menu_.highlight = std::max(0, menu_.highlight - 1);
+  if (menu_keys_.page_down) menu_.highlight = std::min(n - 1, menu_.highlight + page);
+  if (menu_keys_.page_up) menu_.highlight = std::max(0, menu_.highlight - page);
+  if (menu_keys_.home) menu_.highlight = 0;
+  if (menu_keys_.end) menu_.highlight = n - 1;
+  bool pick = menu_keys_.pick;
   int picked = pick ? menu_.highlight : -1;
   const Rect list = r.inset(6.0f);
-  const float off = ui_.begin_scroll(ui_.id("menu-scroll"), list, static_cast<float>(n) * row_h);
-  (void)off;
+  const WidgetId scroll_id = ui_.id("menu-scroll");
+  // Long menus (some options have dozens of choices) scroll: keep the
+  // keyboard highlight, and on opening the current choice, in view.
+  const bool just_opened = !menu_.scrolled_once;
+  if ((menu_.highlight != before || just_opened) && menu_.highlight >= 0 && n * row_h > list.h) {
+    const float top = static_cast<float>(menu_.highlight) * row_h;
+    float off = menu_.scroll;
+    if (top < off) off = top;
+    if (top + row_h > off + list.h) off = top + row_h - list.h;
+    if (just_opened) off = std::max(0.0f, top - (list.h - row_h) * 0.5f);
+    off = clampf(off, 0.0f, static_cast<float>(n) * row_h - list.h);
+    ui_.scroll_to(scroll_id, off);
+  }
+  menu_.scrolled_once = true;
+  menu_.scroll = ui_.begin_scroll(scroll_id, list, static_cast<float>(n) * row_h);
   for (int i = 0; i < n; ++i) {
     const Rect rr{list.x, list.y + static_cast<float>(i) * row_h, list.w, row_h};
     const WidgetId id = ui_.id("menu-item", static_cast<std::uint64_t>(i));
@@ -716,6 +751,9 @@ Json App::dump_state() const {
       for (const auto& c : o.choices) ch.push_back(c);
       spec.set("choices", ch);
       spec.set("advanced", o.advanced);
+      if (o.type == OptionType::Int || o.type == OptionType::Float) {
+        spec.set("control", numeric_control(o) == NumericControl::Slider ? "slider" : "stepper");
+      }
       specs.push_back(spec);
     }
     j.set("optionSpecs", specs);

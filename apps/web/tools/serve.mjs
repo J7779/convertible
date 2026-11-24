@@ -73,9 +73,11 @@ const server = createServer(async (req, res) => {
       return;
     }
     const type = TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream';
-    res.writeHead(200, {
-      'Content-Type': type,
-      'Content-Length': info.size,
+    // A validator lets revalidation (the service worker installing right
+    // after the page downloaded the core) end in a 304 instead of a download.
+    const etag = `"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`;
+    const headers = {
+      ETag: etag,
       // Freshness is handled by the service worker's versioned cache.
       'Cache-Control': 'no-cache',
       'Content-Security-Policy': CSP,
@@ -83,7 +85,12 @@ const server = createServer(async (req, res) => {
       'Referrer-Policy': 'no-referrer',
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
       'Cross-Origin-Opener-Policy': 'same-origin',
-    });
+    };
+    if (req.headers['if-none-match'] === etag) {
+      res.writeHead(304, headers).end();
+      return;
+    }
+    res.writeHead(200, { ...headers, 'Content-Type': type, 'Content-Length': info.size });
     if (req.method === 'HEAD') res.end();
     else createReadStream(file).pipe(res);
   } catch (error) {

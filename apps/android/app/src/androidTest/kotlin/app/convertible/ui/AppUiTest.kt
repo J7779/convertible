@@ -1,6 +1,10 @@
 package app.convertible.ui
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -15,6 +19,8 @@ import app.convertible.MainActivity
 import app.convertible.state.ImportedFile
 import app.convertible.state.ItemStatus
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -53,6 +59,30 @@ class AppUiTest {
         rule.onNodeWithTag("formats_search").performTextInput("base64")
         rule.waitUntil(5_000) { rule.onAllNodes(hasTestTag("format_base64")).fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("format_base64").assertIsDisplayed()
+    }
+
+    @Test
+    fun pickerHeadingsAreSeparateAccessibilityNodes() {
+        val vm = ViewModelProvider(rule.activity)[ConverterViewModel::class.java]
+        val context = rule.activity
+        val id = vm.store.add("note.txt", 5) { itemId ->
+            val f = File(File(context.cacheDir, "work/in/$itemId").apply { mkdirs() }, "note.txt")
+            f.writeText("hello")
+            ImportedFile(f.path, f.name, f.length())
+        }
+        rule.waitUntil(10_000) { vm.store.item(id)?.status == ItemStatus.Ready }
+        rule.onNodeWithTag("queue").performScrollToNode(hasTestTag("pick_target_$id"))
+        rule.onNodeWithTag("pick_target_$id").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodes(hasTestTag("picker_list")).fetchSemanticsNodes().isNotEmpty() }
+        // In the merged tree (what TalkBack walks) the sheet is not one clickable node swallowing its content:
+        // the title and the section headings are headings of their own, and the rows are separate buttons.
+        val sheet = rule.onNodeWithTag("target_picker").fetchSemanticsNode()
+        assertFalse("the sheet itself is not clickable", sheet.config.contains(SemanticsActions.OnClick))
+        val headings = rule.onAllNodes(isHeading()).fetchSemanticsNodes()
+        assertTrue("title and section headings (${headings.size})", headings.size >= 2)
+        rule.onNodeWithTag("picker_search").performTextInput("base64")
+        rule.waitUntil(5_000) { rule.onAllNodes(hasTestTag("target_base64")).fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag("target_base64").assert(hasClickAction())
     }
 
     @Test

@@ -10,6 +10,12 @@ const { CATEGORY_LABELS } = await import('../src/js/model/targets.js');
 
 const PICKER = 'dialog[data-testid="picker-dialog"][open]';
 
+/** Waits for the picker to be open with every row built (long lists render incrementally). */
+async function pickerOpen(page) {
+  await page.waitForSelector(PICKER);
+  await page.waitForGone(`${PICKER} .picker-list[aria-busy="true"]`);
+}
+
 /** The open picker as rendered: groups with their options, and the active option. */
 function readPicker() {
   const dlg = document.querySelector('dialog[data-testid="picker-dialog"][open]');
@@ -33,7 +39,7 @@ function readPicker() {
 
 async function openPickerFor(page, name) {
   await page.click({ card: name, sel: tid('target-picker') });
-  await page.waitForSelector(PICKER);
+  await pickerOpen(page);
   const picker = await page.evaluate(readPicker);
   // Without a fine pointer the close button has focus; Tab reaches the search.
   if (picker.focused !== 'search') {
@@ -58,7 +64,7 @@ suite('target picker', () => {
     const { files, page, source } = await setupText(ctx);
     const targets = core.targets(source);
     await page.click({ card: 'notes.txt', sel: tid('target-picker') });
-    await page.waitForSelector(PICKER);
+    await pickerOpen(page);
     const picker = await page.evaluate(readPicker);
     assert.match(picker.title, new RegExp(`Convert ${source.toUpperCase()} to`));
     // With a mouse the search field takes focus; on touch-only devices the close
@@ -170,7 +176,7 @@ suite('target picker', () => {
       return;
     }
     await page.click({ card: 'notes.txt', sel: tid('compress') });
-    await page.waitForSelector(PICKER);
+    await pickerOpen(page);
     const picker = await page.evaluate(readPicker);
     assert.equal(picker.title, 'Compress notes.txt');
     assert.deepEqual([...picker.options].sort(), offered.map((t) => t.id).sort());

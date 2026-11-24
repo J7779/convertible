@@ -43,11 +43,15 @@ struct TargetFormat: Codable, Hashable, Identifiable, Sendable {
     let mime: String
     let lossy: Bool
     let compress: Bool
+    /// What the target is for, when the core says so (an additive field):
+    /// for example "compress", "archive" or "extract". Nil for plain conversions
+    /// and for cores that do not report it; unknown values are kept verbatim.
+    let role: String?
 
     init(id: String, name: String, category: String, extensions: [String] = [], mime: String = "",
-         lossy: Bool = false, compress: Bool = false) {
+         lossy: Bool = false, compress: Bool = false, role: String? = nil) {
         self.id = id; self.name = name; self.category = category; self.extensions = extensions
-        self.mime = mime; self.lossy = lossy; self.compress = compress
+        self.mime = mime; self.lossy = lossy; self.compress = compress; self.role = role
     }
 
     init(from decoder: Decoder) throws {
@@ -59,10 +63,30 @@ struct TargetFormat: Codable, Hashable, Identifiable, Sendable {
         mime = try c.decodeIfPresent(String.self, forKey: .mime) ?? ""
         lossy = try c.decodeIfPresent(Bool.self, forKey: .lossy) ?? false
         compress = try c.decodeIfPresent(Bool.self, forKey: .compress) ?? false
+        role = try? c.decodeIfPresent(String.self, forKey: .role)
     }
 
     /// Default file extension for output files.
     var defaultExtension: String { extensions.first ?? id }
+}
+
+/// Decodes a JSON array, skipping entries that do not decode (a newer core may
+/// add entries of a shape this app does not know) instead of failing the whole list.
+struct LossyArray<Element: Decodable>: Decodable {
+    let elements: [Element]
+
+    /// Accepts any JSON value; decoding it moves past an entry that did not decode.
+    private struct Skip: Decodable { init(from decoder: Decoder) throws {} }
+
+    init(from decoder: Decoder) throws {
+        var c = try decoder.unkeyedContainer()
+        var out: [Element] = []
+        out.reserveCapacity(c.count ?? 0)
+        while !c.isAtEnd {
+            if let element = try? c.decode(Element.self) { out.append(element) } else if (try? c.decode(Skip.self)) == nil { break }
+        }
+        elements = out
+    }
 }
 
 /// A JSON scalar as found in option defaults and option values.

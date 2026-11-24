@@ -63,6 +63,16 @@ bool has_preset(const std::vector<OptionSpec>& specs);
 /// Index into preset_values() of the current value, -1 when not applicable.
 int preset_index(const Json& values);
 
+/// How a numeric option is edited: a slider when the range is bounded and
+/// small enough to drag through (at most kSliderMaxSteps integer steps, or a
+/// bounded float), otherwise a stepper (a number field with - and +), e.g.
+/// a sample rate of 0..384000 or a bit rate of 0..2000.
+enum class NumericControl { Slider, Stepper };
+inline constexpr double kSliderMaxSteps = 1000.0;
+NumericControl numeric_control(const OptionSpec& spec);
+/// The - / + increment of a stepper: a round number about 1/50 of the range (1 for small ranges).
+double stepper_step(const OptionSpec& spec);
+
 // ---------------------------------------------------------------------------
 // Queue
 // ---------------------------------------------------------------------------

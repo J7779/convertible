@@ -31,7 +31,14 @@ test('the cache version is a digest of the content', async () => {
   const template = await readFile(path.join(WEB_DIR, 'src', 'sw.js'), 'utf8');
   const changed = { ...manifest, version: 'abcdefabcdef', files: manifest.files.slice(0, 2) };
   const out = precache.injectManifest(template, changed);
-  assert.deepEqual(precache.readManifestFromSw(out), { version: 'abcdefabcdef', urls: changed.files.map((f) => f.url) });
+  assert.deepEqual(precache.readManifestFromSw(out), {
+    version: 'abcdefabcdef',
+    urls: changed.files.map((f) => f.url),
+    hashes: Object.fromEntries(changed.files.map((f) => [f.url, f.hash])),
+  });
+  // Every precached file carries its content hash (an update reuses unchanged files).
+  const { urls, hashes } = precache.readManifestFromSw(sw);
+  for (const u of urls) assert.match(hashes[u] ?? '', /^[0-9a-f]{16}$/, u);
   assert.throws(() => precache.injectManifest('no markers', manifest));
 });
 
@@ -93,9 +100,17 @@ test('web app manifest is valid and installable', async () => {
   }
   assert.equal(m.share_target.method, 'POST');
   assert.equal(m.share_target.enctype, 'multipart/form-data');
-  const exts = Object.values(m.file_handlers[0].accept).flat();
-  assert.ok(exts.includes('.txt') && exts.includes('.b64'), 'file handlers come from the readable catalogue');
+  const exts = m.file_handlers.flatMap((fh) => Object.values(fh.accept).flat());
+  assert.ok(exts.includes('.txt'), 'file handlers come from the readable catalogue');
+  assert.ok(exts.length <= 300, `Chromium accepts at most 300 extensions (${exts.length})`);
+  for (const fh of m.file_handlers) {
+    assert.equal(typeof fh.name, 'string');
+    for (const mime of Object.keys(fh.accept)) assert.match(mime, /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/, mime);
+  }
   for (const e of exts) assert.match(e, /^\.[a-z0-9+._-]+$/);
+  // The catalogue is shipped as data for a fast start.
+  const catalogue = JSON.parse(await readFile(path.join(DIST, 'catalogue.json'), 'utf8'));
+  assert.ok(Array.isArray(catalogue.formats) && catalogue.formats.length > 10);
   assert.ok(m.shortcuts.length >= 2);
 });
 

@@ -4,9 +4,14 @@ import SwiftUI
 struct FormatsBrowserView: View {
     @EnvironmentObject private var queue: QueueModel
     @State private var query = ""
+    @State private var category: String?
+    /// Computed off the body: the catalogue has ~1,500 formats, and the queue
+    /// publishes progress many times a second while files convert.
+    @State private var sections: [FormatSection] = []
+
+    private struct Key: Equatable { let query: String; let category: String?; let count: Int }
 
     var body: some View {
-        let sections = FormatsBrowser.sections(queue.catalog.formats, query: query)
         List {
             Section {
                 HStack(spacing: Space.s5) {
@@ -24,7 +29,7 @@ struct FormatsBrowserView: View {
                     .foregroundStyle(Palette.textSecondary)
                     .listRowBackground(Color.clear)
             }
-            if sections.isEmpty {
+            if sections.isEmpty && !(query.isEmpty && category == nil) {
                 Text("No format matches “\(query)”.")
                     .textStyle(.body)
                     .foregroundStyle(Palette.textSecondary)
@@ -49,6 +54,28 @@ struct FormatsBrowserView: View {
         .background(Palette.background.ignoresSafeArea())
         .searchable(text: $query, prompt: "Search formats")
         .navigationTitle("Formats")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Picker("Category", selection: $category) {
+                        Text("All categories").tag(String?.none)
+                        ForEach(FormatsBrowser.categories(queue.catalog.formats), id: \.id) { entry in
+                            Text("\(FileCategory.title(entry.id)) (\(entry.count))").tag(Optional(entry.id))
+                        }
+                    }
+                } label: {
+                    Label(category.map(FileCategory.title) ?? "All categories",
+                          systemImage: category == nil ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                }
+                .accessibilityIdentifier("formatsCategoryFilter")
+            }
+        }
+        .task(id: Key(query: query, category: category, count: queue.catalog.formats.count)) {
+            // Coalesce fast typing; the first render is immediate.
+            if !sections.isEmpty, !query.isEmpty { try? await Task.sleep(nanoseconds: 120_000_000) }
+            if Task.isCancelled { return }
+            sections = FormatsBrowser.sections(queue.catalog.formats, query: query, category: category)
+        }
         .accessibilityIdentifier("formatsBrowser")
     }
 }

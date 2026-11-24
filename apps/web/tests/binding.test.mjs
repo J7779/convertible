@@ -24,7 +24,9 @@ describe('library and catalogue', () => {
     assert.ok(formats.length > 10);
     const ids = new Set();
     for (const f of formats) {
-      assert.match(f.id, /^[a-z0-9][a-z0-9.+-]*$/);
+      // Canonical ids are lower case; the C ABI does not restrict them further
+      // (for example "ds_store" or "tar.gz"), so neither does the app.
+      assert.match(f.id, /^[a-z0-9][a-z0-9._+-]*$/);
       assert.ok(!ids.has(f.id), `duplicate ${f.id}`);
       ids.add(f.id);
       assert.equal(typeof f.name, 'string');
