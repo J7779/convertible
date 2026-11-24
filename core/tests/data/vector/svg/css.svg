@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100" color="#2a7">
+  <style>
+    rect { fill: #888; }
+    .warm { fill: #e33; stroke: black; stroke-width: 2px }
+    #special { fill: #33e !important; }
+    g.row rect { opacity: 0.5 }
+    g > circle:first-child { fill: currentColor }
+    /* comment */
+    @media print { rect { fill: white } }
+  </style>
+  <rect x="5" y="5" width="40" height="40"/>
+  <rect class="warm" x="55" y="5" width="40" height="40"/>
+  <rect id="special" class="warm" x="105" y="5" width="40" height="40" style="fill: yellow"/>
+  <g class="row"><rect x="5" y="55" width="40" height="40" style="fill:#0a0"/></g>
+  <g><circle cx="75" cy="75" r="18"/><circle cx="125" cy="75" r="18" fill="#000" style="fill-opacity:.3"/></g>
+</svg>

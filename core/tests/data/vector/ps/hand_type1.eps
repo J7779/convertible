@@ -1,0 +1,43 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 0 0 200 80
+%%EndComments
+% A tiny synthetic Type 1 font (unencrypted charstrings, lenIV -1) with three
+% glyphs: a square "A", a triangle "B" and a diamond "C", plus space.
+12 dict begin
+/FontType 1 def
+/FontName /SynthBlocks def
+/PaintType 0 def
+/FontMatrix [0.001 0 0 0.001 0 0] def
+/FontBBox [0 0 700 700] def
+/Encoding StandardEncoding def
+/Private 8 dict dup begin
+  /lenIV -1 def
+  /BlueValues [] def
+  /password 5839 def
+  /MinFeature {16 16} def
+  /Subrs 0 array def
+end def
+% charstring encoding helpers (Type 1 number and operator bytes)
+/csnum { dup -107 ge 1 index 107 le and { 139 add 1 string dup 0 4 -1 roll put }
+  { dup 0 gt { 108 sub dup 256 idiv 247 add exch 256 mod exch 2 string dup 0 4 -1 roll put dup 1 4 -1 roll put }
+    { neg 108 sub dup 256 idiv 251 add exch 256 mod exch 2 string dup 0 4 -1 roll put dup 1 4 -1 roll put } ifelse } ifelse } def
+/csop { 1 string dup 0 4 -1 roll put } def
+/cat { exch dup length 2 index length add string dup dup 4 2 roll copy length 4 -1 roll putinterval } def
+/cs { () exch { dup type /integertype eq { csnum } { exec } ifelse cat } forall } def
+/hsbw {13 csop} def /rmoveto {21 csop} def /rlineto {5 csop} def /closepath {9 csop} def /endchar {14 csop} def
+/CharStrings 5 dict dup begin
+  /.notdef [0 500 /hsbw load] cs def
+  /space [0 300 /hsbw load /endchar load] cs def
+  /A [50 700 /hsbw load 0 0 /rmoveto load 600 0 /rlineto load 0 600 /rlineto load -600 0 /rlineto load
+      /closepath load /endchar load] cs def
+  /B [50 700 /hsbw load 0 0 /rmoveto load 600 0 /rlineto load -300 600 /rlineto load /closepath load
+      /endchar load] cs def
+  /C [50 700 /hsbw load 300 0 /rmoveto load 300 300 /rlineto load -300 300 /rlineto load -300 -300 /rlineto load
+      /closepath load /endchar load] cs def
+end def
+currentdict end
+/SynthBlocks exch definefont pop
+/SynthBlocks findfont 40 scalefont setfont
+0 0 1 setrgbcolor
+20 20 moveto (AB C) show
+showpage

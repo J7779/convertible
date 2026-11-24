@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+ xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+ xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+ office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.graphics">
+ <office:styles>
+  <draw:hatch draw:name="H1" draw:style="single" draw:color="#0000ff" draw:distance="0.15cm" draw:rotation="450"/>
+  <draw:stroke-dash draw:name="D1" draw:style="rect" draw:dots1="1" draw:dots1-length="0.3cm" draw:distance="0.15cm"/>
+ </office:styles>
+ <office:automatic-styles>
+  <style:page-layout style:name="PM1"><style:page-layout-properties fo:page-width="10cm" fo:page-height="8cm" fo:margin-top="0cm" fo:margin-bottom="0cm" fo:margin-left="0cm" fo:margin-right="0cm"/></style:page-layout>
+  <style:style style:name="dp1" style:family="drawing-page"/>
+  <style:style style:name="gr1" style:family="graphic"><style:graphic-properties draw:fill="hatch" draw:fill-hatch-name="H1" draw:fill-hatch-solid="true" draw:fill-color="#ffff99" svg:stroke-color="#000000" draw:stroke="solid" svg:stroke-width="0.05cm"/></style:style>
+  <style:style style:name="gr2" style:family="graphic"><style:graphic-properties draw:fill="solid" draw:fill-color="#ff8000" draw:stroke="solid" svg:stroke-color="#800000" svg:stroke-width="0.03cm"/></style:style>
+  <style:style style:name="gr3" style:family="graphic"><style:graphic-properties draw:fill="none" draw:stroke="dash" draw:stroke-dash="D1" svg:stroke-color="#008000" svg:stroke-width="0.08cm"/></style:style>
+  <style:style style:name="gr4" style:family="graphic"><style:graphic-properties draw:fill="solid" draw:fill-color="#00a0ff" draw:stroke="none"/></style:style>
+  <style:style style:name="gr5" style:family="graphic"><style:graphic-properties draw:fill="none" draw:stroke="none"/></style:style>
+  <style:style style:name="P1" style:family="paragraph"><style:text-properties fo:font-size="18pt" fo:color="#c00000" style:font-name="DejaVu Sans" fo:font-family="'DejaVu Sans'"/></style:style>
+ </office:automatic-styles>
+ <office:body>
+  <office:drawing>
+   <draw:page draw:name="page1" draw:style-name="dp1" draw:master-page-name="Default">
+    <draw:rect draw:style-name="gr1" svg:x="0.5cm" svg:y="0.5cm" svg:width="4cm" svg:height="2.5cm" draw:corner-radius="0.5cm"/>
+    <draw:circle draw:style-name="gr2" svg:x="5.5cm" svg:y="0.5cm" svg:width="3cm" svg:height="3cm" draw:kind="section" draw:start-angle="30" draw:end-angle="300"/>
+    <draw:ellipse draw:style-name="gr4" svg:x="0.5cm" svg:y="3.5cm" svg:width="3cm" svg:height="2cm" draw:kind="cut" draw:start-angle="0" draw:end-angle="180"/>
+    <draw:circle draw:style-name="gr3" svg:x="4.5cm" svg:y="3.5cm" svg:width="3cm" svg:height="3cm" draw:kind="arc" draw:start-angle="45" draw:end-angle="270"/>
+    <draw:frame draw:style-name="gr5" svg:x="1cm" svg:y="6.5cm" svg:width="6cm" svg:height="1cm"><draw:text-box><text:p text:style-name="P1">Draw 123</text:p></draw:text-box></draw:frame>
+   </draw:page>
+  </office:drawing>
+ </office:body>
+</office:document>

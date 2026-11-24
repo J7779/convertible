@@ -1,0 +1,410 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 73 174 492 580
+%%HiResBoundingBox: 73.0488 174.4047 491.4101 579.2872
+%%DocumentProcessColors: Black
+%%DocumentFonts: Helvetica
+%%DocumentNeededResources: procset Adobe_level2_AI5 1.0 0
+%%+ procset Adobe_typography_AI5 1.0 0
+%%+ procset Adobe_Illustrator_AI6_vars Adobe_Illustrator_AI6
+%%+ procset Adobe_Illustrator_AI5 1.0 0
+%AI5_FileFormat 3
+%AI3_ColorUsage: Black&White
+%AI7_ImageSettings: 0
+%AI3_TemplateBox: 306 396 306 396
+%AI3_TileBox: 18 0 594 792
+%AI3_DocumentPreview: None
+%AI5_ArtSize: 612 792
+%AI5_RulerUnits: 0
+%AI5_ArtFlags: 1 0 0 1 0 0 1 1 0
+%AI5_TargetResolution: 800
+%AI5_NumLayers: 1
+%AI5_OpenViewLayers: 7
+%%PageOrigin:18 0
+%%AI3_PaperRect:-18 792 594 0
+%%AI3_Margin:18 0 -18 0
+%AI7_GridSettings: 72 8 72 8 1 0 0.8 0.8 0.8 0.9 0.9 0.9
+%%EndComments
+%%BeginProlog
+%%IncludeResource: procset Adobe_level2_AI5 1.0 0
+%%IncludeResource: procset Adobe_typography_AI5 1.0 0
+%%IncludeResource: procset Adobe_Illustrator_AI6_vars Adobe_Illustrator_AI6
+%%IncludeResource: procset Adobe_Illustrator_AI5 1.0 0
+%%EndProlog
+%%BeginSetup
+%%IncludeFont: Helvetica
+Adobe_level2_AI5 /initialize get exec
+Adobe_Illustrator_AI5_vars Adobe_Illustrator_AI5 Adobe_typography_AI5 /initialize get exec
+Adobe_ColorImage_AI6 /initialize get exec
+Adobe_Illustrator_AI5 /initialize get exec
+[
+TE
+%AI3_BeginEncoding: _Helvetica Helvetica
+[/_Helvetica/Helvetica 0 0 0 TZ
+%AI3_EndEncoding AdobeType
+%%EndSetup
+%AI5_BeginLayer
+1 1 1 1 0 0 0 79 128 255 Lb
+(Layer 1) Ln
+10.43 M
+0.6776 w
+133.2000 223.2000 m
+478.8000 223.2000 L
+478.8000 568.8000 L
+133.2000 568.8000 L
+133.2000 223.2000 L
+s
+0 To
+1.0000 0.0000 0.0000 1.0000 133.2000 201.1239 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(0.0) Tx
+TO
+133.2000 568.8000 m
+133.2000 561.8880 L
+S
+133.2000 223.2000 m
+133.2000 230.1120 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 190.8000 201.1239 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(0.5) Tx
+TO
+190.8000 568.8000 m
+190.8000 561.8880 L
+S
+190.8000 223.2000 m
+190.8000 230.1120 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 248.4000 201.1239 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(1.0) Tx
+TO
+248.4000 568.8000 m
+248.4000 561.8880 L
+S
+248.4000 223.2000 m
+248.4000 230.1120 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 306.0000 201.1239 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(1.5) Tx
+TO
+306.0000 568.8000 m
+306.0000 561.8880 L
+S
+306.0000 223.2000 m
+306.0000 230.1120 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 363.6000 201.1239 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(2.0) Tx
+TO
+363.6000 568.8000 m
+363.6000 561.8880 L
+S
+363.6000 223.2000 m
+363.6000 230.1120 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 421.2000 201.1239 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(2.5) Tx
+TO
+421.2000 568.8000 m
+421.2000 561.8880 L
+S
+421.2000 223.2000 m
+421.2000 230.1120 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 478.8000 201.1239 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(3.0) Tx
+TO
+478.8000 568.8000 m
+478.8000 561.8880 L
+S
+478.8000 223.2000 m
+478.8000 230.1120 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 128.0160 216.7952 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+2 Ta
+0 Tq
+0 0 Tl
+(0.0) Tx
+TO
+478.8000 223.2000 m
+471.8880 223.2000 L
+S
+133.2000 223.2000 m
+140.1120 223.2000 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 128.0160 274.3952 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+2 Ta
+0 Tq
+0 0 Tl
+(0.5) Tx
+TO
+478.8000 280.8000 m
+471.8880 280.8000 L
+S
+133.2000 280.8000 m
+140.1120 280.8000 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 128.0160 331.9952 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+2 Ta
+0 Tq
+0 0 Tl
+(1.0) Tx
+TO
+478.8000 338.4000 m
+471.8880 338.4000 L
+S
+133.2000 338.4000 m
+140.1120 338.4000 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 128.0160 389.5952 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+2 Ta
+0 Tq
+0 0 Tl
+(1.5) Tx
+TO
+478.8000 396.0000 m
+471.8880 396.0000 L
+S
+133.2000 396.0000 m
+140.1120 396.0000 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 128.0160 447.1952 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+2 Ta
+0 Tq
+0 0 Tl
+(2.0) Tx
+TO
+478.8000 453.6000 m
+471.8880 453.6000 L
+S
+133.2000 453.6000 m
+140.1120 453.6000 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 128.0160 504.7952 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+2 Ta
+0 Tq
+0 0 Tl
+(2.5) Tx
+TO
+478.8000 511.2000 m
+471.8880 511.2000 L
+S
+133.2000 511.2000 m
+140.1120 511.2000 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 128.0160 562.3952 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+2 Ta
+0 Tq
+0 0 Tl
+(3.0) Tx
+TO
+478.8000 568.8000 m
+471.8880 568.8000 L
+S
+133.2000 568.8000 m
+140.1120 568.8000 L
+S
+0 To
+1.0000 0.0000 0.0000 1.0000 306.0000 178.4871 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(X) Tx
+TO
+0 To
+0.0000 1.0000 -1.0000 0.0000 89.9408 396.0000 0 Tp
+TP
+0 Tr
+/_Helvetica 18.1440 Tf
+100 Tz
+0 Tt
+0 TA
+0 0 0 TC
+100 100 100 TW
+0 0 0 Ti
+1 Ta
+0 Tq
+0 0 Tl
+(Y) Tx
+TO
+133.2000 223.2000 m
+248.4000 453.6000 L
+363.6000 338.4000 L
+478.8000 568.8000 L
+S
+LB
+%AI5_EndLayer--
+%%PageTrailer
+gsave annotatepage grestore showpage
+%%Trailer
+Adobe_Illustrator_AI5 /terminate get exec
+Adobe_ColorImage_AI6 /terminate get exec
+Adobe_typography_AI5 /terminate get exec
+Adobe_level2_AI5 /terminate get exec
+%%EOF

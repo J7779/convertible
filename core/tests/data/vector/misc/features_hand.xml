@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hand-written per the VectorDrawable specification: features the SVG converters do not emit. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="50"
+    android:alpha="0.8">
+    <group android:name="rotated" android:rotation="90" android:pivotX="25" android:pivotY="25">
+        <path android:name="bar" android:pathData="M15 20h20v10h-20z" android:fillColor="#F00"/>
+    </group>
+    <group android:name="clipped" android:translateX="50">
+        <clip-path android:pathData="M0 0h25v50h-25z"/>
+        <path android:pathData="M0 0h50v50h-50z" android:fillColor="#8000FF00"/>
+    </group>
+    <path android:name="trimmed" android:pathData="M0 45h100" android:strokeColor="#0000FF"
+        android:strokeWidth="2" android:trimPathStart="0.25" android:trimPathEnd="0.75"/>
+    <path android:name="sweep" android:pathData="M60 0h40v40h-40z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="sweep" android:centerX="80" android:centerY="20"
+                android:startColor="#FFFF0000" android:endColor="#FF0000FF"/>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M0 0h10v10h-10z" android:fillColor="@color/brand_primary" android:fillAlpha="0.5"/>
+</vector>

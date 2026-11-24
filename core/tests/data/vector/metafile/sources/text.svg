@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120" viewBox="0 0 300 120">
+<text x="10" y="40" font-family="DejaVu Sans" font-size="24" fill="#000000">Lorem ipsum</text>
+<text x="10" y="80" font-family="DejaVu Serif" font-size="20" font-weight="bold" fill="#c00000">Ωμέγα Жук</text>
+<text x="150" y="110" font-family="DejaVu Sans" font-size="16" fill="#0000c0" transform="rotate(-30 150 110)">rotated</text>
+</svg>

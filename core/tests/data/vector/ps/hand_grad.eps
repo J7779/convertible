@@ -1,0 +1,21 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 0 0 200 100
+%%LanguageLevel: 3
+%%EndComments
+gsave
+newpath 10 10 moveto 90 10 lineto 90 90 lineto 10 90 lineto closepath clip
+<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [10 0 90 0] /Extend [true true]
+   /Function << /FunctionType 2 /Domain [0 1] /C0 [1 0 0] /C1 [0 0 1] /N 1 >> >> shfill
+grestore
+gsave
+newpath 150 50 40 0 360 arc clip
+<< /ShadingType 3 /ColorSpace /DeviceRGB /Coords [150 50 0 150 50 40] /Extend [true true]
+   /Function << /FunctionType 2 /Domain [0 1] /C0 [1 1 0] /C1 [0 0.5 0] /N 1 >> >> shfill
+grestore
+% a small 4x2 RGB image
+gsave 100 0 translate 40 20 scale
+4 2 8 [4 0 0 -2 0 2] currentfile /ASCIIHexDecode filter false 3 colorimage
+ff0000 00ff00 0000ff ffffff
+000000 808080 ffff00 00ffff>
+grestore
+showpage

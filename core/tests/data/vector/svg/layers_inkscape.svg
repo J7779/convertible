@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100mm"
+   height="50mm"
+   viewBox="0 0 100 50"
+   version="1.1"
+   id="svg15"
+   sodipodi:docname="layers.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs19" />
+  <sodipodi:namedview
+     id="namedview17"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm" />
+  <title
+     id="title2">Layer test</title>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Background"
+     id="layer1">
+    <rect
+       x="0"
+       y="0"
+       width="100"
+       height="50"
+       fill="#eef"
+       id="rect4" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Shapes"
+     id="layer2">
+    <circle
+       cx="25"
+       cy="25"
+       r="20"
+       fill="#c33"
+       id="circle7" />
+    <rect
+       x="55"
+       y="10"
+       width="35"
+       height="30"
+       fill="#3c3"
+       id="rect9" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Hidden"
+     id="layer3"
+     style="display:none">
+    <rect
+       x="40"
+       y="0"
+       width="20"
+       height="50"
+       fill="#000"
+       id="rect12" />
+  </g>
+</svg>

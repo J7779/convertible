@@ -1,0 +1,25 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 0 0 200 150
+%%EndComments
+% red filled rectangle
+1 0 0 setrgbcolor
+10 10 60 40 rectfill
+% blue stroked circle
+0 0 1 setrgbcolor 4 setlinewidth
+newpath 140 40 25 0 360 arc closepath stroke
+% green triangle
+0 0.5 0 setrgbcolor
+newpath 20 70 moveto 90 70 lineto 55 130 lineto closepath fill
+% dashed gray line
+0.5 setgray 2 setlinewidth [6 3] 0 setdash
+newpath 110 80 moveto 190 140 lineto stroke
+[] 0 setdash
+% text
+/Helvetica findfont 14 scalefont setfont
+0 setgray 110 100 moveto (Lorem) show
+% cmyk square clipped by circle
+gsave
+newpath 160 120 15 0 360 arc clip
+0 1 1 0 setcmykcolor 140 100 40 40 rectfill
+grestore
+showpage
