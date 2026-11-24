@@ -1,0 +1,2 @@
+Feature: Sample
+  Scenario: works

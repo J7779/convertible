@@ -1,0 +1,3 @@
+dn: cn=sample,dc=example,dc=invalid
+cn: sample
+objectClass: person

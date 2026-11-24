@@ -1,0 +1,12 @@
+From: <Saved>
+Subject: page
+Date: Thu, 01 Jan 1970 00:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/related; boundary="b"
+
+--b
+Content-Type: text/html
+Content-Location: http://example.invalid/
+
+<html></html>
+--b--

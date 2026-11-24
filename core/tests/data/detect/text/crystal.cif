@@ -1,0 +1,5 @@
+data_sample
+_cell_length_a 1.0
+loop_
+_atom_site_label
+C1
