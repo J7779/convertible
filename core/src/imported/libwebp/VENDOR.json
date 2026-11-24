@@ -1,0 +1,8 @@
+{
+  "name": "libwebp",
+  "version": "1.6.0",
+  "license": "BSD-3-Clause AND WebM-Patent-Grant (PATENTS)",
+  "url": "https://chromium.googlesource.com/webm/libwebp",
+  "commit": "4fa21912338357f89e4fd51cf2368325b59e9bd9",
+  "files_modified": true
+}

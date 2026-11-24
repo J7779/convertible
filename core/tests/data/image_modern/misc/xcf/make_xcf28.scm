@@ -1,0 +1,62 @@
+; GIMP 2.8 Script-Fu: documents in the pre-2.10 XCF versions (0..3, 32-bit
+; offsets) with GIMP's own flattened rendering of each as a PNG reference.
+;   gimp-console -i -b '(load "make_xcf28.scm")' -b '(gimp-quit 0)'
+
+(define (export-reference img path)
+  (let* ((dup (car (gimp-image-duplicate img)))
+         ; Indexed documents are flattened in RGB so the reference is not re-quantised.
+         (rgb (if (= (car (gimp-image-base-type dup)) INDEXED) (gimp-image-convert-rgb dup) 0))
+         (merged (car (gimp-image-merge-visible-layers dup CLIP-TO-IMAGE))))
+    (file-png-save2 RUN-NONINTERACTIVE dup merged path path 0 9 0 0 0 0 0 0 0)
+    (gimp-image-delete dup)))
+
+(define (save-xcf img path)
+  (gimp-xcf-save 0 img (car (gimp-image-get-active-drawable img)) path path))
+
+(define (solid-layer img name w h r g b opacity)
+  (let ((layer (car (gimp-layer-new img w h RGBA-IMAGE name opacity NORMAL-MODE))))
+    (gimp-context-set-foreground (list r g b))
+    (gimp-drawable-fill layer FOREGROUND-FILL)
+    layer))
+
+(define (base)
+  (let* ((img (car (gimp-file-load RUN-NONINTERACTIVE "bg.png" "bg.png")))
+         (box (solid-layer img "box" 24 16 255 255 255 60))
+         (hidden (solid-layer img "hidden" 64 48 0 0 0 100))
+         (fade (car (gimp-file-load-layer RUN-NONINTERACTIVE img "fade.png"))))
+    (gimp-image-insert-layer img box 0 -1)
+    (gimp-layer-set-offsets box 8 6)
+    (gimp-image-insert-layer img fade 0 -1)
+    (gimp-layer-set-offsets fade 30 14)
+    (gimp-layer-add-mask fade (car (gimp-layer-create-mask fade ADD-ALPHA-TRANSFER-MASK)))
+    (gimp-image-insert-layer img hidden 0 -1)
+    (gimp-item-set-visible hidden FALSE)
+    img))
+
+(let ((img (base)))
+  (save-xcf img "v28_rgb.xcf")
+  (export-reference img "v28_rgb.png")
+  (let ((grey (car (gimp-image-duplicate img))))
+    (gimp-image-convert-grayscale grey)
+    (save-xcf grey "v28_grey.xcf")
+    (export-reference grey "v28_grey.png"))
+  (let ((indexed (car (gimp-image-duplicate img))))
+    (gimp-image-convert-indexed indexed NO-DITHER MAKE-PALETTE 20 FALSE FALSE "")
+    (save-xcf indexed "v28_indexed.xcf")
+    (export-reference indexed "v28_indexed.png"))
+  (let* ((grouped (car (gimp-image-duplicate img)))
+         (group (car (gimp-layer-group-new grouped)))
+         (child (solid-layer grouped "child" 10 10 255 0 255 100))
+         (overlay (solid-layer grouped "overlay" 16 16 0 255 255 70)))
+    (gimp-image-insert-layer grouped group 0 0)
+    (gimp-layer-set-opacity group 80)
+    (gimp-image-insert-layer grouped child group 0)
+    (gimp-layer-set-offsets child -4 36)
+    (gimp-image-insert-layer grouped overlay group 0)
+    (gimp-layer-set-offsets overlay 2 30)
+    (save-xcf grouped "v28_group.xcf")
+    (export-reference grouped "v28_group.png")))
+
+; Interoperability: open an OpenRaster file written by Convertible.
+(let* ((ora (car (file-openraster-load RUN-NONINTERACTIVE "ours.ora" "ours.ora"))))
+  (export-reference ora "ours_ora_in_gimp.png"))

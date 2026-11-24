@@ -1,0 +1,8 @@
+{
+  "name": "libjxl",
+  "version": "0.13.0",
+  "license": "BSD-3-Clause (lib, with the PATENTS grant); third_party/highway: Apache-2.0 OR BSD-3-Clause (highway 1.2.0); third_party/brotli: MIT; third_party/skcms: BSD-3-Clause",
+  "url": "https://github.com/libjxl/libjxl",
+  "commit": "v0.13.0; highway 457c891775a7397bdb0376bb1031e6e027af1c48, brotli db24a98aed38a16de78cc05ca15cdd8dc2a0d92d, skcms 96d9171c94b937a1b5f0293de7309ac16311b722 (the submodule commits pinned by libjxl v0.13.0)",
+  "files_modified": true
+}
