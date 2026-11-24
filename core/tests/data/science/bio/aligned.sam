@@ -1,0 +1,5 @@
+@HD	VN:1.6	SO:coordinate
+@SQ	SN:chrT	LN:1000
+@SQ	SN:chrU	LN:500
+r001	99	chrT	100	60	8M2I	=	200	110	ACGTACGTAC	IIIIIHHHHH	NM:i:1	XS:Z:tag text	XF:f:1.5	XB:B:C,1,2,3
+r002	4	*	0	0	*	*	0	0	GGGTTT	*

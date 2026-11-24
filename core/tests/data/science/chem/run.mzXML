@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<mzXML xmlns="http://sashimi.sourceforge.net/schema_revision/mzXML_3.1" 
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:schemaLocation="http://sashimi.sourceforge.net/schema_revision/mzXML_3.1 http://sashimi.sourceforge.net/schema_revision/mzXML_3.1/mzXML_idx_3.1.xsd">
+	<msRun scanCount="2" startTime="PT90S" endTime="PT105S" >
+		<parentFile fileName="" fileType="processedData" fileSha1="0000000000000000000000000000000000000000"/>
+		<dataProcessing>
+			<software type="processing" name="" version=""/>
+		</dataProcessing>
+		<scan num="1" msLevel="1" peaksCount="4" polarity="any" retentionTime="PT90S" basePeakMz="200.25">
+			<peaks precision="32" byteOrder="network" contentType="m/z-int" compressionType="none" compressedLen="0" >QskAAER6AABDSEAARRxIAEOWEABCSQAAQ8gIAEDgAAA=</peaks>
+			<scan num="2" msLevel="2" peaksCount="2" polarity="any" retentionTime="PT105S" basePeakMz="151.5">
+				<peaks precision="32" byteOrder="network" contentType="m/z-int" compressionType="none" compressedLen="0" >QxYAAEEgAABDF4AAQaAAAA==</peaks>
+			</scan>
+		</scan>
+	</msRun>
+<index name = "scan" >
+<offset id = "1" >585</offset>
+<offset id = "2" >849</offset>
+</index>
+<indexOffset>1122</indexOffset>
+</mzXML>

@@ -1,0 +1,5 @@
+chrT	test	transcript	100	900	.	+	.	transcript_id "mrna1"; gene_id "gene1"
+chrT	test	exon	100	300	.	+	.	transcript_id "mrna1"; gene_id "gene1";
+chrT	test	exon	500	900	.	+	.	transcript_id "mrna1"; gene_id "gene1";
+chrT	test	CDS	150	300	.	+	0	transcript_id "mrna1"; gene_id "gene1";
+chrT	test	CDS	500	800	.	+	2	transcript_id "mrna1"; gene_id "gene1";

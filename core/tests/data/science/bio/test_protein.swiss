@@ -1,0 +1,20 @@
+ID   TEST1_SYNTH             Reviewed;          30 AA.
+AC   Q00000; Q00001;
+DT   01-JAN-2000, integrated into UniProtKB/Swiss-Prot.
+DT   01-JAN-2000, sequence version 1.
+DT   01-JAN-2000, entry version 1.
+DE   RecName: Full=Synthetic test protein 1;
+GN   Name=tst1;
+OS   synthetic construct.
+OC   other entries; artificial sequences.
+OX   NCBI_TaxID=32630;
+CC   -!- FUNCTION: Made-up entry used to test a flat file parser; it has no
+CC       biological meaning.
+KW   Reference proteome; Test entry.
+FT   CHAIN           1..30
+FT                   /note="Synthetic test protein 1"
+FT   DOMAIN          5..20
+FT                   /note="Made-up domain"
+SQ   SEQUENCE   30 AA;  3337 MW;  0000000000000000 CRC64;
+     MKTAYIAKQR QISFVKSHFS RQLEERLGLI
+//

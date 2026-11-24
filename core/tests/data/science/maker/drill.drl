@@ -1,0 +1,15 @@
+M48
+; drill file for tests
+METRIC,TZ
+T1C0.300
+T2C1.000
+%
+G90
+G05
+T1
+X2.5Y3.0
+X0.0Y0.0
+T2
+X5.0Y0.0
+T0
+M30

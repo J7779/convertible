@@ -1,0 +1,8 @@
+GIMP Palette
+Name: Four colours
+Columns: 4
+#
+255   0   0	Red
+  0 128   0	Dark green
+  0   0 255	Blue
+250 250 210	Light goldenrod

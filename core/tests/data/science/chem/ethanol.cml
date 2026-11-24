@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<molecule id="ethanol" xmlns="http://www.xml-cml.org/schema">
+ <atomArray>
+  <atom id="a1" elementType="C" hydrogenCount="3" x3="-0.914600" y3="0.284300" z3="0.060900"/>
+  <atom id="a2" elementType="C" hydrogenCount="2" x3="0.422100" y3="-0.366000" z3="-0.214100"/>
+  <atom id="a3" elementType="O" hydrogenCount="1" x3="1.449100" y3="0.546200" z3="0.058600"/>
+  <atom id="a4" elementType="H" hydrogenCount="0" x3="-1.695300" y3="-0.082500" z3="-0.650400"/>
+  <atom id="a5" elementType="H" hydrogenCount="0" x3="-0.882100" y3="1.394300" z3="-0.076800"/>
+  <atom id="a6" elementType="H" hydrogenCount="0" x3="-1.225400" y3="0.057800" z3="1.096800"/>
+  <atom id="a7" elementType="H" hydrogenCount="0" x3="0.484600" y3="-1.229300" z3="0.496400"/>
+  <atom id="a8" elementType="H" hydrogenCount="0" x3="0.477100" y3="-0.785600" z3="-1.226200"/>
+  <atom id="a9" elementType="H" hydrogenCount="0" x3="1.884600" y3="0.180700" z3="0.882100"/>
+ </atomArray>
+ <bondArray>
+  <bond atomRefs2="a1 a2" order="1"/>
+  <bond atomRefs2="a2 a3" order="1"/>
+  <bond atomRefs2="a1 a4" order="1"/>
+  <bond atomRefs2="a1 a5" order="1"/>
+  <bond atomRefs2="a1 a6" order="1"/>
+  <bond atomRefs2="a2 a7" order="1"/>
+  <bond atomRefs2="a2 a8" order="1"/>
+  <bond atomRefs2="a3 a9" order="1"/>
+ </bondArray>
+</molecule>

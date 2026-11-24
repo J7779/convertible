@@ -1,0 +1,12 @@
+; square with a rounded corner, mm
+G21
+G90
+G0 Z5
+G0 X0 Y0
+G1 Z-1 F100
+G1 X10 Y0 F600
+G1 X10 Y10
+G2 X0 Y20 I-10 J0
+G1 X0 Y0
+G0 Z5
+M30

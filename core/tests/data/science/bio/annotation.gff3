@@ -1,0 +1,9 @@
+##gff-version 3
+# gffread v0.12.7
+# gffread in.gff3 -F -O -o annotation.gff3
+chrT	test	gene	100	900	.	+	.	ID=gene1;Name=tstA
+chrT	test	mRNA	100	900	.	+	.	ID=mrna1;Parent=gene1
+chrT	test	exon	100	300	.	+	.	Parent=mrna1
+chrT	test	exon	500	900	.	+	.	Parent=mrna1
+chrT	test	CDS	150	300	.	+	0	Parent=mrna1
+chrT	test	CDS	500	800	.	+	2	Parent=mrna1

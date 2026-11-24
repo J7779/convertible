@@ -1,0 +1,30 @@
+ID   TEST0001; SV 1; circular; DNA; ; SYN; 95 BP.
+XX
+AC   TEST0001;
+XX
+DE   Synthetic test construct for parser checks
+XX
+KW   test
+KW   parser
+XX
+OS   synthetic construct
+OC   other sequences; artificial sequences.
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..95
+FT                   /organism="synthetic construct"
+FT                   /mol_type="other DNA"
+FT   CDS             1..15
+FT                   /gene="tstA"
+FT                   /codon_start=1
+FT                   /translation="MAKR"
+FT                   /note="a long note that will need to wrap across more than
+FT                   one line in the flat file output format"
+FT   misc_feature    complement(21..40)
+FT                   /label="reverse bit"
+XX
+SQ   Sequence 95 BP; 25 A; 22 C; 24 G; 24 T; 0 other;
+     atggctaaac gttgaacgta cgtacgtacg tacgtacgta cgtacgtacg tacgtacgta        60
+     cgtacgtacg tacgtacgta cgtacgtacg tacgt                                   95
+//
