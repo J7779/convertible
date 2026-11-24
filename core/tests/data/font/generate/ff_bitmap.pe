@@ -1,0 +1,8 @@
+# FontForge native script: $1 = source font, $2 = output basename (no extension)
+Open($1)
+BitmapsAvail([16])
+BitmapsRegen([16])
+Generate($2 + ".bdf", "bdf")
+Generate($2 + ".otb", "otb", 0x800000)
+Generate($2 + ".fnt", "fnt")
+Generate($2 + ".fon", "fon")
