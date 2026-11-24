@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      
+      <authoring_tool>Blender 4.1.1 commit date:2024-04-15, commit time:15:11, hash:e1743a0317bc</authoring_tool>
+    </contributor>
+    <created>2000-01-01T00:00:00</created>
+    <modified>2000-01-01T00:00:00</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_geometries>
+    <geometry id="Star-mesh" name="Star">
+      <mesh>
+        <source id="Star-mesh-positions">
+          <float_array id="Star-mesh-positions-array" count="30">0 0 1 -0.235114 0 0.3236068 -0.9510565 0 0.309017 -0.3804226 0 -0.1236068 -0.5877853 0 -0.809017 0 0 -0.4 0.5877853 0 -0.809017 0.3804226 0 -0.1236068 0.9510565 0 0.309017 0.235114 0 0.3236068</float_array>
+          <technique_common>
+            <accessor source="#Star-mesh-positions-array" count="10" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Star-mesh-normals">
+          <float_array id="Star-mesh-normals-array" count="24">0 -1 0 0 -1 0 0 -1 0 0 -1 0 0 -1 0 0 -1 0 0 -1 0 0 -1 0</float_array>
+          <technique_common>
+            <accessor source="#Star-mesh-normals-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Star-mesh-vertices">
+          <input semantic="POSITION" source="#Star-mesh-positions"/>
+        </vertices>
+        <triangles count="8">
+          <input semantic="VERTEX" source="#Star-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Star-mesh-normals" offset="1"/>
+          <p>5 0 7 0 9 0 9 1 0 1 1 1 1 2 2 2 3 2 3 3 4 3 5 3 5 4 6 4 7 4 7 5 8 5 9 5 9 6 1 6 3 6 3 7 5 7 9 7</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Star" name="Star" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <instance_geometry url="#Star-mesh" name="Star"/>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<amf unit="millimeter" version="1.1">
+<metadata type="name">Synthetic AMF</metadata>
+<material id="1"><metadata type="name">Red</metadata><color><r>1</r><g>0</g><b>0</b><a>1</a></color></material>
+<object id="0"><metadata type="name">Cube</metadata><mesh><vertices>
+<vertex><coordinates><x>-0.5</x><y>-0.5</y><z>-0.5</z></coordinates><color><r>0.0</r><g>0.0</g><b>0.0</b></color></vertex>
+<vertex><coordinates><x>0.5</x><y>-0.5</y><z>-0.5</z></coordinates><color><r>1.0</r><g>0.0</g><b>0.0</b></color></vertex>
+<vertex><coordinates><x>0.5</x><y>0.5</y><z>-0.5</z></coordinates><color><r>0.0</r><g>1.0</g><b>0.0</b></color></vertex>
+<vertex><coordinates><x>-0.5</x><y>0.5</y><z>-0.5</z></coordinates><color><r>1.0</r><g>1.0</g><b>0.0</b></color></vertex>
+<vertex><coordinates><x>-0.5</x><y>-0.5</y><z>0.5</z></coordinates><color><r>0.0</r><g>0.0</g><b>1.0</b></color></vertex>
+<vertex><coordinates><x>0.5</x><y>-0.5</y><z>0.5</z></coordinates><color><r>1.0</r><g>0.0</g><b>1.0</b></color></vertex>
+<vertex><coordinates><x>0.5</x><y>0.5</y><z>0.5</z></coordinates><color><r>0.0</r><g>1.0</g><b>1.0</b></color></vertex>
+<vertex><coordinates><x>-0.5</x><y>0.5</y><z>0.5</z></coordinates><color><r>1.0</r><g>1.0</g><b>1.0</b></color></vertex>
+</vertices><volume materialid="1">
+<triangle><v1>0</v1><v2>3</v2><v3>2</v3></triangle>
+<triangle><v1>0</v1><v2>2</v2><v3>1</v3></triangle>
+<triangle><v1>4</v1><v2>5</v2><v3>6</v3></triangle>
+<triangle><v1>4</v1><v2>6</v2><v3>7</v3></triangle>
+<triangle><v1>0</v1><v2>1</v2><v3>5</v3></triangle>
+<triangle><v1>0</v1><v2>5</v2><v3>4</v3></triangle>
+<triangle><v1>1</v1><v2>2</v2><v3>6</v3></triangle>
+<triangle><v1>1</v1><v2>6</v2><v3>5</v3></triangle>
+<triangle><v1>2</v1><v2>3</v2><v3>7</v3></triangle>
+<triangle><v1>2</v1><v2>7</v2><v3>6</v3></triangle>
+<triangle><v1>3</v1><v2>0</v2><v3>4</v3></triangle>
+<triangle><v1>3</v1><v2>4</v2><v3>7</v3></triangle>
+</volume></mesh></object>
+<constellation id="10"><instance objectid="0"><deltax>3</deltax><deltay>0</deltay><deltaz>0</deltaz><rz>90</rz></instance><instance objectid="0"><deltax>-3</deltax></instance></constellation></amf>

@@ -1,0 +1,44 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v5.3.0)
+
+mtllib cube_hand_assimp_reference.mtl
+
+# 8 vertex positions
+v -0.5 -0.5 -0.5
+v -0.5 0.5 -0.5
+v 0.5 0.5 -0.5
+v 0.5 -0.5 -0.5
+v -0.5 -0.5 0.5
+v 0.5 -0.5 0.5
+v 0.5 0.5 0.5
+v -0.5 0.5 0.5
+
+# 4 UV coordinates
+vt 0 1 0
+vt 1 0 0
+vt 0 0 0
+vt 1 1 0
+
+# 6 vertex normals
+vn 0 0 -1
+vn 0 0 1
+vn 0 -1 0
+vn 1 0 0
+vn 0 1 0
+vn -1 0 0
+
+# Mesh '' with 12 faces
+usemtl Blue
+f  1/1/1 2/2/1 3/3/1
+f  1/1/1 3/3/1 4/4/1
+f  5/1/2 6/4/2 7/3/2
+f  5/1/2 7/3/2 8/2/2
+f  1/1/3 4/4/3 6/4/3
+f  1/1/3 6/4/3 5/1/3
+f  4/4/4 3/3/4 7/3/4
+f  4/4/4 7/3/4 6/4/4
+f  3/3/5 2/2/5 8/2/5
+f  3/3/5 8/2/5 7/3/5
+f  2/2/6 1/1/6 5/1/6
+f  2/2/6 5/1/6 8/2/6
+
