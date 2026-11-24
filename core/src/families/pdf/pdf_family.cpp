@@ -263,6 +263,7 @@ void register_pdf(Registry& registry) {
   blob_writer.kind = Kind::Blob;
   blob_writer.write = write_blob;
   blob_writer.write_cost = 8;
+  blob_writer.same_format_only = true;  // rewrites PDF files only, not every file read as bytes
   blob_writer.write_options = {
       password_option(),
       pages_option(),

@@ -151,6 +151,8 @@ ir::ColorInfo color_info_from_cicp(const PictureColor& color, std::uint32_t widt
   }
   info.range = color.full_range ? ir::ColorRange::Full : ir::ColorRange::Limited;
   info.siting = color.chroma_sample_position == 2 ? ir::ChromaSiting::TopLeft : ir::ChromaSiting::Left;
+  info.primaries = color.color_primaries;
+  info.transfer = color.transfer_characteristics;
   return info;
 }
 

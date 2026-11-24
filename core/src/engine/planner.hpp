@@ -42,7 +42,9 @@ struct Plan {
   [[nodiscard]] std::string describe() const;
 };
 
-/// Choose the cheapest route from `source_id` to `target_id` (canonical ids):
+/// Choose the cheapest route from `source_id` to `target_id` (canonical ids),
+/// skipping bridges that exclude the target's category and same-format-only
+/// writers when the formats differ:
 /// reader(source, k1) -> 0..2 bridges -> writer(target, k2), minimising the
 /// summed cost. Ties are broken deterministically: fewer bridges, then fewer
 /// lossy steps, then earlier registration.
@@ -64,10 +66,19 @@ struct TargetInfo {
   /// True when the target is the source format itself: a re-encode, offered
   /// by UIs as "Compress" / "Optimise".
   bool same_format = false;
+  /// Bridges on the route (0 = the target reads the same kind as the source).
+  int bridges = 0;
+  /// True when the route only sees the file's bytes (the implicit Blob
+  /// reader): Base64, hex, checksums and other universal byte targets.
+  bool byte_level = false;
 };
 
-/// Every format `source_id` can be converted to, most relevant first: same
-/// category as the source, then lossless, then by popularity, then by id.
+/// Every format `source_id` can be converted to, most relevant first: the
+/// source's own category by popularity; then real conversions to other
+/// categories (fewer bridges first, then lossless before lossy, then by
+/// popularity); then the universal byte-level targets; ties by id. Routes through a bridge that
+/// excludes the target's category (Bridge::excluded_target_categories) and
+/// same-format-only writers of other formats are never offered.
 /// Empty when the source id is unknown.
 [[nodiscard]] std::vector<TargetInfo> list_targets(const Registry& registry, std::string_view source_id);
 

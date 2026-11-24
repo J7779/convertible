@@ -270,9 +270,17 @@ std::vector<const FormatInfo*> Registry::formats_with_extension(std::string_view
     const bool a_primary = a->extensions.front() == extension;
     const bool b_primary = b->extensions.front() == extension;
     if (a_primary != b_primary) return a_primary;
+    const bool a_family = described_by_family(a->id);
+    const bool b_family = described_by_family(b->id);
+    if (a_family != b_family) return a_family;
     return by_popularity(a, b);
   });
   return out;
+}
+
+bool Registry::described_by_family(std::string_view id) const {
+  const auto it = formats_.find(id);
+  return it != formats_.end() && it->second.authoritative;
 }
 
 std::vector<const Codec*> Registry::codecs_for(std::string_view format_id) const {
@@ -334,10 +342,24 @@ std::vector<std::string> Registry::validate() const {
   }
   // Two formats may share an extension only if at most one of them has no
   // way of telling by content; otherwise detection would be a coin toss.
+  // A family's format and a detection-only database entry may share an
+  // untested extension: the family's format wins (formats_with_extension and
+  // detection rank it first), so only collisions within one group count.
   std::map<std::string, std::string, std::less<>> untested_owner;
+  std::map<std::string, std::string, std::less<>> untested_known_owner;
   for (const auto& [id, entry] : formats_) {
     const FormatInfo& info = entry.info;
     if (!info.signatures.empty() || info.sniff) continue;
+    if (!entry.authoritative) {
+      for (const std::string& extension : info.extensions) {
+        const auto [it, inserted] = untested_known_owner.emplace(extension, id);
+        if (!inserted) {
+          problem(std::format("formats '{}' and '{}' both claim extension '{}' without signatures or a sniff function",
+                              it->second, id, extension));
+        }
+      }
+      continue;
+    }
     for (const std::string& extension : info.extensions) {
       const auto [it, inserted] = untested_owner.emplace(extension, id);
       if (!inserted) {
@@ -357,6 +379,22 @@ std::vector<std::string> Registry::validate() const {
     const std::string owner = std::format("codec {}/{}", codec.format_id, kind_name(codec.kind));
     check_specs(owner, codec.read_options);
     check_specs(owner, codec.write_options);
+  }
+  // Ownership: one family owns each (format, kind) direction. Two readers (or
+  // two writers) of the same kind for one format mean two families claim it,
+  // and which one runs would depend on costs and registration order.
+  {
+    std::map<std::string, int, std::less<>> readers;
+    std::map<std::string, int, std::less<>> writers;
+    for (const Codec& codec : codecs_) {
+      const std::string key = std::format("{}/{}", codec.format_id, kind_name(codec.kind));
+      if (codec.read && ++readers[key] == 2) {
+        problem(std::format("format '{}' has two {} readers: one family must own it", codec.format_id, kind_name(codec.kind)));
+      }
+      if (codec.write && ++writers[key] == 2) {
+        problem(std::format("format '{}' has two {} writers: one family must own it", codec.format_id, kind_name(codec.kind)));
+      }
+    }
   }
   for (const Bridge& bridge : bridges_) {
     if (!bridge.fn) problem(std::format("bridge {} -> {} has no function", kind_name(bridge.from), kind_name(bridge.to)));

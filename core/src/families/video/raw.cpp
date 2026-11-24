@@ -7,6 +7,8 @@
 #include <charconv>
 #include <cmath>
 #include <format>
+#include <numeric>
+#include <optional>
 
 #include "codec/ids.hpp"
 #include "families/video/adapt.hpp"
@@ -182,6 +184,7 @@ Result<std::shared_ptr<Demuxed>> demux_y4m(ByteView input, const ReadSettings& s
 // =========================================================================== raw elementary streams
 
 Result<std::shared_ptr<Demuxed>> demux_raw(ByteView input, const ReadSettings& settings, std::string_view codec, double fps) {
+  const double clock = fps > 0 ? fps : 25.0;  // 0 = not chosen by the user
   auto out = std::make_shared<Demuxed>();
   out->input = input;
   TrackInfo t;
@@ -195,7 +198,7 @@ Result<std::shared_ptr<Demuxed>> demux_raw(ByteView input, const ReadSettings& s
     util::ByteReader r(input);
     std::optional<std::size_t> unit_start;
     std::int64_t n = 0;
-    const auto d = static_cast<std::int64_t>(std::llround(90000.0 / fps));
+    const auto d = static_cast<std::int64_t>(std::llround(90000.0 / clock));
     const auto close = [&](std::size_t end) {
       if (!unit_start || end <= *unit_start) return;
       const ByteView unit = input.subspan(*unit_start, end - *unit_start);
@@ -245,12 +248,38 @@ Result<std::shared_ptr<Demuxed>> demux_raw(ByteView input, const ReadSettings& s
     t.width = seq->width;
     t.height = seq->height;
     if (seq->fps_num > 0) t.fps = ir::Rational{seq->fps_num, seq->fps_den};
-    split_mpeg12_video(*out, t, es, {}, fps);
+    split_mpeg12_video(*out, t, es, {}, clock);
   } else {
-    if (!bits::starts_with_start_code(input)) return fail(Status::Decode, "not an Annex-B {} stream", codec);
-    split_annexb_video(*out, t, es, {}, fps);
-    if (codec == id::h264) derive_h264_pts(*out, t);
-    t.fps = ir::Rational{static_cast<std::int64_t>(std::llround(fps * 1000)), 1000};
+    const bool hevc = codec == id::hevc;
+    const std::string_view name = hevc ? "HEVC" : "H.264";
+    if (!bits::starts_with_start_code(input)) return fail(Status::Decode, "not an Annex-B {} stream", name);
+    // The first sequence parameter set gives the picture size and the VUI frame rate.
+    std::optional<bits::SpsInfo> sps;
+    for (const ByteView nal : bits::split_annexb(input.first(std::min<std::size_t>(input.size(), 1u << 20)))) {
+      if ((hevc ? bits::hevc_nal_type(nal) : bits::h264_nal_type(nal)) != (hevc ? 33 : 7)) continue;
+      sps = hevc ? bits::parse_hevc_sps(nal) : bits::parse_h264_sps(nal);
+      if (sps) break;
+    }
+    if (!sps) return fail(Status::Decode, "not an {} stream: no valid sequence parameter set found", name);
+    CVT_TRY(settings.limits.check_pixels(sps->width, sps->height));
+    t.width = sps->width;
+    t.height = sps->height;
+    ir::Rational rate{static_cast<std::int64_t>(std::llround(fps * 1000)), 1000};
+    if (fps <= 0) {
+      rate = {25, 1};
+      if (sps->fps_num > 0 && sps->fps_den > 0) {
+        const double vui = static_cast<double>(sps->fps_num) / sps->fps_den;
+        if (vui >= 1.0 && vui <= 1000.0) rate = {sps->fps_num, sps->fps_den};
+      }
+      const std::int64_t g = std::gcd(rate.num, rate.den);
+      rate = {rate.num / g, rate.den / g};
+    }
+    split_annexb_video(*out, t, es, {}, rate.value());
+    // Every picture lasts one frame; raw streams have no other clock.
+    const auto d = static_cast<std::int64_t>(std::llround(90000.0 / rate.value()));
+    for (PacketRef& p : t.packets) p.duration = d;
+    derive_h264_pts(*out, t, true);
+    t.fps = rate;
   }
   out->tracks.push_back(std::move(t));
   CVT_TRY(finish_demux(*out, "raw video"));

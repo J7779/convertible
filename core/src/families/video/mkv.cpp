@@ -151,10 +151,12 @@ void map_codec(const std::string& codec_id, MkvTrack& t, ByteView priv) {
   else if (codec_id == "V_MJPEG") set(id::mjpeg);
   else if (codec_id == "V_PRORES") set(id::prores);
   else if (codec_id == "V_UNCOMPRESSED") set(id::rawvideo);
+  else if (codec_id == "V_FFV1") set(id::ffv1);
   else if (codec_id == "V_MS/VFW/FOURCC") {
     if (priv.size() >= 40) {
       util::ByteReader r(priv);
-      r.skip(16);
+      r.skip(14);
+      info.bits_per_sample = r.u16le();  // biBitCount: the coded depth
       const std::uint32_t compression = std::byteswap(r.u32le());
       set(codec_for_bitmap_fourcc(compression));
       info.tag = bits::fourcc_text(compression);
@@ -627,6 +629,8 @@ std::string_view mkv_codec_id(std::string_view codec, std::uint16_t bits) {
   if (codec == id::mjpeg) return "V_MJPEG";
   if (codec == id::prores) return "V_PRORES";
   if (codec == id::rawvideo) return "V_UNCOMPRESSED";
+  if (codec == id::ffv1) return "V_FFV1";
+  if (codec == id::huffyuv || codec == id::utvideo) return "V_MS/VFW/FOURCC";
   if (codec == id::aac) return "A_AAC";
   if (codec == id::mp3) return "A_MPEG/L3";
   if (codec == id::mp2) return "A_MPEG/L2";
@@ -828,6 +832,15 @@ class MkvMuxer final : public Muxer {
     if (c == id::vorbis || c == id::theora) {
       if (extra.empty()) return fail(Status::Encode, "the {} stream has no setup headers", c);
       return extra;
+    }
+    if (c == id::huffyuv || c == id::utvideo) {
+      // V_MS/VFW/FOURCC: a BITMAPINFOHEADER followed by the codec's own data.
+      util::ByteWriter w;
+      w.u32le(40 + static_cast<std::uint32_t>(extra.size())).i32le(static_cast<std::int32_t>(t.desc.width));
+      w.i32le(static_cast<std::int32_t>(t.desc.height)).u16le(1).u16le(t.desc.bits_per_sample != 0 ? t.desc.bits_per_sample : 16);
+      w.u32le(std::byteswap(bitmap_fourcc_for_codec(c))).u32le(0).zeros(16);
+      w.bytes(extra);
+      return w.take();
     }
     if (c == id::rawvideo || c == id::vp8 || c == id::vp9 || c.starts_with("pcm_") || c == id::mp3 || c == id::mp2 ||
         c == id::ac3) {

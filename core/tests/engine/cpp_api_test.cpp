@@ -12,6 +12,16 @@
 #include "util/json.hpp"
 
 namespace {
+
+// Field by field: GCC flags designated initializers that leave members out
+// (-Wmissing-field-initializers), and the tests build warning-free.
+cvt::ConvertParams make_params(std::string target, std::string source = {}, std::string options = {}) {
+  cvt::ConvertParams p;
+  p.target = std::move(target);
+  p.source = std::move(source);
+  p.options_json = std::move(options);
+  return p;
+}
 std::span<const std::uint8_t> u8(std::string_view text) {
   return {reinterpret_cast<const std::uint8_t*>(text.data()), text.size()};
 }
@@ -67,7 +77,7 @@ TEST_CASE("cpp api: conversions") {
   CHECK_FALSE(failed.message().empty());
   CHECK(failed.data().empty());
 
-  cvt::Conversion moved = cvt::convert(u8("Hi!"), {.target = "hex", .source = "txt"});
+  cvt::Conversion moved = cvt::convert(u8("Hi!"), make_params("hex", "txt"));
   cvt::Conversion owner = std::move(moved);
   CHECK(text_of(owner) == "486921");
 }
@@ -78,10 +88,10 @@ TEST_CASE("cpp api: file conversions") {
   const std::filesystem::path input = temp->path() / cvt::util::path_from_utf8("\xE2\x82\xAC.txt");
   const std::filesystem::path output = temp->path() / "out.b64";
   REQUIRE_OK(cvt::util::write_file(input, cvt::as_bytes("euro")));
-  const cvt::Conversion result = cvt::convert_file(input, output, {.target = "base64", .options_json = R"({"line_width":0})"});
+  const cvt::Conversion result = cvt::convert_file(input, output, make_params("base64", "", R"({"line_width":0})"));
   REQUIRE(result.ok());
   CHECK(result.data().empty());
   CHECK(result.extension() == "b64");
   CHECK(cvt::test::str(*cvt::util::read_file(output)) == "ZXVybw==");
-  CHECK(cvt::convert_file(temp->path() / "missing", output, {.target = "hex"}).status() == CVT_ERR_IO);
+  CHECK(cvt::convert_file(temp->path() / "missing", output, make_params("hex")).status() == CVT_ERR_IO);
 }

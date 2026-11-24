@@ -212,6 +212,10 @@ struct H264Decoder::Impl {
         return fail(Status::Decode, "H.264 video larger than {}x{} pixels ({}x{}) is not supported", max_decode_dimension,
                     max_decode_dimension, parsed->coded_width, parsed->coded_height);
       }
+      if (params.max_pixels > 0 && std::uint64_t{parsed->width} * parsed->height > params.max_pixels) {
+        return fail(Status::Limit, "H.264 picture of {}x{} exceeds the limit of {} pixels", parsed->width, parsed->height,
+                    params.max_pixels);
+      }
       sps = *parsed;
       sps_sets[parsed->id] = Bytes(nal.begin(), nal.end());
     } else if (type == nal_pps) {

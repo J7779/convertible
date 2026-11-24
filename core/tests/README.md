@@ -81,6 +81,16 @@ TEST_CASE("image/png: damaged input is an error") {
 | `test::write_from(format, ir_value, options_json, &warnings, limits)` | run the registered writer (move-only IRs are moved in) |
 | `test::fuzz_reader<ir::T>(format, valid_bytes)` | truncations + deterministic corruptions; must simply return |
 | `test::random_bytes(n, seed)`, `test::all_byte_values()`, `test::bytes("...")`, `test::str(bytes)` | data helpers |
+| `test::read_owned<ir::T>(format, bytes)`, `test::drain(video)`, `test::packets_of(track)` | `support/video_support.hpp`: read while keeping the input alive, pull every frame/sample/packet of an `ir::Video` |
+
+**Lifetime pitfall**: an IR can keep views into the bytes it was read from
+(`ir::Video` always does — it decodes on demand). `read_as<ir::Video>("mp4",
+test::fixture("..."))` reads from a temporary that is gone at the end of the
+statement; keep the bytes in a named variable or use `test::read_owned`.
+
+Cross-family conversions of real files through the public C ABI live in
+`tests/integration/`; tests that need a family not yet in the build check
+the registry and `SKIP` with the reason, so they start running by themselves.
 
 Quality metrics (`support/metrics.hpp`) return NaN when the two sides are not
 comparable (different size, rate, format), so a wrong decode can never pass a

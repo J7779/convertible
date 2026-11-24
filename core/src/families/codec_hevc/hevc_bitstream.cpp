@@ -488,6 +488,8 @@ ir::ColorInfo color_info(const SequenceInfo& sps) noexcept {
     if (sps.chroma_sample_loc_type == 1) color.siting = ir::ChromaSiting::Center;
     if (sps.chroma_sample_loc_type == 2) color.siting = ir::ChromaSiting::TopLeft;
   }
+  color.primaries = sps.colour_primaries;
+  color.transfer = sps.transfer_characteristics;
   return color;
 }
 

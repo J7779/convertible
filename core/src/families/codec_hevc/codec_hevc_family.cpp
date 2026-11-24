@@ -13,7 +13,6 @@ namespace cvt {
 void register_codec_hevc_family(Registry& registry) {
   registry.media().register_video_decoder(codec::id::hevc, [] { return hevc::make_decoder(); });
   registry.media().register_video_encoder(codec::id::hevc, [] { return hevc::make_encoder(); });
-  hevc::register_stream_format(registry);
 }
 
 }  // namespace cvt

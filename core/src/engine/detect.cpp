@@ -90,8 +90,12 @@ std::vector<Detection> detect_candidates(const Registry& registry, ByteView data
     }
   }
 
-  std::ranges::stable_sort(candidates, [](const Detection& a, const Detection& b) {
+  std::ranges::stable_sort(candidates, [&registry](const Detection& a, const Detection& b) {
     if (a.confidence != b.confidence) return a.confidence > b.confidence;
+    // A format a family implements beats a detection-only database entry.
+    const bool a_family = registry.described_by_family(a.format->id);
+    const bool b_family = registry.described_by_family(b.format->id);
+    if (a_family != b_family) return a_family;
     if (a.format->popularity != b.format->popularity) return a.format->popularity > b.format->popularity;
     return a.format->id < b.format->id;
   });

@@ -1307,7 +1307,8 @@ std::string medline_wrap(std::string_view tag, const std::string& value) {
   std::string out;
   std::string line = std::format("{:<4}- ", tag);
   std::size_t width = line.size();
-  for (const std::string_view word : util::split(util::replace_all(value, "\n", " "), ' ', false)) {
+  const std::string split_text = util::replace_all(value, "\n", " ");  // split() returns views into it
+  for (const std::string_view word : util::split(split_text, ' ', false)) {
     if (width > 6 && width + 1 + word.size() > 82) {
       out += line + "\n";
       line = "      ";

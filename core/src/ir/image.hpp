@@ -106,6 +106,19 @@ struct Image {
   /// True when the source stored a single grey channel (plus optional alpha).
   /// A hint only; writers must still look at the pixels.
   bool source_grayscale = false;
+  /// The source file's encoded bytes, kept when a writer can embed them
+  /// unchanged (a JPEG placed in a PDF as DCTDecode, without recompression),
+  /// with their MIME type ("image/jpeg"). Empty when not available. Readers
+  /// fill them only when the bytes show exactly `frames[0]` (no orientation
+  /// applied, a single 8-bit picture) and the file is small enough; ANY
+  /// operation that changes the pixels must clear both (`clear_original()`).
+  Bytes original_bytes;
+  std::string original_mime;
+
+  void clear_original() noexcept {
+    original_bytes.clear();
+    original_mime.clear();
+  }
 
   [[nodiscard]] std::uint32_t width() const noexcept { return frames.empty() ? 0 : frames.front().width; }
   [[nodiscard]] std::uint32_t height() const noexcept { return frames.empty() ? 0 : frames.front().height; }

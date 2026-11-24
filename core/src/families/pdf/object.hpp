@@ -92,9 +92,14 @@ class Object {
   [[nodiscard]] const std::string& as_string() const noexcept;
   [[nodiscard]] const String* string_object() const noexcept { return std::get_if<String>(&value_); }
   /// Empty array when not an array.
-  [[nodiscard]] const Array& as_array() const noexcept;
+  [[nodiscard]] const Array& as_array() const& noexcept;
+  /// On a temporary (`file.get(d, "W").as_array()`): a copy, so that the
+  /// result outlives the temporary (no dangling reference in range-for loops
+  /// or `const Array& x = ...` bindings).
+  [[nodiscard]] Array as_array() const&&;
   /// The dictionary of a dict or stream; empty dict otherwise.
-  [[nodiscard]] const Dict& as_dict() const noexcept;
+  [[nodiscard]] const Dict& as_dict() const& noexcept;
+  [[nodiscard]] Dict as_dict() const&&;
   [[nodiscard]] const Stream* as_stream() const noexcept;
   [[nodiscard]] std::shared_ptr<const Stream> stream_ptr() const noexcept;
   [[nodiscard]] std::shared_ptr<const Dict> dict_ptr() const noexcept;
@@ -157,6 +162,8 @@ struct Stream {
 inline Object::Object(Array v) : value_(std::make_shared<const Array>(std::move(v))) {}
 inline Object::Object(Dict v) : value_(std::make_shared<const Dict>(std::move(v))) {}
 inline Object::Object(Stream v) : value_(std::make_shared<const Stream>(std::move(v))) {}
+inline Array Object::as_array() const&& { return static_cast<const Object&>(*this).as_array(); }
+inline Dict Object::as_dict() const&& { return static_cast<const Object&>(*this).as_dict(); }
 
 /// Serialise an object in PDF syntax (no indirect object wrapper). Streams
 /// are written as their dictionary only.

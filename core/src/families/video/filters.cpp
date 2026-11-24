@@ -5,6 +5,7 @@
 #include <numbers>
 
 #include "codec/colorspace.hpp"
+#include "families/audio_lossless/audio_dsp.hpp"
 #include "families/video/pipeline.hpp"
 
 namespace cvt::video {
@@ -190,19 +191,14 @@ Result<ir::VideoFrame> rotate_frame(const ir::VideoFrame& frame, int degrees) {
 }
 
 // --------------------------------------------------------------------------- audio
+//
+// Through the seam of pipeline.hpp, the pipeline uses the lossless audio
+// family's DSP toolbox (families/audio_lossless/audio_dsp.hpp): the polyphase
+// Kaiser resampler (exact output length, no delay) and the BS.775 mixing
+// matrices, so that audio extracted from a video and audio converted on its
+// own sound the same.
 
 namespace {
-
-double bessel_i0(double x) {
-  double sum = 1.0;
-  double term = 1.0;
-  for (int k = 1; k < 50; ++k) {
-    term *= (x / (2.0 * k)) * (x / (2.0 * k));
-    sum += term;
-    if (term < sum * 1e-17) break;
-  }
-  return sum;
-}
 
 class PassThrough final : public AudioResampler {
  public:
@@ -211,112 +207,34 @@ class PassThrough final : public AudioResampler {
   }
 };
 
-class SincResampler final : public AudioResampler {
+class DspResampler final : public AudioResampler {
  public:
-  SincResampler(std::uint32_t in_rate, std::uint32_t out_rate, std::uint16_t channels)
-      : ratio_(static_cast<double>(in_rate) / out_rate),
-        cutoff_(std::min(1.0, static_cast<double>(out_rate) / in_rate) * 0.97),
-        channels_(channels == 0 ? 1 : channels) {
-    radius_ = static_cast<std::int64_t>(std::min(512.0, std::ceil(16.0 / cutoff_)));
-    beta_i0_ = bessel_i0(beta_);
-  }
-
+  explicit DspResampler(audio::dsp::Resampler resampler) : resampler_(std::move(resampler)) {}
   std::vector<float> process(std::span<const float> interleaved, bool flush) override {
-    buffer_.insert(buffer_.end(), interleaved.begin(), interleaved.end());
-    total_in_ += static_cast<std::int64_t>(interleaved.size() / channels_);
     std::vector<float> out;
-    while (true) {
-      const double pos = static_cast<double>(out_index_) * ratio_;
-      const auto center = static_cast<std::int64_t>(std::floor(pos));
-      if (!flush && center + radius_ >= total_in_) break;
-      if (flush && pos >= static_cast<double>(total_in_)) break;
-      for (std::uint16_t c = 0; c < channels_; ++c) out.push_back(0.0f);
-      float* sample = out.data() + out.size() - channels_;
-      double norm = 0.0;
-      std::vector<double> acc(channels_, 0.0);
-      for (std::int64_t k = center - radius_ + 1; k <= center + radius_; ++k) {
-        const double x = pos - static_cast<double>(k);
-        const double r = x / static_cast<double>(radius_);
-        if (r <= -1.0 || r >= 1.0) continue;
-        const double arg = cutoff_ * x;
-        const double sinc = std::abs(arg) < 1e-12 ? 1.0 : std::sin(std::numbers::pi * arg) / (std::numbers::pi * arg);
-        const double weight = cutoff_ * sinc * bessel_i0(beta_ * std::sqrt(1.0 - r * r)) / beta_i0_;
-        norm += weight;
-        if (k < 0 || k >= total_in_ || k < start_) continue;
-        const std::size_t at = static_cast<std::size_t>(k - start_) * channels_;
-        for (std::uint16_t c = 0; c < channels_; ++c) acc[c] += weight * buffer_[at + c];
-      }
-      const double scale = norm > 0.5 ? 1.0 / norm : 1.0;  // keeps DC exact
-      for (std::uint16_t c = 0; c < channels_; ++c) sample[c] = static_cast<float>(acc[c] * scale);
-      ++out_index_;
-    }
-    // Drop history no longer needed.
-    const double pos = static_cast<double>(out_index_) * ratio_;
-    const std::int64_t keep_from = static_cast<std::int64_t>(std::floor(pos)) - radius_;
-    if (keep_from > start_) {
-      const std::int64_t drop = std::min<std::int64_t>(keep_from - start_, static_cast<std::int64_t>(buffer_.size() / channels_));
-      buffer_.erase(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(drop * channels_));
-      start_ += drop;
-    }
+    if (!interleaved.empty()) resampler_.process(interleaved, out);
+    if (flush) resampler_.flush(out);
     return out;
   }
 
  private:
-  double ratio_;
-  double cutoff_;
-  std::uint16_t channels_;
-  std::int64_t radius_ = 16;
-  double beta_ = 8.0;
-  double beta_i0_ = 1.0;
-  std::vector<float> buffer_;
-  std::int64_t start_ = 0;     // absolute input frame index of buffer_[0]
-  std::int64_t total_in_ = 0;  // input frames received
-  std::int64_t out_index_ = 0;
+  audio::dsp::Resampler resampler_;
 };
 
 }  // namespace
 
 std::unique_ptr<AudioResampler> make_resampler(std::uint32_t in_rate, std::uint32_t out_rate, std::uint16_t channels) {
   if (in_rate == out_rate || in_rate == 0 || out_rate == 0) return std::make_unique<PassThrough>();
-  return std::make_unique<SincResampler>(in_rate, out_rate, channels);
+  audio::dsp::Resampler resampler;
+  if (!resampler.configure(in_rate, out_rate, channels == 0 ? 1 : channels, audio::dsp::ResampleQuality::High)) {
+    return std::make_unique<PassThrough>();  // absurd rates were refused by the encoder settings already
+  }
+  return std::make_unique<DspResampler>(std::move(resampler));
 }
 
 std::vector<float> remix_channels(std::span<const float> in, std::uint16_t from, std::uint16_t to) {
   if (from == to || from == 0 || to == 0) return std::vector<float>(in.begin(), in.end());
-  const std::size_t frames = in.size() / from;
-  std::vector<float> out(frames * to, 0.0f);
-  constexpr float minus3db = 0.70710678f;
-  for (std::size_t f = 0; f < frames; ++f) {
-    const float* s = &in[f * from];
-    float* d = &out[f * to];
-    if (to == 1) {
-      if (from == 2) {
-        d[0] = 0.5f * (s[0] + s[1]);
-      } else {
-        float acc = 0.0f;
-        for (std::uint16_t c = 0; c < from; ++c) acc += s[c];
-        d[0] = acc / from;
-      }
-    } else if (from == 1) {
-      for (std::uint16_t c = 0; c < std::min<std::uint16_t>(to, 2); ++c) d[c] = s[0];
-    } else if (to == 2) {
-      // L R C LFE Ls Rs ...: fold the centre and surrounds into the front pair.
-      float l = s[0];
-      float r = s[1];
-      if (from >= 3) {
-        l += minus3db * s[2];
-        r += minus3db * s[2];
-      }
-      if (from >= 5) l += minus3db * s[4];
-      if (from >= 6) r += minus3db * s[5];
-      const float gain = from >= 5 ? 1.0f / (1.0f + 2.0f * minus3db) : from >= 3 ? 1.0f / (1.0f + minus3db) : 1.0f;
-      d[0] = l * gain;
-      d[1] = r * gain;
-    } else {
-      for (std::uint16_t c = 0; c < std::min(from, to); ++c) d[c] = s[c];
-    }
-  }
-  return out;
+  return audio::dsp::apply_mix(audio::dsp::mix_matrix(from, 0, to, 0), in);
 }
 
 }  // namespace cvt::video

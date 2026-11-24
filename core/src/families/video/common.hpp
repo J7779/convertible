@@ -21,6 +21,7 @@
 #include <string_view>
 #include <vector>
 
+#include "codec/ids.hpp"
 #include "engine/context.hpp"
 #include "engine/errors.hpp"
 #include "ir/video.hpp"
@@ -28,32 +29,30 @@
 
 namespace cvt::video {
 
-/// Codec ids used by containers of this family that codec/ids.hpp lacks.
-/// They label tracks so that messages are precise and so that a codec family
-/// can register a decoder under the same spelling later (proposed for
-/// codec/ids.hpp in the family report).
+/// Former private codec ids of this family, now canonical in codec/ids.hpp
+/// (kept as aliases so existing code keeps compiling).
 namespace cid {
-inline constexpr std::string_view wmv1 = "wmv1";
-inline constexpr std::string_view wmv2 = "wmv2";
-inline constexpr std::string_view wmv3 = "wmv3";
-inline constexpr std::string_view vc1 = "vc1";
-inline constexpr std::string_view msmpeg4v3 = "msmpeg4v3";
-inline constexpr std::string_view flv1 = "flv1";  ///< Sorenson Spark (FLV H.263 flavour)
-inline constexpr std::string_view vp6f = "vp6f";
-inline constexpr std::string_view rv10 = "rv10";
-inline constexpr std::string_view rv20 = "rv20";
-inline constexpr std::string_view rv30 = "rv30";
-inline constexpr std::string_view rv40 = "rv40";
-inline constexpr std::string_view wmav1 = "wmav1";
-inline constexpr std::string_view wmav2 = "wmav2";
-inline constexpr std::string_view wmapro = "wmapro";
-inline constexpr std::string_view eac3 = "eac3";
-inline constexpr std::string_view cook = "cook";
-inline constexpr std::string_view ra_144 = "ra_144";
-inline constexpr std::string_view subrip = "subrip";
-inline constexpr std::string_view webvtt = "webvtt";
-inline constexpr std::string_view mov_text = "mov_text";
-inline constexpr std::string_view ass = "ass";
+inline constexpr std::string_view wmv1 = codec::id::wmv1;
+inline constexpr std::string_view wmv2 = codec::id::wmv2;
+inline constexpr std::string_view wmv3 = codec::id::wmv3;
+inline constexpr std::string_view vc1 = codec::id::vc1;
+inline constexpr std::string_view msmpeg4v3 = codec::id::msmpeg4v3;
+inline constexpr std::string_view flv1 = codec::id::flv1;
+inline constexpr std::string_view vp6f = codec::id::vp6f;
+inline constexpr std::string_view rv10 = codec::id::rv10;
+inline constexpr std::string_view rv20 = codec::id::rv20;
+inline constexpr std::string_view rv30 = codec::id::rv30;
+inline constexpr std::string_view rv40 = codec::id::rv40;
+inline constexpr std::string_view wmav1 = codec::id::wmav1;
+inline constexpr std::string_view wmav2 = codec::id::wmav2;
+inline constexpr std::string_view wmapro = codec::id::wmapro;
+inline constexpr std::string_view eac3 = codec::id::eac3;
+inline constexpr std::string_view cook = codec::id::cook;
+inline constexpr std::string_view ra_144 = codec::id::ra_144;
+inline constexpr std::string_view subrip = codec::id::subrip;
+inline constexpr std::string_view webvtt = codec::id::webvtt;
+inline constexpr std::string_view mov_text = codec::id::mov_text;
+inline constexpr std::string_view ass = codec::id::ass;
 }  // namespace cid
 
 /// A byte range of the input, or of `Demuxed::owned` when `owned` is set.

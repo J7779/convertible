@@ -25,6 +25,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "engine/errors.hpp"
@@ -142,9 +143,38 @@ struct SpsInfo {
   int chroma_format = 1;
   int bit_depth_luma = 8;
   int bit_depth_chroma = 8;
+  /// VUI timing: frames per second = fps_num / fps_den; both 0 when absent.
+  std::uint32_t fps_num = 0;
+  std::uint32_t fps_den = 0;
+  /// VUI sample aspect ratio; 0:0 when unspecified.
+  std::uint32_t sar_num = 0;
+  std::uint32_t sar_den = 0;
+  /// Pictures that may precede another one in decode order but follow it in
+  /// output order (HEVC sps_max_num_reorder_pics; H.264 VUI max_num_reorder_frames
+  /// when stated); nullopt when the stream does not say.
+  std::optional<std::uint32_t> max_num_reorder;
+  /// True for H.264 streams coded as frames only (no field pictures).
+  bool frame_mbs_only = true;
 };
 [[nodiscard]] std::optional<SpsInfo> parse_h264_sps(ByteView nal);
 [[nodiscard]] std::optional<SpsInfo> parse_hevc_sps(ByteView nal);
+
+/// HEVC picture order counts (H.265 8.3.1), one access unit at a time, so
+/// raw streams get presentation times that follow the B-frame reordering.
+class HevcPocTracker {
+ public:
+  HevcPocTracker();
+  ~HevcPocTracker();
+  HevcPocTracker(const HevcPocTracker&) = delete;
+  HevcPocTracker& operator=(const HevcPocTracker&) = delete;
+  /// {POC, starts a coded video sequence} of an access unit (decode order);
+  /// nullopt when its parameter sets are unknown or the slice header is damaged.
+  [[nodiscard]] std::optional<std::pair<std::int64_t, bool>> next(const std::vector<ByteView>& access_unit);
+
+ private:
+  struct State;
+  std::unique_ptr<State> state_;
+};
 
 /// True when an access unit contains an IDR/IRAP picture.
 [[nodiscard]] bool h264_is_keyframe(const std::vector<ByteView>& nals) noexcept;

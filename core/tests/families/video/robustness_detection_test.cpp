@@ -21,7 +21,7 @@ constexpr Sample samples[] = {
     {"aac.m4a", "m4a"},             {"mpeg4_aac.m4v", "m4v"},      {"h264_vorbis.mkv", "mkv"},
     {"vp9_opus.webm", "webm"},      {"mkvmerge_lacing.mka", "mka"}, {"mpeg4_mp3.avi", "avi"},
     {"rawvideo_i420.avi", "avi"},   {"h264_aac.flv", "flv"},       {"flv1_mp3.flv", "flv"},
-    {"h264_aac.ts", "ts"},          {"hevc_ac3.ts", "ts"},         {"mpeg2_mp2.vob", "vob"},
+    {"h264_aac.ts", "mpegts"},          {"hevc_ac3.ts", "mpegts"},         {"mpeg2_mp2.vob", "vob"},
     {"mpeg1_mp2.mpg", "mpg"},       {"theora_vorbis.ogv", "ogv"},  {"opus.ogg", "ogg"},
     {"flac.oga", "ogg"},            {"wmv2_wmav2.wmv", "wmv"},     {"wmav2.wma", "wma"},
     {"vp8.ivf", "ivf"},             {"av1.ivf", "ivf"},            {"i420.y4m", "y4m"},
@@ -71,7 +71,7 @@ TEST_CASE("video/robustness: damaged headers are decode errors with a clear mess
   if (!cut) CHECK(cut.error().message.find("moov") != std::string::npos);
   CHECK_STATUS(test::read_as<ir::Video>("y4m", test::bytes("YUV4MPEG2 W999999 H999999 F25:1\nFRAME\n")), Status::Decode);
   CHECK_STATUS(test::read_as<ir::Video>("y4m", test::bytes("YUV4MPEG2 W60000 H60000 F25:1\nFRAME\n")), Status::Limit);
-  CHECK_STATUS(test::read_as<ir::Video>("ts", test::bytes(std::string(188 * 3, 'G'))), Status::Decode);
+  CHECK_STATUS(test::read_as<ir::Video>("mpegts", test::bytes(std::string(188 * 3, 'G'))), Status::Decode);
   CHECK_STATUS(test::read_as<ir::Video>("mkv", test::bytes("\x1A\x45\xDF\xA3\x80")), Status::Decode);
   // An MP4 sample table that claims more entries than the file could hold.
   Bytes bomb = mp4;
@@ -88,7 +88,11 @@ TEST_CASE("video/robustness: damaged headers are decode errors with a clear mess
     avi[strf + field] = std::byte{0x30};
     avi[strf + field + 1] = std::byte{0x75};
   }
-  auto huge = test::read_as<ir::Video>("avi", avi);
+  // The reader checks the stated picture size against the pixel limit up front.
+  CHECK_STATUS(test::read_as<ir::Video>("avi", avi), Status::Limit);
+  Limits generous;
+  generous.max_pixels = std::uint64_t{30000} * 30000;
+  auto huge = test::read_as<ir::Video>("avi", avi, {}, nullptr, generous);
   REQUIRE_OK(huge);
   auto frames = drain(*huge, 2);
   CHECK(!frames.has_value());
@@ -101,7 +105,7 @@ TEST_CASE("video/detection: every fixture is recognised from its content") {
   } cases[] = {
       {"h264_aac.mp4", "mp4"},         {"h264_aac_cmov.mov", "mp4"}, {"h264_rot90.mov", "mov"},  {"h263_aac.3gp", "3gp"},
       {"aac.m4a", "m4a"},              {"mpeg4_aac.m4v", "m4v"},     {"h264_vorbis.mkv", "mkv"}, {"vp9_opus.webm", "webm"},
-      {"mpeg4_mp3.avi", "avi"},        {"h264_aac.flv", "flv"},      {"h264_aac.ts", "ts"},      {"mpeg2_mp2.vob", "mpg"},
+      {"mpeg4_mp3.avi", "avi"},        {"h264_aac.flv", "flv"},      {"h264_aac.ts", "mpegts"},      {"mpeg2_mp2.vob", "mpg"},
       {"theora_vorbis.ogv", "ogv"},    {"wmv2_wmav2.wmv", "wmv"},    {"wmav2.wma", "wma"},       {"vp8.ivf", "ivf"},
       {"i420.y4m", "y4m"},             {"h264.h264", "h264"},        {"hevc.h265", "hevc"},      {"av1.obu", "obu"},
       {"mpeg2.m2v", "m2v"},            {"rv10_ac3.rm", "rm"},

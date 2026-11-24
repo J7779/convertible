@@ -170,7 +170,7 @@ Result<Bytes> write_sun(const ir::Image& source, WriteContext& ctx) {
 
 void register_sun(Registry& registry) {
   FormatInfo info;
-  info.id = "sun";
+  info.id = "ras";
   info.name = "Sun raster image";
   info.description = "Sun Microsystems raster image.";
   info.category = Category::Image;
@@ -181,7 +181,7 @@ void register_sun(Registry& registry) {
   registry.add_format(std::move(info));
 
   ImageCodecSpec spec;
-  spec.format_id = "sun";
+  spec.format_id = "ras";
   spec.read = reader(read_sun);
   spec.write = writer(write_sun);
   spec.write_options = plain_writer_options();

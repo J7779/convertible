@@ -12,7 +12,8 @@ cvt_add_imported(libtheora
     lib/analyze.c lib/bitpack.c lib/decinfo.c lib/decode.c lib/dequant.c lib/encfrag.c lib/encinfo.c
     lib/encode.c lib/enquant.c lib/fdct.c lib/fragment.c lib/huffdec.c lib/huffenc.c lib/idct.c lib/info.c
     lib/internal.c lib/mathops.c lib/mcenc.c lib/quant.c lib/rate.c lib/state.c lib/tokenize.c
-  INCLUDE_DIRS include ${CVT_CORE_DIR}/src/imported/libogg/include)
+  INCLUDE_DIRS include ${CVT_CORE_DIR}/src/imported/libogg/include
+  PRIVATE_DEFINITIONS _DEFAULT_SOURCE)
 
 # libtheora shifts negative values left (strides of its bottom-up frames,
 # motion vectors): two's complement arithmetic on every supported compiler

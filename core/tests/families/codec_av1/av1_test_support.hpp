@@ -63,7 +63,8 @@ inline std::optional<Ivf> read_ivf(ByteView data) {
 /// MD5 lines of a reference file (comment lines start with '#').
 inline std::vector<std::string> read_md5s(std::string_view fixture_name) {
   std::vector<std::string> out;
-  for (const std::string_view line : util::split(test::fixture_text(fixture_name), '\n')) {
+  const std::string text = test::fixture_text(fixture_name);  // split() returns views into it
+  for (const std::string_view line : util::split(text, '\n')) {
     const std::string_view trimmed = util::trim(line);
     if (trimmed.empty() || trimmed.front() == '#') continue;
     out.emplace_back(trimmed);

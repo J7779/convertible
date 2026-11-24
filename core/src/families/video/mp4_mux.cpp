@@ -542,12 +542,25 @@ class Mp4Muxer final : public Muxer {
       if (codec == codec::id::mjpeg) type = "jpeg";
       if (codec == codec::id::h263) type = "s263";
       if (codec == codec::id::png) type = "png ";
-      if (codec == codec::id::prores) type = "apcn";
+      if (codec == codec::id::prores) {
+        // The ProRes flavour follows the quality the encoder was asked for.
+        const int q = t.desc.quality;
+        type = q >= 90 ? "apch" : q >= 75 ? "apcn" : q >= 55 ? "apcs" : q > 0 ? "apco" : "apcn";
+      }
+      if (codec == codec::id::qtrle) type = "rle ";
+      if (codec == codec::id::rpza) type = "rpza";
+      if (codec == codec::id::smc) type = "smc ";
+      if (codec == codec::id::cinepak) type = "cvid";
+      if (codec == codec::id::uyvy) type = "2vuy";
+      if (codec == codec::id::yuy2) type = "yuvs";
+      if (codec == codec::id::v210) type = "v210";
+      if (codec == codec::id::r210) type = "r210";
       const std::size_t entry = b.open(type);
       auto& w = b.w();
       w.zeros(6).u16be(1).zeros(16);
       w.u16be(static_cast<std::uint16_t>(t.desc.width)).u16be(static_cast<std::uint16_t>(t.desc.height));
-      w.u32be(0x00480000).u32be(0x00480000).u32be(0).u16be(1).zeros(32).u16be(0x18).i16be(-1);
+      const std::uint16_t depth = t.desc.bits_per_sample != 0 ? t.desc.bits_per_sample : 0x18;
+      w.u32be(0x00480000).u32be(0x00480000).u32be(0).u16be(1).zeros(32).u16be(depth).i16be(-1);
       if (codec == codec::id::h264 || codec == codec::id::hevc) {
         if (extradata.empty()) return fail(Status::Encode, "the {} stream carries no parameter sets", codec);
         const std::size_t c = b.open(codec == codec::id::h264 ? "avcC" : "hvcC");
@@ -566,7 +579,10 @@ class Mp4Muxer final : public Muxer {
         info.width = t.desc.width;
         info.height = t.desc.height;
         const std::size_t c = b.open("vpcC");
-        w.bytes(bits::build_vpcc(info));
+        // The encoder's (or source file's) record knows the level and colours
+        // best; only build one from the bitstream when there is none.
+        const bool valid_record = extradata.size() >= 12 && std::to_integer<int>(extradata[0]) == 1;
+        w.bytes(valid_record ? extradata : bits::build_vpcc(info));
         b.close(c);
       } else if (codec == codec::id::mpeg4 || codec == codec::id::mpeg2video || codec == codec::id::mpeg1video) {
         const std::uint8_t oti = codec == codec::id::mpeg4 ? 0x20 : codec == codec::id::mpeg2video ? 0x61 : 0x6A;

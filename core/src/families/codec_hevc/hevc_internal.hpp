@@ -142,7 +142,4 @@ class PocTracker {
 [[nodiscard]] std::unique_ptr<codec::VideoDecoder> make_decoder();
 [[nodiscard]] std::unique_ptr<codec::VideoEncoder> make_encoder();
 
-/// The raw Annex-B stream format ("hevc"): detection, reader and writer.
-void register_stream_format(Registry& registry);
-
 }  // namespace cvt::hevc

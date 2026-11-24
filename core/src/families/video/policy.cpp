@@ -20,15 +20,20 @@ using List = std::vector<std::string_view>;
 
 const List mp4_video = {id::h264, id::hevc, id::av1, id::vp9, id::mpeg4, id::mpeg2video, id::mpeg1video, id::mjpeg, id::vp8};
 const List mp4_audio = {id::aac, id::mp3, id::mp2, id::opus, id::flac, id::alac, id::ac3};
-const List mov_video = {id::h264,       id::hevc,       id::av1,   id::vp9, id::mpeg4, id::mpeg2video,
-                        id::mpeg1video, id::mjpeg,      id::prores, id::png, id::h263};
+const List mov_video = {id::h264,       id::hevc,  id::av1,    id::vp9,   id::mpeg4,   id::mpeg2video,
+                        id::mpeg1video, id::mjpeg, id::prores, id::png,   id::h263,    id::qtrle,
+                        id::rpza,       id::smc,   id::cinepak, id::uyvy, id::yuy2,    id::v210,
+                        id::r210};
 const List mov_audio = {id::aac,      id::mp3,       id::mp2,       id::opus,     id::flac,     id::alac,     id::ac3,
                         id::pcm_s16le, id::pcm_s16be, id::pcm_u8,   id::pcm_alaw, id::pcm_mulaw, id::amr_nb, id::amr_wb};
-const List mkv_video = {id::h264, id::hevc,  id::av1,   id::vp8,    id::vp9,      id::mpeg4,
-                        id::mpeg1video, id::mpeg2video, id::theora, id::mjpeg, id::prores, id::rawvideo};
+const List mkv_video = {id::h264,       id::hevc,       id::av1,    id::vp8,   id::vp9,    id::mpeg4,
+                        id::mpeg1video, id::mpeg2video, id::theora, id::mjpeg, id::prores, id::rawvideo,
+                        id::ffv1,       id::huffyuv,    id::utvideo};
 const List mkv_audio = {id::aac,  id::mp3,       id::mp2,       id::opus,      id::vorbis,    id::flac,  id::alac,
                         id::ac3,  cid::eac3,     id::pcm_s16le, id::pcm_s16be, id::pcm_s24le, id::pcm_f32le, id::pcm_u8};
-const List avi_video = {id::mjpeg, id::mpeg4, id::h264, id::hevc, id::rawvideo, id::mpeg1video, id::mpeg2video, id::vp8, id::h263};
+const List avi_video = {id::mjpeg, id::mpeg4,   id::h264,     id::hevc,    id::rawvideo, id::mpeg1video, id::mpeg2video,
+                        id::vp8,   id::h263,    id::huffyuv,  id::ffv1,    id::utvideo,  id::cinepak,    id::msvideo1,
+                        id::msrle, id::uyvy,    id::yuy2,     id::v210};
 const List avi_audio = {id::pcm_s16le, id::pcm_u8,  id::pcm_s24le, id::pcm_f32le,  id::mp3,       id::mp2,
                         id::aac,       id::ac3,     id::pcm_alaw,  id::pcm_mulaw, id::adpcm_ima, id::adpcm_ms};
 
@@ -67,7 +72,7 @@ const std::vector<ContainerPolicy>& table() {
     add("avi", avi_video, avi_audio, {id::mjpeg, id::mpeg4, id::h264, id::rawvideo}, {id::pcm_s16le, id::mp3}, false, true);
     add("flv", {id::h264, cid::flv1}, {id::aac, id::mp3, id::pcm_s16le, id::pcm_alaw, id::pcm_mulaw, id::speex},
         {id::h264, cid::flv1}, {id::aac, id::mp3}, false, false);
-    add("ts", {id::h264, id::hevc, id::mpeg2video, id::mpeg1video, id::mpeg4}, {id::aac, id::mp2, id::mp3, id::ac3},
+    add("mpegts", {id::h264, id::hevc, id::mpeg2video, id::mpeg1video, id::mpeg4}, {id::aac, id::mp2, id::mp3, id::ac3},
         {id::h264, id::hevc, id::mpeg2video}, {id::aac, id::mp2, id::mp3, id::ac3}, false, false);
     add("ogv", {id::theora}, {id::vorbis, id::opus, id::flac}, {id::theora}, {id::vorbis, id::opus, id::flac}, false, false);
     add("ogg", {}, {id::vorbis, id::opus, id::flac}, {}, {id::vorbis, id::opus, id::flac}, false, false);
@@ -170,7 +175,7 @@ std::unique_ptr<Muxer> make_muxer(std::string_view format_id) {
   if (format_id == "webm") return make_mkv_muxer(true);
   if (format_id == "avi") return make_avi_muxer();
   if (format_id == "flv") return make_flv_muxer();
-  if (format_id == "ts") return make_ts_muxer();
+  if (format_id == "mpegts") return make_ts_muxer();
   if (format_id == "ogv" || format_id == "ogg" || format_id == "opus") return make_ogg_muxer();
   if (format_id == "ivf") return make_ivf_muxer();
   if (format_id == "y4m") return make_y4m_muxer();

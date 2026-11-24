@@ -132,8 +132,13 @@ TEST_CASE("capi: targets") {
     CHECK(keys == std::vector<std::string>{"id", "name", "category", "extensions", "mime", "lossy", "compress"});
     CHECK(target["compress"].as_bool() == (target["id"].as_string() == "txt"));
   }
-  // Same category first: the text re-encode ("compress") leads for a text file.
-  CHECK(targets[std::size_t{0}]["id"].as_string() == "txt");
+  // The source's category comes first, most popular format first; the text
+  // re-encode ("compress") is among them, flagged.
+  const std::string first_category = targets[std::size_t{0}]["category"].as_string();
+  CHECK(first_category == "document");
+  const Json* txt = find_by_id(targets, "txt");
+  REQUIRE(txt != nullptr);
+  CHECK((*txt)["category"].as_string() == first_category);
   CHECK(find_by_id(targets, "base64") != nullptr);
   CHECK(find_by_id(targets, "rot13") != nullptr);
 
@@ -143,8 +148,15 @@ TEST_CASE("capi: targets") {
   CHECK(find_by_id(for_png, "base64") != nullptr);
   CHECK(find_by_id(for_png, "checksums") != nullptr);
   CHECK(find_by_id(for_png, "rot13") == nullptr);
-  CHECK(find_by_id(for_png, "png") == nullptr);  // no PNG codec yet: nothing to "compress" with
-  for (const Json& target : for_png.elements()) CHECK_FALSE(target["compress"].as_bool(true));
+  // PNG has a real reader and writer: it is offered as "compress", and only it.
+  const Json* png = find_by_id(for_png, "png");
+  REQUIRE(png != nullptr);
+  CHECK((*png)["compress"].as_bool(false));
+  for (const Json& target : for_png.elements()) {
+    CHECK(target["compress"].as_bool(true) == (target["id"].as_string() == "png"));
+  }
+  // Same category first: an image converts to images before anything else.
+  CHECK(for_png[std::size_t{0}]["category"].as_string() == "image");
 }
 
 TEST_CASE("capi: option schemas") {

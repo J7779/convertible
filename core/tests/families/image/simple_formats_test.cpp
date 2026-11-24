@@ -202,9 +202,9 @@ TEST_CASE("image/hdr: Radiance files keep HDR precision") {
 }
 
 TEST_CASE("image/farbfeld: 16-bit samples round trip exactly") {
-  const ir::Image ff = misc("farbfeld", "wide.ff");
+  const ir::Image ff = misc("ff", "wide.ff");
   CHECK(wide_error(ff, false) == 0.0);
-  const auto encoded = test::write_from("farbfeld", ff);
+  const auto encoded = test::write_from("ff", ff);
   REQUIRE_OK(encoded);
   CHECK(*encoded == test::fixture("image/misc/wide.ff"));
 }
@@ -255,14 +255,14 @@ TEST_CASE("image/sgi: verbatim, RLE and 16-bit") {
 }
 
 TEST_CASE("image/sun: 24-bit, palette and monochrome") {
-  CHECK(test::pixels_equal(misc("sun", "grad.ras").frames[0], test::gradient_frame(32, 24)));
-  CHECK(test::pixels_equal(misc("sun", "palette.ras").frames[0], palette200()));
-  CHECK(test::pixels_equal(misc("sun", "mono.ras").frames[0], checker()));
+  CHECK(test::pixels_equal(misc("ras", "grad.ras").frames[0], test::gradient_frame(32, 24)));
+  CHECK(test::pixels_equal(misc("ras", "palette.ras").frames[0], palette200()));
+  CHECK(test::pixels_equal(misc("ras", "mono.ras").frames[0], checker()));
   for (const char* opts : {"{}", R"({"rle":true})"}) {
     for (const ir::Frame& f : {photo_frame(41, 30), palette200(), checker()}) {
-      const auto encoded = test::write_from("sun", single(f), opts);
+      const auto encoded = test::write_from("ras", single(f), opts);
       REQUIRE_OK(encoded);
-      CHECK(test::pixels_equal(test::read_as<ir::Image>("sun", *encoded)->frames[0], f));
+      CHECK(test::pixels_equal(test::read_as<ir::Image>("ras", *encoded)->frames[0], f));
     }
   }
 }
@@ -272,8 +272,8 @@ TEST_CASE("image/misc: damaged files are errors, never crashes") {
       {"ppm", "grad.ppm"},      {"ppm", "grad_ascii.ppm"}, {"pbm", "checker.pbm"},   {"pam", "alpha.pam"},
       {"pfm", "wide.pfm"},      {"pgm", "grey16.pgm"},     {"qoi", "alpha.qoi"},     {"tga", "grad_rle.tga"},
       {"tga", "palette.tga"},   {"pcx", "palette.pcx"},    {"pcx", "mono.pcx"},      {"hdr", "wide.hdr"},
-      {"farbfeld", "wide.ff"},  {"wbmp", "checker.wbmp"},  {"xbm", "checker.xbm"},   {"xpm", "palette.xpm"},
-      {"sgi", "grad_rle.sgi"},  {"sgi", "wide16.sgi"},     {"sun", "grad.ras"},      {"sun", "palette.ras"},
+      {"ff", "wide.ff"},  {"wbmp", "checker.wbmp"},  {"xbm", "checker.xbm"},   {"xpm", "palette.xpm"},
+      {"sgi", "grad_rle.sgi"},  {"sgi", "wide16.sgi"},     {"ras", "grad.ras"},      {"ras", "palette.ras"},
   };
   for (const auto& [format, name] : cases) {
     INFO(format, " ", name);
@@ -285,8 +285,8 @@ TEST_CASE("image/misc: detection") {
   const std::pair<const char*, const char*> cases[] = {
       {"grad.ppm", "ppm"},       {"checker.pbm", "pbm"}, {"grey16.pgm", "pgm"}, {"alpha.pam", "pam"},
       {"wide.pfm", "pfm"},       {"alpha.qoi", "qoi"},   {"grad.pcx", "pcx"},   {"wide.hdr", "hdr"},
-      {"wide.ff", "farbfeld"},   {"checker.xbm", "xbm"}, {"palette.xpm", "xpm"}, {"grad_rle.sgi", "sgi"},
-      {"grad.ras", "sun"},       {"alpha.tga", "tga"},
+      {"wide.ff", "ff"},   {"checker.xbm", "xbm"}, {"palette.xpm", "xpm"}, {"grad_rle.sgi", "sgi"},
+      {"grad.ras", "ras"},       {"alpha.tga", "tga"},
   };
   for (const auto& [name, id] : cases) {
     INFO(name);

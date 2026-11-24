@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "codec/codec.hpp"
+#include "codec/ids.hpp"
 #include "codec/registry.hpp"
 
 namespace cvt {
@@ -21,27 +22,27 @@ class Registry;
 
 namespace cvt::legacy {
 
-/// Codec ids used by this family that codec/ids.hpp does not define (yet).
-/// Spelled like the FFmpeg codec names, which containers already map to.
+/// The codec ids of this family: canonical ones alias codec/ids.hpp; dnxhd
+/// and dvvideo are reserved here until they are implemented.
 namespace id {
-inline constexpr std::string_view flv1 = "flv1";            ///< Sorenson Spark (H.263 variant in FLV)
-inline constexpr std::string_view msmpeg4v3 = "msmpeg4v3";  ///< Microsoft MPEG-4 v3 / DivX ;-) 3
+inline constexpr std::string_view flv1 = codec::id::flv1;
+inline constexpr std::string_view msmpeg4v3 = codec::id::msmpeg4v3;
 inline constexpr std::string_view dnxhd = "dnxhd";          ///< Avid DNxHD / DNxHR (SMPTE VC-3)
 inline constexpr std::string_view dvvideo = "dvvideo";      ///< DV25/DV50 (IEC 61834, SMPTE 314M)
-inline constexpr std::string_view huffyuv = "huffyuv";      ///< HuffYUV (HFYU)
-inline constexpr std::string_view ffv1 = "ffv1";            ///< FFV1 (RFC 9043)
-inline constexpr std::string_view utvideo = "utvideo";      ///< Ut Video (ULY0/ULY2/ULH0/ULH2/ULRG/ULRA)
-inline constexpr std::string_view cinepak = "cinepak";      ///< Cinepak (cvid)
-inline constexpr std::string_view msrle = "msrle";          ///< Microsoft RLE (BI_RLE8 / BI_RLE4)
-inline constexpr std::string_view msvideo1 = "msvideo1";    ///< Microsoft Video 1 (CRAM)
-inline constexpr std::string_view qtrle = "qtrle";          ///< QuickTime Animation ('rle ')
-inline constexpr std::string_view rpza = "rpza";            ///< QuickTime Video ('rpza', "Road Pizza")
-inline constexpr std::string_view smc = "smc";              ///< QuickTime Graphics ('smc ')
-inline constexpr std::string_view uyvy = "uyvy";            ///< packed 4:2:2 8-bit U Y V Y ('2vuy', 'UYVY')
-inline constexpr std::string_view yuy2 = "yuy2";            ///< packed 4:2:2 8-bit Y U Y V ('YUY2', 'yuvs')
-inline constexpr std::string_view v210 = "v210";            ///< packed 4:2:2 10-bit ('v210')
-inline constexpr std::string_view bgr24 = "bgr24";          ///< bottom-up or top-down 24-bit BGR (AVI BI_RGB)
-inline constexpr std::string_view r210 = "r210";            ///< packed 10-bit RGB, big-endian words ('r210')
+inline constexpr std::string_view huffyuv = codec::id::huffyuv;
+inline constexpr std::string_view ffv1 = codec::id::ffv1;
+inline constexpr std::string_view utvideo = codec::id::utvideo;
+inline constexpr std::string_view cinepak = codec::id::cinepak;
+inline constexpr std::string_view msrle = codec::id::msrle;
+inline constexpr std::string_view msvideo1 = codec::id::msvideo1;
+inline constexpr std::string_view qtrle = codec::id::qtrle;
+inline constexpr std::string_view rpza = codec::id::rpza;
+inline constexpr std::string_view smc = codec::id::smc;
+inline constexpr std::string_view uyvy = codec::id::uyvy;
+inline constexpr std::string_view yuy2 = codec::id::yuy2;
+inline constexpr std::string_view v210 = codec::id::v210;
+inline constexpr std::string_view bgr24 = codec::id::bgr24;
+inline constexpr std::string_view r210 = codec::id::r210;
 
 /// Every id above.
 inline constexpr std::string_view all[] = {flv1, msmpeg4v3, dnxhd, dvvideo, huffyuv, ffv1, utvideo, cinepak, msrle,

@@ -49,9 +49,11 @@ struct EsStream {
 void split_mpeg12_video(Demuxed& demuxed, TrackInfo& track, const EsStream& es, const std::vector<EsMarker>& markers,
                         double fallback_fps);
 /// Split an Annex-B H.264/HEVC stream into access units (same timing rules).
-/// Give an H.264 track without presentation times (raw stream, AVI) the times
-/// implied by its picture order counts; leaves the track alone when unsure.
-void derive_h264_pts(Demuxed& demuxed, TrackInfo& track);
+/// Give an H.264 or HEVC track without presentation times (raw stream, AVI) the
+/// times implied by its picture order counts; leaves the track alone when
+/// unsure. `zero_based`: shift so that the first picture shown starts at the
+/// first decode time (DTS may become negative), as raw streams have no clock.
+void derive_h264_pts(Demuxed& demuxed, TrackInfo& track, bool zero_based = false);
 void split_annexb_video(Demuxed& demuxed, TrackInfo& track, const EsStream& es, const std::vector<EsMarker>& markers,
                         double fallback_fps);
 

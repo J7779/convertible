@@ -5,6 +5,7 @@
 # is configured or generated at build time.
 cvt_add_imported(libvpx
   C_STANDARD 11
+  PRIVATE_DEFINITIONS _DEFAULT_SOURCE
   INCLUDE_DIRS . config
   SOURCES
     config/vpx_config.c

@@ -15,8 +15,16 @@ using namespace cvt::test::video;
 
 namespace {
 
+// Only the video family plus the fakes: deterministic, independent of the
+// real codec families merged into the build.
 const Registry& fake_registry() {
-  static const TestRegistry instance([](codec::Registry& media) { register_fakes(media); });
+  static const TestRegistry instance([](codec::Registry& media) { register_fakes(media); }, true);
+  return instance.registry;
+}
+
+// The video family alone, without any compressed-video encoder.
+const Registry& bare_registry() {
+  static const TestRegistry instance([](codec::Registry&) {}, true);
   return instance.registry;
 }
 
@@ -89,7 +97,7 @@ std::vector<ir::VideoFrame> reference_frames(std::uint32_t frames, std::uint32_t
 TEST_CASE("video/pipeline: lossless encode through MP4 keeps every frame, its timing and the sound") {
   const Registry& registry = fake_registry();
   for (const char* format : {"mp4", "mkv", "mov", "3gp"}) {  // (TS cannot carry the fake codec's out-of-band size)
-    const bool ts = std::string_view(format) == "ts";
+    const bool ts = std::string_view(format) == "mpegts";
     INFO(format);
     auto encoded = write_with(registry, format, synthetic(25), ts ? R"({"quality":95,"video_codec":"mpeg4"})" : R"({"quality":95})");
     REQUIRE_OK(encoded);
@@ -260,12 +268,20 @@ TEST_CASE("video/pipeline: quality and bitrate change the output size") {
 }
 
 TEST_CASE("video/pipeline: codec choice follows the container policy and the registry") {
-  // Default registry: no H.264/HEVC/AV1/MPEG-4 encoder in this build -> a precise error.
+  // Without any H.264/HEVC/AV1/MPEG-4 encoder -> a precise error.
   const Bytes y4m = test::fixture("video/i420.y4m");
-  const auto mp4 = test::convert(y4m, "y4m", "mp4");
+  const auto mp4 = convert_with(bare_registry(), y4m, "y4m", "mp4");
   CHECK(mp4.status == Status::Encode);
   CHECK(mp4.message.find("h264") != std::string::npos);
   CHECK(mp4.message.find("mp4") != std::string::npos);
+  // The full registry has the real H.264 encoder, which MP4 prefers.
+  if (Registry::instance().media().has_video_encoder("h264")) {
+    const auto real = test::convert(y4m, "y4m", "mp4");
+    REQUIRE(real.ok());
+    auto real_video = test::read_as<ir::Video>("mp4", real.data);
+    REQUIRE_OK(real_video);
+    CHECK(real_video->tracks[0].codec == "h264");
+  }
   // Matroska falls back down its list to raw video.
   const auto mkv = test::convert(y4m, "y4m", "mkv", R"({"video_codec":"rawvideo"})");
   CHECK(mkv.ok());

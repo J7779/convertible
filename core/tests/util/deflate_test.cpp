@@ -1380,12 +1380,48 @@ TEST_CASE("deflate: output is identical on every platform") {
     std::uint32_t crc;
   };
   const std::array<Golden, 4> golden = {
-      {{1, 17335, 2710690842u}, {4, 15223, 3158970588u}, {6, 14402, 2432620333u}, {9, 14222, 1009594540u}}};
+      {{1, 17255, 1552293043u}, {4, 15188, 2844861365u}, {6, 14448, 1470399089u}, {9, 14222, 1009594540u}}};
   for (const Golden& g : golden) {
     const Bytes packed = *deflate_raw(data, g.level);
     CHECK_MESSAGE(packed.size() == g.size, "level ", g.level, " size ", packed.size());
     CHECK_MESSAGE(crc32(packed) == g.crc, "level ", g.level, " crc ", crc32(packed));
     CHECK(*inflate_raw(packed) == data);
+  }
+}
+
+TEST_CASE("deflate: compression ratio does not regress (benchmark guard)") {
+  // Sizes recorded with the 4-byte hash chains + nearest 3-byte match
+  // matcher, with 1 % slack: a faster matcher must not pay in size. (Time is
+  // not checked; the speed-up is measured outside the suite.)
+  Bytes photo;  // PNG-style rows: filter byte "Sub" then RGB differences of a smooth noisy picture
+  {
+    constexpr std::uint32_t w = 400;
+    constexpr std::uint32_t h = 300;
+    std::uint32_t state = 12345;
+    std::vector<std::uint8_t> row(w * 3);
+    for (std::uint32_t y = 0; y < h; ++y) {
+      for (std::uint32_t x = 0; x < w * 3; ++x) {
+        state = state * 1664525u + 1013904223u;
+        const int smooth = 128 + static_cast<int>((x * 7 + y * 5) % 97) - 48;
+        row[x] = static_cast<std::uint8_t>(smooth + static_cast<int>((state >> 24) & 7));
+      }
+      photo.push_back(std::byte{1});
+      for (std::uint32_t i = 0; i < w * 3; ++i) photo.push_back(static_cast<std::byte>(static_cast<std::uint8_t>(row[i] - (i >= 3 ? row[i - 3] : 0))));
+    }
+  }
+  const Bytes text = text_like(300000, 21);
+  struct Bound {
+    const Bytes* data;
+    int level;
+    std::size_t recorded;
+  };
+  const Bound bounds[] = {{&photo, 1, 221002}, {&photo, 6, 217643}, {&photo, 9, 217643},
+                          {&text, 1, 61775},   {&text, 6, 46119},   {&text, 9, 44025}};
+  for (const Bound& b : bounds) {
+    const Bytes packed = *deflate_raw(*b.data, b.level);
+    MESSAGE("level ", b.level, ": ", b.data->size(), " -> ", packed.size());
+    CHECK(packed.size() <= b.recorded + b.recorded / 100);
+    CHECK(*inflate_raw(packed) == *b.data);
   }
 }
 

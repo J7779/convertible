@@ -21,7 +21,6 @@ void register_codecs(Registry& registry) {
 
 void register_codec_h264_family(Registry& registry) {
   h264::register_codecs(registry);
-  h264::register_elementary_stream(registry);
 }
 
 }  // namespace cvt

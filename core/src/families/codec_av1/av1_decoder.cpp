@@ -12,6 +12,7 @@
 // came from; when packets carry no duration, a picture's duration is the
 // distance to the next one, so one picture is held back until then.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include <algorithm>
 #include <cstdint>
 #include <deque>
 #include <limits>
@@ -38,12 +39,48 @@ std::int64_t rescale(std::int64_t value, std::uint32_t from, std::uint32_t to) {
   return q * to + (r * to + from / 2) / from;
 }
 
+/// An identity-matrix picture (planes G, B, R; 4:4:4 unless the stream is
+/// malformed) as RGBA8, expanded from limited range when the stream says so.
+codec::VideoFrame gbr_to_rgba(const Picture& picture) {
+  const ir::VideoFrame& in = picture.frame;
+  codec::VideoFrame out = codec::VideoFrame::allocate(ir::PixelFormat::RGBA8, in.width, in.height);
+  out.pts_ms = in.pts_ms;
+  out.duration_ms = in.duration_ms;
+  const bool wide = ir::bytes_per_sample(in.format) == 2;
+  const int sx = ir::chroma_shift_x(in.format);
+  const int sy = ir::chroma_shift_y(in.format);
+  const bool full = picture.color.full_range;
+  const auto sample = [&](std::size_t plane, std::uint32_t x, std::uint32_t y) -> std::uint32_t {
+    if (plane > 0) {
+      x >>= sx;
+      y >>= sy;
+    }
+    const ir::Plane& p = in.planes[plane];
+    const std::uint8_t* row = p.data.data() + p.stride * y;
+    std::uint32_t v = wide ? (static_cast<std::uint32_t>(row[2 * x]) | (static_cast<std::uint32_t>(row[2 * x + 1]) << 8)) : row[x];
+    if (wide) v = (v + 2) >> 2;  // 10 -> 8 bits
+    if (!full) v = static_cast<std::uint32_t>(std::clamp((static_cast<int>(v) - 16) * 255 / 219, 0, 255));
+    return std::min<std::uint32_t>(v, 255);
+  };
+  for (std::uint32_t y = 0; y < in.height; ++y) {
+    std::uint8_t* dst = out.planes[0].data.data() + out.planes[0].stride * y;
+    for (std::uint32_t x = 0; x < in.width; ++x) {
+      dst[4 * x] = static_cast<std::uint8_t>(sample(2, x, y));      // R
+      dst[4 * x + 1] = static_cast<std::uint8_t>(sample(0, x, y));  // G
+      dst[4 * x + 2] = static_cast<std::uint8_t>(sample(1, x, y));  // B
+      dst[4 * x + 3] = 255;
+    }
+  }
+  return out;
+}
+
 class Av1Decoder final : public codec::VideoDecoder {
  public:
   Result<void> configure(const codec::CodecParams& params) override {
     if (configured_) return fail(Status::Internal, "AV1 decoder configured twice");
     configured_ = true;
     timescale_ = params.timescale == 0 ? 1000 : params.timescale;
+    if (params.max_pixels > 0) max_pixels_ = std::min(max_pixels_, params.max_pixels);
     const ByteView extra = params.extradata;
     if (!extra.empty()) {
       if ((std::to_integer<std::uint8_t>(extra[0]) & 0x80u) != 0) {
@@ -122,7 +159,7 @@ class Av1Decoder final : public codec::VideoDecoder {
   Result<void> check_sequence_header(ByteView payload) {
     CVT_TRY_ASSIGN(const SequenceHeader header, parse_sequence_header(payload));
     if (header.max_frame_width > max_video_side || header.max_frame_height > max_video_side ||
-        std::uint64_t{header.max_frame_width} * header.max_frame_height > max_video_pixels) {
+        std::uint64_t{header.max_frame_width} * header.max_frame_height > max_pixels_) {
       return fail(Status::Limit, "AV1 frames of up to {}x{} exceed the supported size", header.max_frame_width,
                   header.max_frame_height);
     }
@@ -160,7 +197,9 @@ class Av1Decoder final : public codec::VideoDecoder {
 
   void collect(std::int64_t pts, std::int64_t duration) {
     while (std::optional<Picture> picture = core_.next_picture()) {
-      codec::VideoFrame frame = std::move(picture->frame);
+      // Identity-matrix (GBR) pictures cannot be described by ir::ColorInfo:
+      // deliver them as RGBA so that every consumer sees the right colours.
+      codec::VideoFrame frame = picture->color.matrix_coefficients == 0 ? gbr_to_rgba(*picture) : std::move(picture->frame);
       frame.pts_ms = rescale(pts, timescale_, 1000);
       frame.duration_ms = duration > 0 ? rescale(duration, timescale_, 1000) : 0;
       last_pts_ = pts;
@@ -183,6 +222,7 @@ class Av1Decoder final : public codec::VideoDecoder {
   detail::DecoderCore core_;
   Bytes config_obus_;
   std::uint32_t timescale_ = 1000;
+  std::uint64_t max_pixels_ = max_video_pixels;  ///< lowered by CodecParams::max_pixels
   Layout layout_ = Layout::Unknown;
   bool configured_ = false;
   bool flushed_ = false;

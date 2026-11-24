@@ -69,15 +69,39 @@ std::string_view codec_for_bitmap_fourcc(std::uint32_t f) noexcept {
     case fourcc("WMV2"): return cid::wmv2;
     case fourcc("WMV3"): return cid::wmv3;
     case fourcc("WVC1"): return cid::vc1;
+    case fourcc("FLV1"): return id::flv1;
+    case fourcc("HFYU"): return id::huffyuv;
+    case fourcc("FFV1"): return id::ffv1;
+    case fourcc("ULY0"):
+    case fourcc("ULY2"):
+    case fourcc("ULY4"):
+    case fourcc("ULH0"):
+    case fourcc("ULH2"):
+    case fourcc("ULH4"):
+    case fourcc("ULRG"):
+    case fourcc("ULRA"): return id::utvideo;
+    case fourcc("CVID"): return id::cinepak;
+    case fourcc("MRLE"): return id::msrle;
+    case fourcc("CRAM"):
+    case fourcc("MSVC"):
+    case fourcc("WHAM"): return id::msvideo1;
+    case fourcc("UYVY"):
+    case fourcc("2VUY"): return id::uyvy;
+    case fourcc("YUY2"):
+    case fourcc("YUYV"): return id::yuy2;
+    case fourcc("V210"): return id::v210;
     case 0: return id::rawvideo;  // BI_RGB
+    case 1:                       // BI_RLE8
+    case 2: return id::msrle;     // BI_RLE4
     default: return {};
   }
 }
 
 std::string_view codec_for_wave_tag(std::uint16_t tag, std::uint16_t bits) noexcept {
   switch (tag) {
-    case 0x0001: return bits == 8 ? id::pcm_u8 : bits == 24 ? id::pcm_s24le : bits == 16 ? id::pcm_s16le : std::string_view{};
-    case 0x0003: return bits == 32 ? id::pcm_f32le : std::string_view{};
+    case 0x0001: return bits == 8 ? id::pcm_u8 : bits == 24 ? id::pcm_s24le : bits == 16 ? id::pcm_s16le : bits == 32 ? id::pcm_s32le : std::string_view{};
+    case 0x0003: return bits == 32 ? id::pcm_f32le : bits == 64 ? id::pcm_f64le : std::string_view{};
+    case 0x0031: return id::gsm_ms;
     case 0x0006: return id::pcm_alaw;
     case 0x0007: return id::pcm_mulaw;
     case 0x0002: return id::adpcm_ms;
@@ -107,6 +131,15 @@ std::uint32_t bitmap_fourcc_for_codec(std::string_view codec) noexcept {
   if (codec == id::mpeg1video) return fourcc("MPG1");
   if (codec == id::mpeg2video) return fourcc("MPG2");
   if (codec == id::h263) return fourcc("H263");
+  if (codec == id::huffyuv) return fourcc("HFYU");
+  if (codec == id::ffv1) return fourcc("FFV1");
+  if (codec == id::utvideo) return fourcc("ULY2");
+  if (codec == id::cinepak) return fourcc("cvid");
+  if (codec == id::msvideo1) return fourcc("CRAM");
+  if (codec == id::msrle) return 1;  // BI_RLE8
+  if (codec == id::uyvy) return fourcc("UYVY");
+  if (codec == id::yuy2) return fourcc("YUY2");
+  if (codec == id::v210) return fourcc("v210");
   return 0;
 }
 
@@ -217,12 +250,18 @@ struct AviReader {
           s.info.height = static_cast<std::uint32_t>(std::min(std::abs(height), 1 << 20));
           s.info.tag = bits::fourcc_text(compression);
           s.info.codec = std::string(codec_for_bitmap_fourcc(compression));
+          // Coded depth (biBitCount) for codecs that need it (codec_legacy/codec_notes.hpp).
+          s.info.bits_per_sample = bitcount;
           if (c.size > 40) s.info.extradata.assign(input.begin() + static_cast<std::ptrdiff_t>(c.data + 40),
                                                    input.begin() + static_cast<std::ptrdiff_t>(c.data + c.size));
           if (s.info.codec == id::rawvideo) {
             if (compression == 0) {
               if (bitcount == 24 && height > 0) {
                 s.info.extradata = to_bytes(std::string_view("BGR3"));
+              } else if (bitcount == 24) {
+                // Top-down 24-bit rows: the bgr24 codec of codec_legacy handles them.
+                s.info.codec = std::string(id::bgr24);
+                s.info.extradata = to_bytes(std::string_view("top-down"));
               } else {
                 s.info.codec.clear();  // other DIB layouts are not supported
               }
@@ -431,7 +470,7 @@ Result<std::shared_ptr<Demuxed>> demux_avi(ByteView input, const ReadSettings& s
       const Bytes first = reader.out->packet_bytes(s.info.packets.front());
       if (const auto h = bits::parse_mpeg_audio(first); h && h->layer == 2) s.info.codec = std::string(id::mp2);
     }
-    if (s.info.codec == id::h264) derive_h264_pts(*reader.out, s.info);
+    if (s.info.codec == id::h264 || s.info.codec == id::hevc) derive_h264_pts(*reader.out, s.info);
     reader.out->tracks.push_back(std::move(s.info));
   }
   CVT_TRY(finish_demux(*reader.out, "AVI"));
@@ -674,11 +713,13 @@ class AviMuxer final : public Muxer {
         if (raw) extra.clear();
         util::ByteWriter f;
         f.u32le(40 + static_cast<std::uint32_t>(extra.size())).i32le(static_cast<std::int32_t>(s.desc.width));
-        f.i32le(static_cast<std::int32_t>(s.desc.height)).u16le(1).u16le(raw ? 12 : 24);
+        const std::uint16_t depth = raw ? 12 : s.desc.bits_per_sample != 0 ? s.desc.bits_per_sample : 24;
+        f.i32le(static_cast<std::int32_t>(s.desc.height)).u16le(1).u16le(depth);
         f.u32le(std::byteswap(compression));
         f.u32le(raw ? s.desc.width * s.desc.height * 3 / 2 : s.desc.width * s.desc.height * 3).zeros(16);
         f.bytes(extra);
         strl.text("strf").u32le(static_cast<std::uint32_t>(f.size())).bytes(f.view());
+        if ((f.size() & 1) != 0) strl.u8(0);  // RIFF chunks are padded to an even size
       } else {
         const std::uint16_t tag = wave_tag_for_codec(s.desc.codec);
         std::uint16_t bits = 0;
@@ -705,6 +746,7 @@ class AviMuxer final : public Muxer {
         f.u16le(tag).u16le(s.desc.channels == 0 ? 1 : s.desc.channels).u32le(s.desc.sample_rate).u32le(bytes_per_second);
         f.u16le(align).u16le(bits).u16le(static_cast<std::uint16_t>(extra.size())).bytes(extra);
         strl.text("strf").u32le(static_cast<std::uint32_t>(f.size())).bytes(f.view());
+        if ((f.size() & 1) != 0) strl.u8(0);  // RIFF chunks are padded to an even size
         if (f.size() & 1) strl.u8(0);
       }
       // OpenDML super index.

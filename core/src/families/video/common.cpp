@@ -169,6 +169,7 @@ struct TrackCursor {
   std::shared_ptr<Demuxed> demuxed;
   std::size_t track = 0;
   std::size_t next = 0;
+  std::optional<StreamAdapter> adapter;  // re-packages to the canonical form
 };
 
 codec::CodecParams params_for(const TrackInfo& t, const StreamAdapter& adapter) {
@@ -213,12 +214,16 @@ struct DecodeState {
   bool flushed = false;
   bool finished = false;
   Progress progress;
+  Warnings warnings;
+  std::uint64_t max_pixels = 0;
+  bool no_pts_codec = false;  // MPEG-1/2/4 Part 2: may reorder, AVI has no PTS
 };
 
 template <class Decoder>
 Result<void> configure(DecodeState<Decoder>& s) {
   const TrackInfo& t = s.demuxed->tracks[s.track];
   s.adapter = StreamAdapter(t.codec, t.extradata, decoder_packaging);
+  s.no_pts_codec = t.codec == "mpeg4" || t.codec == "mpeg1video" || t.codec == "mpeg2video" || t.codec == "msmpeg4v3";
   // Learn in-band configuration from the first packets (Annex-B parameter sets, ADTS headers).
   for (std::size_t i = 0; i < t.packets.size() && i < 16 && !s.adapter.configured(); ++i) {
     const ByteView view = s.demuxed->packet_view(t.packets[i]);
@@ -229,7 +234,9 @@ Result<void> configure(DecodeState<Decoder>& s) {
       s.adapter.learn(copy);
     }
   }
-  CVT_TRY(s.decoder->configure(params_for(t, s.adapter)));
+  codec::CodecParams params = params_for(t, s.adapter);
+  params.max_pixels = s.max_pixels;
+  CVT_TRY(s.decoder->configure(params));
   s.configured = true;
   return {};
 }
@@ -237,7 +244,9 @@ Result<void> configure(DecodeState<Decoder>& s) {
 template <class Decoder>
 Result<bool> feed(DecodeState<Decoder>& s) {
   const TrackInfo& t = s.demuxed->tracks[s.track];
-  if (s.progress.cancelled()) return fail(Status::Cancelled, "the conversion was cancelled");
+  // Decoding progress (by packets) doubles as the cancellation point of every reader.
+  const double done = t.packets.empty() ? 1.0 : static_cast<double>(s.next) / static_cast<double>(t.packets.size());
+  if (!s.progress.report(done)) return fail(Status::Cancelled, "the conversion was cancelled");
   if (s.next < t.packets.size()) {
     const PacketRef& ref = t.packets[s.next++];
     const Bytes raw = s.demuxed->packet_bytes(ref);
@@ -248,6 +257,10 @@ Result<bool> feed(DecodeState<Decoder>& s) {
     packet.dts = ref.dts;
     packet.duration = ref.duration;
     packet.keyframe = ref.keyframe;
+    // AVI stores no presentation times. For codecs that reorder pictures the
+    // convention of codec_legacy/codec_notes.hpp applies: pts = INT64_MIN (none)
+    // and dts = the chunk's place in the stream; the decoder derives the times.
+    if (s.demuxed->format_id == "avi" && s.no_pts_codec) packet.pts = std::numeric_limits<std::int64_t>::min();
     CVT_TRY(s.decoder->send_packet(packet));
     return true;
   }
@@ -331,7 +344,11 @@ Result<ir::Video> make_video(std::shared_ptr<Demuxed> demuxed, const Context& ct
     }
   }
 
-  // Compressed tracks for pass-through.
+  if (info.width != 0 && info.height != 0) CVT_TRY(ctx.limits.check_pixels(info.width, info.height));
+
+  // Compressed tracks for pass-through, in the canonical packaging of
+  // codec/codec.hpp (length-prefixed NAL units + avcC/hvcC, raw AAC + ASC,
+  // AV1 OBUs without temporal delimiters + av1C), whatever the container used.
   for (std::size_t i = 0; i < demuxed->tracks.size(); ++i) {
     const TrackInfo& t = demuxed->tracks[i];
     ir::Track track;
@@ -339,13 +356,27 @@ Result<ir::Video> make_video(std::shared_ptr<Demuxed> demuxed, const Context& ct
     track.codec = t.codec.empty() ? std::string("unknown:") + t.tag : t.codec;
     track.extradata = t.extradata;
     track.timescale = t.timescale;
-    auto cursor = std::make_shared<TrackCursor>(TrackCursor{demuxed, i, 0});
+    auto cursor = std::make_shared<TrackCursor>(TrackCursor{demuxed, i, 0, std::nullopt});
+    if (t.codec == "h264" || t.codec == "hevc" || t.codec == "aac" || t.codec == "av1") {
+      StreamAdapter adapter(t.codec, t.extradata, decoder_packaging);
+      for (std::size_t k = 0; k < t.packets.size() && k < 16 && !adapter.configured(); ++k) {
+        adapter.learn(demuxed->packet_bytes(t.packets[k]));
+      }
+      if (t.codec != "av1" || !adapter.extradata().empty()) {
+        Bytes canonical = adapter.extradata();
+        if (!canonical.empty()) track.extradata = std::move(canonical);
+      }
+      cursor->adapter = std::move(adapter);
+    }
     track.next_packet = [cursor]() -> Result<std::optional<ir::Packet>> {
       const TrackInfo& info_ = cursor->demuxed->tracks[cursor->track];
       if (cursor->next >= info_.packets.size()) return std::optional<ir::Packet>{};
       const PacketRef& ref = info_.packets[cursor->next++];
       ir::Packet packet;
       packet.bytes = cursor->demuxed->packet_bytes(ref);
+      if (cursor->adapter) {
+        CVT_TRY_ASSIGN(packet.bytes, cursor->adapter->convert(packet.bytes, ref.keyframe));
+      }
       packet.pts = ref.pts;
       packet.dts = ref.dts;
       packet.duration = ref.duration;
@@ -371,11 +402,15 @@ Result<ir::Video> make_video(std::shared_ptr<Demuxed> demuxed, const Context& ct
       state->track = index;
       state->decoder = std::move(decoder);
       state->progress = ctx.progress;
+      state->warnings = ctx.warnings;
+      state->max_pixels = ctx.limits.max_pixels;
       video.next_frame = [state]() -> Result<std::optional<ir::VideoFrame>> {
         if (state->finished) return std::optional<ir::VideoFrame>{};
         if (!state->configured) CVT_TRY(configure(*state));
         while (true) {
-          CVT_TRY_ASSIGN(auto frame, state->decoder->receive_frame());
+          auto received = state->decoder->receive_frame();
+          for (std::string& note : state->decoder->take_warnings()) state->warnings.add(std::move(note));
+          CVT_TRY_ASSIGN(auto frame, std::move(received));
           if (frame) return frame;
           CVT_TRY_ASSIGN(const bool fed, feed(*state));
           if (!fed) {

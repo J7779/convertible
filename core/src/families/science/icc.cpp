@@ -3,6 +3,7 @@
 // copyright, white point, colorant matrix, tone curves, adaptation matrix);
 // other tags are listed with their type and size.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include <cmath>
 #include <format>
 
 #include "families/science/common.hpp"

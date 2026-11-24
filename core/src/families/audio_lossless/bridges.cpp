@@ -66,6 +66,8 @@ void register_bridges(Registry& registry) {
   bridge.cost = 30;
   bridge.lossy = true;
   bridge.label = "render audio as a waveform or spectrogram picture";
+  // Pictures of sound are images, not (silent, still) videos.
+  bridge.excluded_target_categories = {Category::Video, Category::Document};
   bridge.options = {
       OptionSpec::choice("picture_kind", "Picture", "waveform", {"waveform", "spectrogram"},
                          "Waveform shows loudness over time; spectrogram shows frequencies over time."),

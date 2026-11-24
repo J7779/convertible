@@ -198,6 +198,11 @@ struct Codec {
   /// Options understood by `write` / `read`.
   std::vector<OptionSpec> write_options;
   std::vector<OptionSpec> read_options;
+  /// The writer only re-encodes files of its own format ("compress": a PDF
+  /// rewrite that takes the PDF bytes as a Blob). The planner then uses it only
+  /// when the source is `format_id` too, never for other sources that reach
+  /// its kind (every file reaches Blob through the implicit reader).
+  bool same_format_only = false;
 };
 
 /// Cost of the engine-provided "read any format as ir::Blob" step.
@@ -220,6 +225,11 @@ struct Bridge {
   std::string label;
   /// Options understood by `fn`.
   std::vector<OptionSpec> options;
+  /// Target categories this bridge must not lead to, so that technically
+  /// possible but pointless routes are not offered (a still image turned into
+  /// a video must not end up as a sound file: Image -> Video excludes
+  /// Category::Audio). The planner skips the bridge for such targets.
+  std::vector<Category> excluded_target_categories;
 };
 
 // --------------------------------------------------------------------------- registry
@@ -281,6 +291,11 @@ class Registry {
   /// Codecs of one format, in registration order.
   [[nodiscard]] std::vector<const Codec*> codecs_for(std::string_view format_id) const;
   [[nodiscard]] std::span<const Bridge> bridges() const noexcept { return bridges_; }
+
+  /// True when a family described the format with `add_format` (as opposed
+  /// to only the detection database). Family formats win ties with database
+  /// entries in detection and extension lookup.
+  [[nodiscard]] bool described_by_family(std::string_view id) const;
 
   /// True when some codec can read / write the format (the implicit Blob
   /// reader does not count).

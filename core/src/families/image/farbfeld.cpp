@@ -56,7 +56,7 @@ Result<Bytes> write_farbfeld(const ir::Image& source, WriteContext& ctx) {
 
 void register_farbfeld(Registry& registry) {
   FormatInfo info;
-  info.id = "farbfeld";
+  info.id = "ff";
   info.name = "farbfeld image";
   info.description = "Minimal 16-bit RGBA image format.";
   info.category = Category::Image;
@@ -67,7 +67,7 @@ void register_farbfeld(Registry& registry) {
   registry.add_format(std::move(info));
 
   ImageCodecSpec spec;
-  spec.format_id = "farbfeld";
+  spec.format_id = "ff";
   spec.read = reader(read_farbfeld);
   spec.write = writer(write_farbfeld);
   spec.write_options = plain_writer_options();

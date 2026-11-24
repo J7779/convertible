@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "support/fixtures.hpp"
+#include "support/video_support.hpp"
 #include "support/test_support.hpp"
 
 #include "codec/codec.hpp"
@@ -26,45 +27,10 @@
 
 namespace cvt::test::video {
 
-/// Everything a Video yields when decoded completely.
-struct Drained {
-  std::vector<ir::VideoFrame> frames;
-  std::vector<std::int64_t> audio_pts_ms;
-  std::vector<float> samples;
-};
-
-/// Pull every frame (up to `max_frames`) and every audio chunk out of `video`.
-inline Result<Drained> drain(ir::Video& video, std::size_t max_frames = 10000) {
-  Drained out;
-  if (video.next_frame) {
-    while (out.frames.size() < max_frames) {
-      CVT_TRY_ASSIGN(auto frame, video.next_frame());
-      if (!frame) break;
-      out.frames.push_back(std::move(*frame));
-    }
-  }
-  if (video.next_audio) {
-    while (true) {
-      CVT_TRY_ASSIGN(auto chunk, video.next_audio());
-      if (!chunk) break;
-      out.audio_pts_ms.push_back(chunk->pts_ms);
-      out.samples.insert(out.samples.end(), chunk->samples.begin(), chunk->samples.end());
-    }
-  }
-  return out;
-}
-
-/// Every packet of a track.
-inline Result<std::vector<ir::Packet>> packets_of(const ir::Track& track) {
-  std::vector<ir::Packet> out;
-  if (!track.next_packet) return out;
-  while (true) {
-    CVT_TRY_ASSIGN(auto p, track.next_packet());
-    if (!p) break;
-    out.push_back(std::move(*p));
-  }
-  return out;
-}
+// drain(), packets_of() and Drained now live in support/video_support.hpp for all families.
+using test::drain;
+using test::Drained;
+using test::packets_of;
 
 /// One row of a `probe/<fixture>.packets.csv` table (ffprobe -show_packets).
 struct ProbePacket {
@@ -185,12 +151,18 @@ inline std::vector<ir::VideoFrame> reference_i420(std::string_view name, std::ui
 // --------------------------------------------------------------------------- a registry for pipeline tests
 
 /// A registry with the real families plus extra codecs registered by the test.
+/// `video_family_only` leaves out every other family, so that pipeline tests
+/// run with the test's fake codecs whatever real codecs the build contains.
 struct TestRegistry {
   Registry registry;
   template <class Setup>
-  explicit TestRegistry(Setup&& setup) {
+  explicit TestRegistry(Setup&& setup, bool video_family_only = false) {
     setup(registry.media());
-    register_all(registry);
+    if (video_family_only) {
+      register_video_family(registry);
+    } else {
+      register_all(registry);
+    }
     registry.finalize();
   }
 };

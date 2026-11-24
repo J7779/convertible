@@ -60,7 +60,7 @@ using LibhevcHandle = std::unique_ptr<cvt_libhevc_decoder, LibhevcDeleter>;
   }
 }
 
-[[nodiscard]] Result<void> check_supported(const SequenceInfo& sps) {
+[[nodiscard]] Result<void> check_supported(const SequenceInfo& sps, std::uint64_t max_pixels) {
   if (sps.bit_depth_luma > 10 || sps.bit_depth_chroma > 10) {
     return fail(Status::Decode, "HEVC video with {}-bit samples is not supported (8 and 10 bit are)",
                 std::max(sps.bit_depth_luma, sps.bit_depth_chroma));
@@ -75,6 +75,9 @@ using LibhevcHandle = std::unique_ptr<cvt_libhevc_decoder, LibhevcDeleter>;
     return fail(Status::Limit, "HEVC picture of {}x{} exceeds the largest supported size (level 6.2)", sps.width,
                 sps.height);
   }
+  if (max_pixels > 0 && std::uint64_t{sps.width} * sps.height > max_pixels) {
+    return fail(Status::Limit, "HEVC picture of {}x{} exceeds the limit of {} pixels", sps.width, sps.height, max_pixels);
+  }
   return {};
 }
 
@@ -86,6 +89,7 @@ class HevcDecoder final : public codec::VideoDecoder {
  public:
   Result<void> configure(const codec::CodecParams& params) override {
     timescale_ = params.timescale == 0 ? 1000 : params.timescale;
+    max_pixels_ = params.max_pixels;
     if (params.extradata.empty()) return {};
     const ByteView extra = params.extradata;
     std::vector<ByteView> nals;
@@ -108,7 +112,7 @@ class HevcDecoder final : public codec::VideoDecoder {
       if (is_parameter_set(nal_type(nal))) CVT_TRY(remember_parameter_set(nal));
     }
     if (!latest_sps_) return {};  // nothing can be decoded before the first SPS
-    CVT_TRY(check_supported(*latest_sps_));
+    CVT_TRY(check_supported(*latest_sps_, max_pixels_));
     if (!decoder_ || needs_new_decoder(*latest_sps_)) CVT_TRY(start_decoder(*latest_sps_));
 
     // A new decoder first receives every parameter set known so far (from the
@@ -224,6 +228,7 @@ class HevcDecoder final : public codec::VideoDecoder {
   [[nodiscard]] codec::VideoFrame new_buffer() const {
     codec::VideoFrame frame = codec::VideoFrame::allocate(format_, active_.width, active_.height);
     frame.color = color_;
+    if (active_.sar_width > 0 && active_.sar_height > 0) frame.sample_aspect = {active_.sar_width, active_.sar_height};
     return frame;
   }
 
@@ -292,6 +297,7 @@ class HevcDecoder final : public codec::VideoDecoder {
   }
 
   std::uint32_t timescale_ = 1000;
+  std::uint64_t max_pixels_ = 0;  ///< caller limit (CodecParams::max_pixels); 0 = none
   unsigned length_size_ = 0;
   DecoderConfig config_;
   std::map<std::uint32_t, Bytes> vps_by_id_;

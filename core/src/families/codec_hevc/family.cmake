@@ -26,7 +26,7 @@ endforeach()
 cvt_add_imported(libhevc
   SOURCES ${_cvt_libhevc_sources}
   INCLUDE_DIRS api
-  PRIVATE_DEFINITIONS ENABLE_MAIN_REXT_PROFILE ${_cvt_libhevc_renames}
+  PRIVATE_DEFINITIONS ENABLE_MAIN_REXT_PROFILE ${_cvt_libhevc_renames} _DEFAULT_SOURCE
   C_STANDARD 99)
 target_include_directories(cvt_imported_libhevc PRIVATE
   "${_cvt_libhevc_root}/portable" "${_cvt_libhevc_root}/common" "${_cvt_libhevc_root}/decoder")

@@ -617,7 +617,8 @@ class ManReader {
       if (mdoc_column_) {
         ir::TableRow row;
         std::string cells_text(rest);
-        for (const std::string_view cell : util::split(util::replace_all(cells_text, " Ta ", "\t"), '\t')) {
+        const std::string split_text = util::replace_all(cells_text, " Ta ", "\t");  // split() returns views into it
+        for (const std::string_view cell : util::split(split_text, '\t')) {
           row.cells.push_back(ir::TableCell{mdoc_inline(util::trim(cell)), 1, 1});
         }
         mdoc_table_.rows.push_back(std::move(row));

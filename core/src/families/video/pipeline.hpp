@@ -50,10 +50,9 @@ namespace cvt::video {
 
 /// Sample-rate converter used by the pipeline.
 ///
-/// SEAM: this is a self-contained windowed-sinc (Kaiser, 32 taps per zero
-/// crossing pair) resampler so that the video family works on its own. When
-/// the audio DSP toolbox lands, replace the body of `make_resampler()` with
-/// the toolbox implementation; nothing else in the pipeline changes.
+/// SEAM: implemented with the lossless audio family's DSP toolbox
+/// (families/audio_lossless/audio_dsp.hpp: polyphase Kaiser-windowed sinc,
+/// exact output length, no delay); nothing else in the pipeline depends on it.
 class AudioResampler {
  public:
   virtual ~AudioResampler() = default;
@@ -63,8 +62,9 @@ class AudioResampler {
 };
 [[nodiscard]] std::unique_ptr<AudioResampler> make_resampler(std::uint32_t in_rate, std::uint32_t out_rate,
                                                              std::uint16_t channels);
-/// Re-map interleaved samples between channel layouts (WAVE order; stereo downmix
-/// uses -3 dB for the centre and surrounds, upmix duplicates mono).
+/// Re-map interleaved samples between channel layouts (WAVE order) with the
+/// toolbox's ITU-R BS.775 matrices (centre and surrounds at -3 dB, LFE dropped,
+/// normalised so that full scale cannot clip; mono goes to both fronts).
 [[nodiscard]] std::vector<float> remix_channels(std::span<const float> interleaved, std::uint16_t from, std::uint16_t to);
 
 }  // namespace cvt::video

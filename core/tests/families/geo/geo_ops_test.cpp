@@ -20,7 +20,8 @@ struct Reference {
 
 std::vector<Reference> references() {
   std::vector<Reference> out;
-  for (std::string_view line : util::split_lines(test::fixture_text("geo/json/proj_reference.txt"))) {
+  const std::string text = test::fixture_text("geo/json/proj_reference.txt");  // split_lines() returns views into it
+  for (std::string_view line : util::split_lines(text)) {
     const auto parts = util::split(util::trim(line), ' ', false);
     if (parts.empty()) continue;
     Reference r;

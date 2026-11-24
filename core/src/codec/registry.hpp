@@ -54,13 +54,31 @@ struct CodecListing {
 ///   if (!decoder) return fail(Status::Decode, "no decoder for {}", track.codec);
 class Registry {
  public:
-  /// Register an implementation. The first registration for an (id, role)
-  /// pair wins; a second one is ignored and reported by `problems()`.
+  /// Register THE implementation of an (id, role) pair, as the family that
+  /// owns the codec. Ownership rule (deterministic, independent of the order
+  /// in which families register):
+  ///   - one owner per (id, role): a second owner registration is ignored,
+  ///     reported by `problems()` (and so by `cvt::Registry::validate()`),
+  ///     and the first one stays;
+  ///   - an owner registration replaces a fallback registered earlier.
   /// Returns false when ignored.
   bool register_video_decoder(std::string_view id, VideoDecoderFactory factory);
   bool register_video_encoder(std::string_view id, VideoEncoderFactory factory);
   bool register_audio_decoder(std::string_view id, AudioDecoderFactory factory);
   bool register_audio_encoder(std::string_view id, AudioEncoderFactory factory);
+
+  /// Register a FALLBACK implementation, used only while no owner registers
+  /// one (e.g. the video family's simple PCM codecs, which stand in when the
+  /// lossless-audio family is absent from a build). Silently ignored when an
+  /// implementation (owner or fallback) is already registered; silently
+  /// replaced when an owner registers later. Returns false when ignored.
+  bool register_video_decoder_fallback(std::string_view id, VideoDecoderFactory factory);
+  bool register_video_encoder_fallback(std::string_view id, VideoEncoderFactory factory);
+  bool register_audio_decoder_fallback(std::string_view id, AudioDecoderFactory factory);
+  bool register_audio_encoder_fallback(std::string_view id, AudioEncoderFactory factory);
+
+  /// True when the implementation registered for (id, role) is a fallback.
+  [[nodiscard]] bool is_fallback(std::string_view id, CodecRole role) const;
 
   /// The factory registered for `id`, or nullopt.
   [[nodiscard]] std::optional<VideoDecoderFactory> video_decoder(std::string_view id) const;
@@ -88,9 +106,14 @@ class Registry {
 
  private:
   template <class Factory>
-  using Table = std::map<std::string, Factory, std::less<>>;
+  struct Entry {
+    Factory factory;
+    bool fallback = false;
+  };
   template <class Factory>
-  bool add(Table<Factory>& table, CodecRole role, std::string_view id, Factory factory);
+  using Table = std::map<std::string, Entry<Factory>, std::less<>>;
+  template <class Factory>
+  bool add(Table<Factory>& table, CodecRole role, std::string_view id, Factory factory, bool fallback);
 
   Table<VideoDecoderFactory> video_decoders_;
   Table<VideoEncoderFactory> video_encoders_;

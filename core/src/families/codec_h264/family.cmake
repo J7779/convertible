@@ -30,7 +30,7 @@ endforeach()
 cvt_add_imported(libavc
   SOURCES ${_cvt_avc_sources}
   INCLUDE_DIRS common common/generic decoder decoder/generic encoder encoder/generic
-  PRIVATE_DEFINITIONS ${_cvt_avc_renames} NDEBUG)
+  PRIVATE_DEFINITIONS ${_cvt_avc_renames} NDEBUG _DEFAULT_SOURCE)  # strnlen etc. on glibc with -std=c99/c11
 target_compile_definitions(convertible_core PRIVATE CVT_HAVE_LIBAVC=1)
 
 # Sanitizer builds: libavc offsets null pointers of planes it never touches

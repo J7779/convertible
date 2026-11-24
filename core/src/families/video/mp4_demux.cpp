@@ -246,7 +246,18 @@ struct Mp4Reader {
         case fourcc("apcn"):
         case fourcc("apcs"):
         case fourcc("apco"):
-        case fourcc("ap4h"): t.codec = std::string(codec::id::prores); break;
+        case fourcc("ap4h"):
+        case fourcc("ap4x"): t.codec = std::string(codec::id::prores); break;
+        case fourcc("rle "): t.codec = std::string(codec::id::qtrle); break;
+        case fourcc("rpza"): t.codec = std::string(codec::id::rpza); break;
+        case fourcc("smc "): t.codec = std::string(codec::id::smc); break;
+        case fourcc("cvid"): t.codec = std::string(codec::id::cinepak); break;
+        case fourcc("2vuy"):
+        case fourcc("UYVY"): t.codec = std::string(codec::id::uyvy); break;
+        case fourcc("yuvs"):
+        case fourcc("YUY2"): t.codec = std::string(codec::id::yuy2); break;
+        case fourcc("v210"): t.codec = std::string(codec::id::v210); break;
+        case fourcc("r210"): t.codec = std::string(codec::id::r210); break;
         case fourcc("raw "):
           if (depth == 24) {
             t.codec = std::string(codec::id::rawvideo);
@@ -257,6 +268,9 @@ struct Mp4Reader {
       }
       parse_child_config(boxes_of(er.rest(), e.body_offset + er.position()), t);
       if (format == fourcc("raw ") && depth == 24) t.extradata = to_bytes(std::string_view("RGB3"));
+      // The sample description depth is the coded depth of the legacy codecs
+      // (qtrle 1..32, 33/34/36/40 = grey); see codec_legacy/codec_notes.hpp.
+      if (t.codec != codec::id::rawvideo) t.bits_per_sample = depth;
     } else if (handler == fourcc("soun")) {
       t.type = ir::TrackType::Audio;
       const std::uint16_t version = er.u16be();
@@ -296,6 +310,8 @@ struct Mp4Reader {
         case fourcc("fLaC"): t.codec = std::string(codec::id::flac); break;
         case fourcc("alac"): t.codec = std::string(codec::id::alac); break;
         case fourcc("ac-3"): t.codec = std::string(codec::id::ac3); break;
+        case fourcc("ima4"): t.codec = std::string(codec::id::adpcm_ima_qt); break;
+        case fourcc("in24"): t.codec = std::string(codec::id::pcm_s24be); break;
         case fourcc("ec-3"): t.codec = std::string(cid::eac3); break;
         case fourcc("sowt"): t.codec = std::string(codec::id::pcm_s16le); break;
         case fourcc("twos"):
@@ -326,7 +342,7 @@ struct Mp4Reader {
       if (pcm) {
         if (t.codec == codec::id::pcm_u8 || t.codec == codec::id::pcm_alaw || t.codec == codec::id::pcm_mulaw) {
           t.bits_per_sample = 8;
-        } else if (t.codec == codec::id::pcm_s24le) {
+        } else if (t.codec == codec::id::pcm_s24le || t.codec == codec::id::pcm_s24be) {
           t.bits_per_sample = 24;
         } else if (t.codec == codec::id::pcm_f32le) {
           t.bits_per_sample = 32;

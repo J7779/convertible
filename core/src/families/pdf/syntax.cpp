@@ -54,11 +54,11 @@ const std::string& Object::as_string() const noexcept {
   if (const auto* s = std::get_if<String>(&value_)) return s->bytes;
   return empty_string();
 }
-const Array& Object::as_array() const noexcept {
+const Array& Object::as_array() const& noexcept {
   if (const auto* a = std::get_if<std::shared_ptr<const Array>>(&value_)) return **a;
   return empty_array();
 }
-const Dict& Object::as_dict() const noexcept {
+const Dict& Object::as_dict() const& noexcept {
   if (const auto* d = std::get_if<std::shared_ptr<const Dict>>(&value_)) return **d;
   if (const auto* s = std::get_if<std::shared_ptr<const Stream>>(&value_)) return (*s)->dict;
   return empty_dict();

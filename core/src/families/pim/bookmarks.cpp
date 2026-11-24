@@ -186,9 +186,11 @@ Node table_tree(const ir::Table& table) {
     bookmark.title = get(rows[r], title);
     bookmark.added = get(rows[r], added);
     bookmark.description = get(rows[r], description);
-    for (const std::string_view tag : util::split(get(rows[r], tags), ',', false)) bookmark.tags.emplace_back(util::trim(tag));
+    const std::string split_text = get(rows[r], tags);  // split() returns views into it
+    for (const std::string_view tag : util::split(split_text, ',', false)) bookmark.tags.emplace_back(util::trim(tag));
     Node* parent = &root;
-    for (const std::string_view part : util::split(get(rows[r], folder), '/', false)) {
+    const std::string folder_text = get(rows[r], folder);  // split() returns views into it
+    for (const std::string_view part : util::split(folder_text, '/', false)) {
       auto it = std::ranges::find_if(parent->children, [&](const Node& n) { return n.folder && n.title == part; });
       if (it == parent->children.end()) {
         Node child;
@@ -353,7 +355,8 @@ Result<Node> parse_netscape(std::string_view text, const Limits& limits) {
       bookmark.added = iso_from_unix(util::parse_int(attribute(*tag, "ADD_DATE")).value_or(0));
       bookmark.modified = iso_from_unix(util::parse_int(attribute(*tag, "LAST_MODIFIED")).value_or(0));
       bookmark.icon = attribute(*tag, "ICON");
-      for (const std::string_view value : util::split(attribute(*tag, "TAGS"), ',', false)) {
+      const std::string split_text = attribute(*tag, "TAGS");  // split() returns views into it
+      for (const std::string_view value : util::split(split_text, ',', false)) {
         bookmark.tags.emplace_back(util::trim(value));
       }
       stack.back()->children.push_back(std::move(bookmark));

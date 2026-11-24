@@ -178,12 +178,14 @@ Result<AnyIR> read_calendar_csv(ReadContext& ctx) {
     event.description = util::replace_all(cell(row, description), "\r\n", "\n");
     event.location = cell(row, location);
     if (truthy(cell(row, is_private))) event.extra.push_back({"CLASS", {}, "PRIVATE"});
-    for (const std::string_view category : util::split(cell(row, categories), ';', false)) {
+    const std::string split_text = cell(row, categories);  // split() returns views into it
+    for (const std::string_view category : util::split(split_text, ';', false)) {
       if (!util::trim(category).empty()) event.categories.emplace_back(util::trim(category));
     }
     event.organizer = cell(row, organizer);
     for (const std::size_t index : {required, optional_attendees}) {
-      for (const std::string_view attendee : util::split(cell(row, index), ';', false)) {
+      const std::string attendee_text = cell(row, index);  // split() returns views into it
+      for (const std::string_view attendee : util::split(attendee_text, ';', false)) {
         if (!util::trim(attendee).empty()) event.attendees.emplace_back(util::trim(attendee));
       }
     }

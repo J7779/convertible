@@ -28,6 +28,9 @@ struct Limits {
   /// Largest total size of data inflated from compressed input, in bytes.
   /// This is what stops decompression bombs.
   std::uint64_t max_decompressed_bytes = 2ull * 1024 * 1024 * 1024;
+  /// Deepest nesting a recursive parser may follow (JSON/XML/YAML trees,
+  /// nested archives, PDF object graphs, box/atom trees ...).
+  std::uint32_t max_depth = 256;
 
   [[nodiscard]] Result<void> check_input(std::uint64_t bytes) const {
     if (bytes > max_input_bytes) {
@@ -54,6 +57,11 @@ struct Limits {
     if (count > max_archive_entries) {
       return fail(Status::Limit, "{} entries exceed the limit of {} entries", count, max_archive_entries);
     }
+    return {};
+  }
+  /// `depth` = the nesting level about to be entered (the outermost is 1).
+  [[nodiscard]] Result<void> check_depth(std::uint64_t depth) const {
+    if (depth > max_depth) return fail(Status::Limit, "nesting deeper than {} levels", max_depth);
     return {};
   }
   /// `total` = bytes decompressed so far plus the bytes about to be produced.

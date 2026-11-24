@@ -122,6 +122,12 @@ struct Converted {
 ///   auto image = cvt::test::read_as<ir::Image>("png", png_bytes);
 ///   REQUIRE(image);
 /// `warnings`, when given, receives the notes the codec emitted.
+///
+/// LIFETIME PITFALL: the returned IR may keep views into `input` (ir::Video
+/// always does; it decodes on demand). Never pass a temporary such as
+/// `test::fixture(...)` for those: keep the bytes in a named variable that
+/// outlives the value, or use `test::read_owned` (support/video_support.hpp),
+/// which keeps them alive with the result.
 template <IrType T>
 [[nodiscard]] Result<T> read_as(std::string_view format_id, ByteView input, std::string_view options_json = {},
                                 std::vector<std::string>* warnings = nullptr, const Limits& limits = {}) {

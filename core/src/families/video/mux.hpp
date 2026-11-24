@@ -38,6 +38,9 @@ struct MuxTrack {
   std::uint32_t sample_rate = 0;
   std::uint16_t channels = 0;
   std::uint16_t bits_per_sample = 0;
+  /// Quality the encoder was asked for (1..100), 0 when copied; selects the
+  /// ProRes flavour ('apco'..'apch') of MOV sample descriptions.
+  int quality = 0;
   std::uint32_t block_align = 0;
   std::string language;
 };

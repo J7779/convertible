@@ -34,6 +34,15 @@ upstream `riscv/` directories, which already use only C functions:
 
 ## Patched files
 
+- `decoder/ih264d_dpb_mgr.c`: the Android-only logging block. Upstream defines
+  `inline int android_errorWriteLog(...)` (C99 `inline` without `static`: no
+  external definition is emitted, so Android Debug builds failed to link) and
+  logs through `__android_log_print` (needs liblog). It is now a
+  `static inline` no-op and `ALOGE` expands to nothing; `<android/log.h>` is
+  no longer included. Decoding is unchanged.
+- No source edit is needed for glibc: `family.cmake` defines `_DEFAULT_SOURCE`
+  so that `strnlen` and friends are declared under `-std=c99`/`c11`.
+
 - `common/ithread.c`: replaced, see below.
 - `encoder/ih264e_defs.h`: `MAX_WD` / `MAX_HT` raised from 2560 to 4096 so
   that UHD (3840x2160) and 4096-wide video can be encoded (the decoder already

@@ -107,7 +107,7 @@ TEST_CASE("video/decode: compressed codecs decode once their codec family regist
       {"av1.ivf", "ivf", "av1", 25.0, 10},            {"vp8.ivf", "ivf", "vp8", 25.0, 10},
       {"vp9.ivf", "ivf", "vp9", 25.0, 10},            {"mpeg4_mp3.avi", "avi", "mpeg4", 28.0, 10},
       {"mjpeg_pcm.mov", "mov", "mjpeg", 30.0, 10},    {"mpeg2.m2v", "m2v", "mpeg2video", 28.0, 10},
-      {"theora_vorbis.ogv", "ogv", "theora", 28.0, 10}, {"h264_aac.ts", "ts", "h264", 30.0, 10},
+      {"theora_vorbis.ogv", "ogv", "theora", 28.0, 10}, {"h264_aac.ts", "mpegts", "h264", 30.0, 10},
       {"h264_vorbis.mkv", "mkv", "h264", 30.0, 10},   {"h264.h264", "h264", "h264", 30.0, 10},
   };
   const auto reference = testsrc_reference();
@@ -124,9 +124,23 @@ TEST_CASE("video/decode: compressed codecs decode once their codec family regist
     REQUIRE(drained->frames.size() == c.frames);
     std::vector<ir::VideoFrame> i420;
     for (const ir::VideoFrame& f : drained->frames) {
-      auto converted = codec::convert_frame(f, ir::PixelFormat::I420, ir::ColorInfo{});
+      // The reference holds the encoder's limited-range input samples: keep
+      // the decoded frame's matrix (a matrix change would alter the samples)
+      // and only bring full-range JPEG pictures to limited range.
+      ir::ColorInfo target = f.color;
+      target.range = ir::ColorRange::Limited;
+      // RGB pictures (AV1 identity matrix) go back through FFmpeg's default BT.601.
+      if (f.format == ir::PixelFormat::RGBA8) target = ir::ColorInfo{ir::ColorMatrix::BT601, ir::ColorRange::Limited, ir::ChromaSiting::Center};
+      auto converted = codec::convert_frame(f, ir::PixelFormat::I420, target);
       REQUIRE_OK(converted);
       i420.push_back(std::move(*converted));
+    }
+    // Presentation order on the 10 fps grid (containers may start later than 0;
+    // the MPEG-4 AVI skips two frame slots, as its ffprobe table shows).
+    for (std::size_t i = 1; i < drained->frames.size(); ++i) {
+      const std::int64_t step = drained->frames[i].pts_ms - drained->frames[i - 1].pts_ms;
+      CHECK(step > 0);
+      CHECK(step % 100 == 0);
     }
     CHECK(test::min_psnr(i420, reference) >= c.min_psnr);
     ++ran;
@@ -140,7 +154,7 @@ TEST_CASE("video/decode: compressed audio decodes once its codec family register
     const char* format;
     const char* codec;
   } cases[] = {{"aac.m4a", "m4a", "aac"},           {"mpeg4_mp3.avi", "avi", "mp3"},  {"opus.ogg", "ogg", "opus"},
-               {"flac.oga", "ogg", "flac"},         {"h264_vorbis.mkv", "mkv", "vorbis"}, {"mpeg2_mp2.ts", "ts", "mp2"},
+               {"flac.oga", "ogg", "flac"},         {"h264_vorbis.mkv", "mkv", "vorbis"}, {"mpeg2_mp2.ts", "mpegts", "mp2"},
                {"rv10_ac3.rm", "rm", "ac3"}};
   const ir::Audio reference = sine_reference();
   std::size_t ran = 0;
@@ -279,15 +293,20 @@ TEST_CASE("video/builtin: raw video and PCM codecs are registered only once") {
   CHECK(media.has_audio_decoder("pcm_s16le"));
   CHECK(media.has_audio_encoder("pcm_s16le"));
   CHECK(media.problems().empty());
-  // A family that registered PCM earlier keeps its implementation.
-  Registry registry;
+  // rawvideo is this family's own; PCM is the lossless audio family's, and the
+  // video family's PCM codecs are only fallbacks, replaced in either order.
+  CHECK_FALSE(media.is_fallback("rawvideo", codec::CodecRole::VideoDecoder));
+  CHECK_FALSE(media.is_fallback("pcm_s16le", codec::CodecRole::AudioDecoder));
+  Registry video_only;
+  register_video_family(video_only);
+  CHECK(video_only.media().has_audio_decoder("pcm_s16le"));
+  CHECK(video_only.media().is_fallback("pcm_s16le", codec::CodecRole::AudioDecoder));
   bool used = false;
-  registry.media().register_audio_decoder("pcm_s16le", [&used]() -> std::unique_ptr<codec::AudioDecoder> {
+  CHECK(video_only.media().register_audio_decoder("pcm_s16le", [&used]() -> std::unique_ptr<codec::AudioDecoder> {
     used = true;
     return nullptr;
-  });
-  register_all(registry);
-  CHECK(registry.media().problems().empty());
-  (void)registry.media().make_audio_decoder("pcm_s16le");
+  }));
+  CHECK(video_only.media().problems().empty());
+  (void)video_only.media().make_audio_decoder("pcm_s16le");
   CHECK(used);
 }

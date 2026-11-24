@@ -1446,7 +1446,16 @@ Result<ir::Image> decode(ByteView data, const Context& ctx, const DecodeOptions&
   image.icc_profile = std::move(extras.icc);
   image.xmp = std::move(extras.xmp);
   if (!extras.comment.empty()) image.metadata["Comment"] = extras.comment;
-  if (!extras.exif.empty()) attach_exif(image, extras.exif);
+  int orientation = 1;
+  if (!extras.exif.empty()) orientation = attach_exif(image, extras.exif);
+  // Keep the file itself for writers that can embed JPEG unchanged (PDF):
+  // only when the pixels are exactly what the bytes show, and bounded.
+  constexpr std::size_t max_kept = 64u << 20;
+  const bool embeddable_model = planes.model == ColorModel::Gray || planes.model == ColorModel::YCbCr || planes.model == ColorModel::Rgb;
+  if (orientation == 1 && planes.precision == 8 && embeddable_model && data.size() <= max_kept) {
+    image.original_bytes.assign(data.begin(), data.end());
+    image.original_mime = "image/jpeg";
+  }
   return image;
 }
 

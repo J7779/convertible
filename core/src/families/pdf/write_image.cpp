@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <optional>
 #include <unordered_set>
 
 #include "engine/standard_options.hpp"
@@ -126,6 +127,45 @@ Result<Ref> embed_image(PdfBuilder& builder, const ir::Frame& frame, const Image
   return builder.add_stream_raw(std::move(dict), flate_encode(predicted, enc.compression_level));
 }
 
+namespace {
+
+/// The source JPEG, embedded unchanged as DCTDecode: no generation loss and
+/// usually smaller than a re-encode. Only for a single unmodified picture
+/// whose bytes the reader kept, when no option asks for a different encoding.
+std::optional<Result<Ref>> embed_original(PdfBuilder& builder, const ir::Image& image, const WriteContext& ctx) {
+  if (image.original_mime != "image/jpeg" || image.original_bytes.empty() || image.frames.size() != 1) return std::nullopt;
+  if (ctx.options.get_bool("lossless", false)) return std::nullopt;
+  for (const char* key : {"quality", "preset", "max_width", "max_height", "scale"}) {
+    if (ctx.options.was_set(key)) return std::nullopt;
+  }
+  // Component count from the frame header (SOFn): 1 = grey, 3 = colour.
+  const ByteView jpeg = image.original_bytes;
+  int components = 0;
+  for (std::size_t i = 2; i + 9 < jpeg.size();) {
+    if (std::to_integer<int>(jpeg[i]) != 0xFF) break;
+    const int marker = std::to_integer<int>(jpeg[i + 1]);
+    const std::size_t len = (std::to_integer<std::size_t>(jpeg[i + 2]) << 8) | std::to_integer<std::size_t>(jpeg[i + 3]);
+    if (marker >= 0xC0 && marker <= 0xCF && marker != 0xC4 && marker != 0xC8 && marker != 0xCC) {
+      components = std::to_integer<int>(jpeg[i + 9]);
+      break;
+    }
+    i += 2 + len;
+  }
+  if (components != 1 && components != 3) return std::nullopt;
+  const ir::Frame& frame = image.frames[0];
+  Dict dict;
+  dict.set("Type", Object::name("XObject"));
+  dict.set("Subtype", Object::name("Image"));
+  dict.set("Width", static_cast<std::int64_t>(frame.width));
+  dict.set("Height", static_cast<std::int64_t>(frame.height));
+  dict.set("ColorSpace", Object::name(components == 1 ? "DeviceGray" : "DeviceRGB"));
+  dict.set("BitsPerComponent", 8);
+  dict.set("Filter", Object::name("DCTDecode"));
+  return Result<Ref>(builder.add_stream_raw(std::move(dict), Bytes(jpeg.begin(), jpeg.end())));
+}
+
+}  // namespace
+
 Result<Bytes> write_image_pdf(const ir::Image& image, WriteContext& ctx) {
   if (!image.valid()) return fail(Status::Encode, "the image has no pixels");
   PdfBuilder builder(options::resolved_compression_level(ctx.options, 9) == 0 ? 0 : 9);
@@ -154,7 +194,12 @@ Result<Bytes> write_image_pdf(const ir::Image& image, WriteContext& ctx) {
       w = natural_w * s;
       h = natural_h * s;
     }
-    CVT_TRY_ASSIGN(const Ref xobj, embed_image(builder, frame, enc, ctx));
+    Ref xobj;
+    if (auto original = embed_original(builder, image, ctx)) {
+      CVT_TRY_ASSIGN(xobj, std::move(*original));
+    } else {
+      CVT_TRY_ASSIGN(xobj, embed_image(builder, frame, enc, ctx));
+    }
     const double x = (page.width() - w) / 2, y = (page.height() - h) / 2;
     const std::string content = "q " + format_number(w) + " 0 0 " + format_number(h) + " " + format_number(x) + " " +
                                 format_number(y) + " cm /Im0 Do Q\n";

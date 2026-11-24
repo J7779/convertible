@@ -188,7 +188,7 @@ Result<std::shared_ptr<Demuxed>> demux_ts(ByteView input, const ReadSettings& se
   if (packet_size == 0) return fail(Status::Decode, "not an MPEG transport stream (no sync bytes)");
   auto out = std::make_shared<Demuxed>();
   out->input = input;
-  out->format_id = "ts";
+  out->format_id = "mpegts";
   std::optional<std::uint16_t> pmt_pid;
   std::map<std::uint16_t, PesStream> pes;  // by PID
   std::vector<std::uint16_t> order;
@@ -500,7 +500,7 @@ class TsMuxer final : public Muxer {
     settings_ = settings;
     for (std::size_t i = 0; i < tracks.size(); ++i) {
       MuxTrack& t = tracks[i];
-      if (!container_accepts("ts", t.type, t.codec)) return fail(Status::Encode, "MPEG-TS cannot store {}", t.codec);
+      if (!container_accepts("mpegts", t.type, t.codec)) return fail(Status::Encode, "MPEG-TS cannot store {}", t.codec);
       Out o;
       Packaging p;
       p.length_prefixed = false;

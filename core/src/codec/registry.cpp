@@ -11,23 +11,29 @@ namespace cvt::codec {
 namespace {
 
 template <class Table>
-auto lookup(const Table& table, std::string_view id) -> std::optional<typename Table::mapped_type> {
+auto lookup(const Table& table, std::string_view id) -> std::optional<decltype(table.begin()->second.factory)> {
   const auto it = table.find(id);
   if (it == table.end()) return std::nullopt;
-  return it->second;
+  return it->second.factory;
 }
 
 template <class Table>
-auto make(const Table& table, std::string_view id) -> decltype(table.begin()->second()) {
+auto make(const Table& table, std::string_view id) -> decltype(table.begin()->second.factory()) {
   const auto it = table.find(id);
   if (it == table.end()) return nullptr;
-  return it->second();
+  return it->second.factory();
+}
+
+template <class Table>
+bool fallback_in(const Table& table, std::string_view id) {
+  const auto it = table.find(id);
+  return it != table.end() && it->second.fallback;
 }
 
 }  // namespace
 
 template <class Factory>
-bool Registry::add(Table<Factory>& table, CodecRole role, std::string_view id, Factory factory) {
+bool Registry::add(Table<Factory>& table, CodecRole role, std::string_view id, Factory factory, bool fallback) {
   if (!id::is_known(id)) {
     problems_.push_back(std::format("{} '{}': not a canonical codec id (see codec/ids.hpp)", codec_role_name(role), id));
   }
@@ -35,22 +41,54 @@ bool Registry::add(Table<Factory>& table, CodecRole role, std::string_view id, F
     problems_.push_back(std::format("{} '{}': empty factory", codec_role_name(role), id));
     return false;
   }
-  const auto [it, inserted] = table.emplace(std::string(id), std::move(factory));
-  if (!inserted) problems_.push_back(std::format("{} '{}': registered twice", codec_role_name(role), id));
-  return inserted;
+  const auto it = table.find(id);
+  if (it == table.end()) {
+    table.emplace(std::string(id), Entry<Factory>{std::move(factory), fallback});
+    return true;
+  }
+  if (fallback) return false;  // an implementation exists: the fallback is not needed
+  if (it->second.fallback) {   // the owner replaces a fallback
+    it->second = Entry<Factory>{std::move(factory), false};
+    return true;
+  }
+  problems_.push_back(std::format("{} '{}': registered twice (one family must own it; others may only register a fallback)",
+                                  codec_role_name(role), id));
+  return false;
 }
 
 bool Registry::register_video_decoder(std::string_view id, VideoDecoderFactory factory) {
-  return add(video_decoders_, CodecRole::VideoDecoder, id, std::move(factory));
+  return add(video_decoders_, CodecRole::VideoDecoder, id, std::move(factory), false);
 }
 bool Registry::register_video_encoder(std::string_view id, VideoEncoderFactory factory) {
-  return add(video_encoders_, CodecRole::VideoEncoder, id, std::move(factory));
+  return add(video_encoders_, CodecRole::VideoEncoder, id, std::move(factory), false);
 }
 bool Registry::register_audio_decoder(std::string_view id, AudioDecoderFactory factory) {
-  return add(audio_decoders_, CodecRole::AudioDecoder, id, std::move(factory));
+  return add(audio_decoders_, CodecRole::AudioDecoder, id, std::move(factory), false);
 }
 bool Registry::register_audio_encoder(std::string_view id, AudioEncoderFactory factory) {
-  return add(audio_encoders_, CodecRole::AudioEncoder, id, std::move(factory));
+  return add(audio_encoders_, CodecRole::AudioEncoder, id, std::move(factory), false);
+}
+bool Registry::register_video_decoder_fallback(std::string_view id, VideoDecoderFactory factory) {
+  return add(video_decoders_, CodecRole::VideoDecoder, id, std::move(factory), true);
+}
+bool Registry::register_video_encoder_fallback(std::string_view id, VideoEncoderFactory factory) {
+  return add(video_encoders_, CodecRole::VideoEncoder, id, std::move(factory), true);
+}
+bool Registry::register_audio_decoder_fallback(std::string_view id, AudioDecoderFactory factory) {
+  return add(audio_decoders_, CodecRole::AudioDecoder, id, std::move(factory), true);
+}
+bool Registry::register_audio_encoder_fallback(std::string_view id, AudioEncoderFactory factory) {
+  return add(audio_encoders_, CodecRole::AudioEncoder, id, std::move(factory), true);
+}
+
+bool Registry::is_fallback(std::string_view id, CodecRole role) const {
+  switch (role) {
+    case CodecRole::VideoDecoder: return fallback_in(video_decoders_, id);
+    case CodecRole::VideoEncoder: return fallback_in(video_encoders_, id);
+    case CodecRole::AudioDecoder: return fallback_in(audio_decoders_, id);
+    case CodecRole::AudioEncoder: return fallback_in(audio_encoders_, id);
+  }
+  return false;
 }
 
 std::optional<VideoDecoderFactory> Registry::video_decoder(std::string_view id) const { return lookup(video_decoders_, id); }
@@ -65,10 +103,10 @@ std::unique_ptr<AudioEncoder> Registry::make_audio_encoder(std::string_view id) 
 
 std::vector<CodecListing> Registry::list() const {
   std::vector<CodecListing> out;
-  for (const auto& [id, factory] : video_decoders_) out.push_back({id, CodecRole::VideoDecoder});
-  for (const auto& [id, factory] : video_encoders_) out.push_back({id, CodecRole::VideoEncoder});
-  for (const auto& [id, factory] : audio_decoders_) out.push_back({id, CodecRole::AudioDecoder});
-  for (const auto& [id, factory] : audio_encoders_) out.push_back({id, CodecRole::AudioEncoder});
+  for (const auto& [id, entry] : video_decoders_) out.push_back({id, CodecRole::VideoDecoder});
+  for (const auto& [id, entry] : video_encoders_) out.push_back({id, CodecRole::VideoEncoder});
+  for (const auto& [id, entry] : audio_decoders_) out.push_back({id, CodecRole::AudioDecoder});
+  for (const auto& [id, entry] : audio_encoders_) out.push_back({id, CodecRole::AudioEncoder});
   return out;
 }
 

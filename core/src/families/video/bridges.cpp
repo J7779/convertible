@@ -350,6 +350,8 @@ void register_bridges(Registry& registry) {
   to_image.cost = 20;
   to_image.lossy = true;
   to_image.label = "extract frames of a video";
+  // Frames of a video are pictures, not documents.
+  to_image.excluded_target_categories = {Category::Document};
   to_image.options = {
       OptionSpec::choice("image_mode", "Frames", "animation", {"animation", "poster", "contact_sheet"},
                          "An animation of the video, one poster frame, or a contact sheet of thumbnails."),
@@ -373,6 +375,8 @@ void register_bridges(Registry& registry) {
   from_image.cost = 30;
   from_image.lossy = false;
   from_image.label = "turn an image or animation into video frames";
+  // A picture made into a video never becomes a sound file (the Video writers of audio formats).
+  from_image.excluded_target_categories = {Category::Audio};
   from_image.options = {
       options::fps(),
       OptionSpec::number("still_duration", "Still duration", 3, 0.1, 3600, "Seconds a still picture is shown."),

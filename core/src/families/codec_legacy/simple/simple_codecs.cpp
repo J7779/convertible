@@ -127,6 +127,7 @@ class QtrleDecoder final : public CanvasDecoder {
       unit_bytes = 4;
       unit_pixels = 32 / bits;
     }
+    unit_bytes = std::clamp(unit_bytes, 1, 4);  // 1..4 bytes per unit for every valid depth; keeps the copies below in bounds
     const std::int64_t width = params_.width;
     for (std::uint32_t line = start; line < start + lines; ++line) {
       std::int64_t x = (static_cast<std::int64_t>(r.u8()) - 1) * unit_pixels;

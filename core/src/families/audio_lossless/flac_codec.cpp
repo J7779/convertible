@@ -206,15 +206,17 @@ Result<void> decode_subframe(BitReader& br, std::uint32_t block_size, std::uint3
     for (std::uint32_t i = 0; i < order; ++i) out[i] = read_sample(br, bits);
     CVT_TRY(decode_residual(br, block_size, order, out + order));
     for (std::uint32_t i = order; i < block_size; ++i) {
-      std::int64_t p = 0;
+      // Wrapping arithmetic (hostile streams must not cause undefined behaviour).
+      const auto u = [&](std::uint32_t back) { return static_cast<std::uint64_t>(out[i - back]); };
+      std::uint64_t p = 0;
       switch (order) {
         case 0: p = 0; break;
-        case 1: p = out[i - 1]; break;
-        case 2: p = 2 * out[i - 1] - out[i - 2]; break;
-        case 3: p = 3 * out[i - 1] - 3 * out[i - 2] + out[i - 3]; break;
-        default: p = 4 * out[i - 1] - 6 * out[i - 2] + 4 * out[i - 3] - out[i - 4]; break;
+        case 1: p = u(1); break;
+        case 2: p = 2 * u(1) - u(2); break;
+        case 3: p = 3 * u(1) - 3 * u(2) + u(3); break;
+        default: p = 4 * u(1) - 6 * u(2) + 4 * u(3) - u(4); break;
       }
-      out[i] += p;
+      out[i] = static_cast<std::int64_t>(static_cast<std::uint64_t>(out[i]) + p);
     }
   } else if (type >= 32) {
     const std::uint32_t order = type - 31;
@@ -228,9 +230,13 @@ Result<void> decode_subframe(BitReader& br, std::uint32_t block_size, std::uint3
     for (std::uint32_t i = 0; i < order; ++i) coefs[i] = br.read_signed(precision);
     CVT_TRY(decode_residual(br, block_size, order, out + order));
     for (std::uint32_t i = order; i < block_size; ++i) {
-      std::int64_t sum = 0;
-      for (std::uint32_t j = 0; j < order; ++j) sum += coefs[j] * out[i - 1 - j];
-      out[i] += sum >> shift;
+      // Wrapping arithmetic: valid streams never come close to overflow, and
+      // hostile ones must not cause undefined behaviour (the result is garbage).
+      std::uint64_t sum = 0;
+      for (std::uint32_t j = 0; j < order; ++j) {
+        sum += static_cast<std::uint64_t>(coefs[j]) * static_cast<std::uint64_t>(out[i - 1 - j]);
+      }
+      out[i] = static_cast<std::int64_t>(static_cast<std::uint64_t>(out[i]) + static_cast<std::uint64_t>(static_cast<std::int64_t>(sum) >> shift));
     }
   } else {
     return fail(Status::Decode, "reserved FLAC subframe type {}", type);

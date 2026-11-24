@@ -54,7 +54,7 @@ class H264Decoder final : public codec::VideoDecoder {
 
   /// Non-fatal problems met so far (concealed corruption, skipped data),
   /// each reported once; the list is cleared by the call.
-  [[nodiscard]] std::vector<std::string> take_warnings();
+  [[nodiscard]] std::vector<std::string> take_warnings() override;
 
  private:
   struct Impl;
@@ -83,9 +83,8 @@ class H264Encoder final : public codec::VideoEncoder {
 /// quality mode: 100 -> 10, 90 -> 21, 75 -> 27, 50 -> 33, 1 -> 46.
 [[nodiscard]] int quality_to_qp(int quality) noexcept;
 
-/// Registers the decoder and encoder under codec id "h264" and the raw
-/// H.264 elementary stream format.
+/// Registers the decoder and encoder under codec id "h264". The raw H.264
+/// elementary stream format (.h264) belongs to the video family.
 void register_codecs(Registry& registry);
-void register_elementary_stream(Registry& registry);
 
 }  // namespace cvt::h264

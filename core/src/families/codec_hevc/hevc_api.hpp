@@ -50,7 +50,8 @@
 
 namespace cvt::hevc {
 
-/// Id of the raw Annex-B elementary-stream format (.h265, .hevc, .265).
+/// Id of the raw Annex-B elementary-stream format (.h265, .hevc, .265); the
+/// format itself (detection, reader, writer) belongs to the video family.
 inline constexpr std::string_view stream_format_id = "hevc";
 
 /// Largest picture the decoder and encoder accept: HEVC level 6.2 limits

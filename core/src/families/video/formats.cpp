@@ -6,6 +6,7 @@
 #include <string>
 
 #include "engine/registry.hpp"
+#include "families/video/bitstream.hpp"
 #include "families/video/containers.hpp"
 #include "families/video/pipeline.hpp"
 #include "families/video/policy.hpp"
@@ -49,23 +50,57 @@ int sniff_ts(std::span<const std::byte> data, std::string_view) {
   return 0;
 }
 
+// Raw H.264 / HEVC: the first NAL units must be well-formed for the codec and
+// a sequence parameter set that parses must turn up before any picture.
 int sniff_annexb(std::span<const std::byte> data, std::string_view filename, bool hevc) {
-  std::size_t at = 0;
-  if (head(data, 4) == std::string_view("\0\0\0\1", 4)) {
-    at = 4;
-  } else if (head(data, 3) == std::string_view("\0\0\1", 3)) {
-    at = 3;
-  } else {
-    return 0;
+  if (!bits::starts_with_start_code(data)) return 0;
+  const std::vector<ByteView> nals = bits::split_annexb(data.first(std::min<std::size_t>(data.size(), 64 * 1024)));
+  bool vps = false;
+  bool sps = false;
+  bool pps = false;
+  bool picture = false;
+  std::size_t checked = 0;
+  for (const ByteView nal : nals) {
+    if (++checked > 64) break;
+    if (nal.size() < 2) return 0;
+    const auto b0 = std::to_integer<unsigned>(nal[0]);
+    const auto b1 = std::to_integer<unsigned>(nal[1]);
+    if (hevc) {
+      // forbidden_zero_bit, nuh_layer_id 0 and a non-zero temporal id.
+      if ((b0 & 0x81u) != 0 || (b1 & 0xF8u) != 0 || (b1 & 7u) == 0) return 0;
+      const int type = bits::hevc_nal_type(nal);
+      if (type >= 41 && type <= 47) return 0;  // reserved
+      vps = vps || type == 32;
+      if (type == 33) {
+        if (!bits::parse_hevc_sps(nal)) return 0;
+        sps = true;
+      }
+      pps = pps || type == 34;
+      if (type <= 31) {
+        if (!(vps && sps && pps)) return 0;
+        picture = true;
+      }
+    } else {
+      if ((b0 & 0x80u) != 0) return 0;  // forbidden_zero_bit (MPEG-1/2 start codes have it set)
+      const int type = bits::h264_nal_type(nal);
+      if (type == 0 || type >= 21) return 0;  // unspecified / reserved
+      if (type == 7) {
+        if (!bits::parse_h264_sps(nal)) return 0;
+        sps = true;
+      }
+      pps = pps || type == 8;
+      if (type == 1 || type == 5) {
+        if (!sps) return 0;  // a stream starts with its parameter sets
+        picture = true;
+      }
+    }
+    if (picture && sps && pps && (!hevc || vps)) break;
   }
-  const std::uint8_t b = byte_at(data, at);
-  int score = 0;
-  if (!hevc && (b & 0x80) == 0 && ((b & 0x1F) == 7 || (b & 0x1F) == 9)) score = 70;
-  if (hevc && (b == 0x40 || b == 0x46 || b == 0x42) && byte_at(data, at + 1) == 0x01) score = 70;
-  if (score > 0 && (hevc ? (has_extension(filename, "h265") || has_extension(filename, "hevc") || has_extension(filename, "265"))
-                         : (has_extension(filename, "h264") || has_extension(filename, "264")))) {
-    score = 90;
-  }
+  if (!sps) return 0;
+  int score = picture ? (hevc ? 92 : 85) : 60;
+  const bool named = hevc ? (has_extension(filename, "h265") || has_extension(filename, "hevc") || has_extension(filename, "265"))
+                          : (has_extension(filename, "h264") || has_extension(filename, "264") || has_extension(filename, "avc"));
+  if (named) score = std::min(score + 5, 95);
   return score;
 }
 
@@ -78,8 +113,10 @@ int sniff_obu(std::span<const std::byte> data, std::string_view filename) {
 }
 
 int sniff_m2v(std::span<const std::byte> data, std::string_view filename) {
-  if (head(data, 4) == std::string_view("\0\0\1\xB3", 4)) return has_extension(filename, "mpg") ? 40 : 90;
-  return 0;
+  if (head(data, 4) != std::string_view("\0\0\1\xB3", 4)) return 0;
+  // MPEG-1 streams (no sequence extension) are the database's "m1v".
+  if (has_extension(filename, "m1v") || head(data, 4096).find(std::string_view("\0\0\1\xB5", 4)) == std::string_view::npos) return 0;
+  return has_extension(filename, "mpg") ? 40 : 90;
 }
 
 int sniff_vob(std::span<const std::byte> data, std::string_view filename) {
@@ -95,7 +132,8 @@ bool asf_has_video(std::span<const std::byte> data) {
   return h.find(std::string_view(reinterpret_cast<const char*>(video_guid), 16)) != std::string_view::npos;
 }
 
-int sniff_asf(std::span<const std::byte> data, std::string_view, bool want_video) {
+int sniff_asf(std::span<const std::byte> data, std::string_view filename, bool want_video) {
+  if (has_extension(filename, "asf")) return 0;  // the generic "asf" format of the database (read by this family too)
   static constexpr unsigned char header_guid[8] = {0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11};
   if (head(data, 8) != std::string_view(reinterpret_cast<const char*>(header_guid), 8)) return 0;
   return asf_has_video(data) == want_video ? 96 : 0;
@@ -158,7 +196,7 @@ Demux simple(DemuxFunction fn) {
 Demux raw(std::string_view codec) {
   const std::string c(codec);
   return [c](ByteView input, const ReadSettings& s, const Options& o) {
-    return demux_raw(input, s, c, o.get_float("raw_fps", 25.0, 1.0, 1000.0));
+    return demux_raw(input, s, c, o.was_set("raw_fps") ? o.get_float("raw_fps", 25.0, 1.0, 1000.0) : 0.0);
   };
 }
 
@@ -186,6 +224,9 @@ int sniff_iso(std::span<const std::byte> data, std::string_view, std::string_vie
                brand == "msf1" || brand == "crx ") {
       return 0;  // still-image formats built on the same boxes
     } else {
+      // Flash MPEG-4 and Smooth Streaming have their own ids (database
+      // entries this family reads as MPEG-4).
+      if (brand.starts_with("f4v") || brand == "isml" || brand == "piff") return 0;
       detected = "mp4";
     }
     return detected == format_id ? 96 : 0;
@@ -203,6 +244,8 @@ int sniff_ebml(std::span<const std::byte> data, std::string_view filename, std::
   const bool matroska = h.find("matroska") != std::string_view::npos;
   if (format_id == "webm") return webm ? 96 : 0;
   if (format_id == "mka") return matroska && has_extension(filename, "mka") ? 97 : 0;
+  // 3D and subtitle-only Matroska have database entries of their own.
+  if (has_extension(filename, "mk3d") || has_extension(filename, "mks")) return 0;
   return matroska ? 95 : 0;
 }
 
@@ -240,7 +283,7 @@ void register_formats(Registry& registry) {
   f.sniff = iso("m4b");
   add_container(registry, std::move(f), simple(demux_mp4), true);
 
-  f = format("mkv", "Matroska video", "Open container that can hold almost any codec.", C::Video, {"mkv", "mk3d"},
+  f = format("mkv", "Matroska video", "Open container that can hold almost any codec.", C::Video, {"mkv"},
              "video/x-matroska", 80);
   f.sniff = ebml("mkv");
   add_container(registry, std::move(f), simple(demux_mkv), true);
@@ -257,7 +300,7 @@ void register_formats(Registry& registry) {
   f = format("flv", "Flash video", "Flash Video, used by older web players and RTMP.", C::Video, {"flv"}, "video/x-flv", 30);
   f.signatures = {Signature::at(0, "'FLV' 01")};
   add_container(registry, std::move(f), simple(demux_flv), true);
-  f = format("ts", "MPEG transport stream", "Broadcast and streaming video (MPEG-TS, M2TS).", C::Video, {"ts", "m2ts", "mts"},
+  f = format("mpegts", "MPEG transport stream", "Broadcast and streaming video (MPEG-TS, M2TS).", C::Video, {"ts", "m2ts", "mts", "m2t"},
              "video/mp2t", 50);
   f.sniff = sniff_ts;
   add_container(registry, std::move(f), simple(demux_ts), true);
@@ -270,7 +313,7 @@ void register_formats(Registry& registry) {
   f = format("ogv", "Ogg video", "Theora video in an Ogg file.", C::Video, {"ogv"}, "video/ogg", 30);
   f.sniff = sniff_ogv;
   add_container(registry, std::move(f), simple(demux_ogg), true);
-  f = format("wmv", "Windows Media video", "Advanced Systems Format (ASF) with video.", C::Video, {"wmv", "asf"},
+  f = format("wmv", "Windows Media video", "Advanced Systems Format (ASF) with video.", C::Video, {"wmv"},
              "video/x-ms-wmv", 45);
   f.sniff = [](std::span<const std::byte> d, std::string_view n) { return sniff_asf(d, n, true); };
   add_container(registry, std::move(f), simple(demux_asf), false);
@@ -289,21 +332,48 @@ void register_formats(Registry& registry) {
   f.signatures = {Signature::at(0, "'.RMF' 00 00 00")};
   add_container(registry, std::move(f), simple(demux_rm), false);
 
-  f = format("h264", "H.264 elementary stream", "Raw H.264/AVC video (Annex B byte stream).", C::Video, {"h264", "264"},
+  f = format("h264", "H.264 elementary stream", "Raw H.264/AVC video (Annex B byte stream).", C::Video, {"h264", "264", "avc", "jsv"},
              "video/h264", 15);
   f.sniff = [](std::span<const std::byte> d, std::string_view n) { return sniff_annexb(d, n, false); };
   add_container(registry, std::move(f), raw("h264"), true, true);
   f = format("hevc", "HEVC elementary stream", "Raw H.265/HEVC video (Annex B byte stream).", C::Video,
-             {"h265", "hevc", "265"}, "video/h265", 15);
+             {"hevc", "h265", "265"}, "video/h265", 30);
   f.sniff = [](std::span<const std::byte> d, std::string_view n) { return sniff_annexb(d, n, true); };
   add_container(registry, std::move(f), raw("hevc"), true, true);
   f = format("obu", "AV1 OBU stream", "Raw AV1 video (low-overhead bitstream).", C::Video, {"obu"}, "video/av1", 5);
   f.sniff = sniff_obu;
   add_container(registry, std::move(f), raw("av1"), true, true);
-  f = format("m2v", "MPEG video elementary stream", "Raw MPEG-1/MPEG-2 video.", C::Video, {"m2v", "m1v", "mpv"},
+  f = format("m2v", "MPEG video elementary stream", "Raw MPEG-1/MPEG-2 video.", C::Video, {"m2v", "mpv"},
              "video/mpeg", 10);
   f.sniff = sniff_m2v;
   add_container(registry, std::move(f), raw("mpeg2video"), true, true);
+
+  // Formats the detection database describes (variants of the containers
+  // above): this family reads them, so they convert like their parents.
+  struct Variant {
+    const char* id;
+    DemuxFunction demux;     // null: a raw elementary stream of raw_codec
+    const char* raw_codec;
+  };
+  const Variant variants[] = {{"f4v", &demux_mp4, ""},
+                              {"ismv", &demux_mp4, ""},
+                              {"mk3d", &demux_mkv, ""},
+                              {"asf", &demux_asf, ""},
+                              {"m1v", nullptr, "mpeg1video"}};
+  for (const Variant& v : variants) {
+    Codec reader;
+    reader.format_id = v.id;
+    reader.kind = Kind::Video;
+    reader.read_options = container_read_options(v.demux == nullptr);
+    const Demux fn = v.demux != nullptr ? simple(v.demux) : raw(v.raw_codec);
+    reader.read = [fn](ReadContext& ctx) -> Result<AnyIR> {
+      CVT_TRY_ASSIGN(std::shared_ptr<Demuxed> demuxed, fn(ctx.input, settings_of(ctx), ctx.options));
+      demuxed->format_id = ctx.format_id;
+      CVT_TRY_ASSIGN(ir::Video video, make_video(std::move(demuxed), ctx));
+      return AnyIR(std::move(video));
+    };
+    registry.add_codec(std::move(reader));
+  }
 
   // Ogg audio files are owned by the audio families; reading them as a video
   // (stream of packets) lets them be remuxed into Matroska/MP4/WebM unchanged.

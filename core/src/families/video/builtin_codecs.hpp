@@ -8,8 +8,9 @@ class Registry;
 
 namespace cvt::video {
 
-/// Register rawvideo and PCM decoders/encoders for every id that has no
-/// implementation yet (a family registered earlier always wins).
+/// Register the rawvideo codecs (owned by this family) and PCM decoders and
+/// encoders as fallbacks (owned by the lossless audio family, which replaces
+/// them whatever the registration order).
 void register_builtin_codecs(codec::Registry& media);
 
 }  // namespace cvt::video

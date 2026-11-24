@@ -274,17 +274,23 @@ void split_annexb_video(Demuxed& demuxed, TrackInfo& track, const EsStream& es, 
   emit(demuxed, track, es, frames);
 }
 
-void derive_h264_pts(Demuxed& demuxed, TrackInfo& track) {
+void derive_h264_pts(Demuxed& demuxed, TrackInfo& track, bool zero_based) {
   const std::size_t n = track.packets.size();
-  if (track.codec != "h264" || n < 2) return;
-  bits::H264PocTracker tracker;
+  const bool hevc = track.codec == "hevc";
+  if ((track.codec != "h264" && !hevc) || n < 2) return;
+  bits::H264PocTracker h264_tracker;
+  bits::HevcPocTracker hevc_tracker;
+  const auto next_poc = [&](const std::vector<ByteView>& nals) {
+    return hevc ? hevc_tracker.next(nals) : h264_tracker.next(nals);
+  };
   int length_size = 0;
-  if (const auto sets = bits::parse_avcc(track.extradata)) {
+  if (const auto sets = hevc ? bits::parse_hvcc(track.extradata) : bits::parse_avcc(track.extradata)) {
     length_size = sets->length_size;
     std::vector<ByteView> config;
+    for (const Bytes& v : sets->vps) config.emplace_back(v);
     for (const Bytes& s : sets->sps) config.emplace_back(s);
     for (const Bytes& p : sets->pps) config.emplace_back(p);
-    (void)tracker.next(config);
+    (void)next_poc(config);
   }
   std::vector<std::pair<std::int64_t, bool>> pocs;
   pocs.reserve(n);
@@ -296,7 +302,7 @@ void derive_h264_pts(Demuxed& demuxed, TrackInfo& track) {
     } else if (auto split = bits::split_length_prefixed(data, length_size)) {
       nals = std::move(*split);
     }
-    const auto poc = tracker.next(nals);
+    const auto poc = next_poc(nals);
     if (!poc) return;  // unsupported stream: keep presentation = decode order
     pocs.push_back(*poc);
   }
@@ -323,6 +329,16 @@ void derive_h264_pts(Demuxed& demuxed, TrackInfo& track) {
     return k < n ? track.packets[k].dts : track.packets[n - 1].dts + static_cast<std::int64_t>(k - n + 1) * step;
   };
   for (std::size_t i = 0; i < n; ++i) track.packets[i].pts = decode_time(rank[i] + static_cast<std::size_t>(delay));
+  if (zero_based && delay > 0) {
+    // Raw streams: the first picture shown starts at the stream's first decode
+    // time, and decoding starts `delay` frames earlier (negative DTS, as
+    // encoders with B-frames produce them).
+    const std::int64_t shift = decode_time(static_cast<std::size_t>(delay)) - decode_time(0);
+    for (PacketRef& p : track.packets) {
+      p.pts -= shift;
+      p.dts -= shift;
+    }
+  }
 }
 
 std::optional<Ac3Header> parse_ac3(ByteView data) noexcept {

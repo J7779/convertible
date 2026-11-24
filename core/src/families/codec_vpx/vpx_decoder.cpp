@@ -188,6 +188,7 @@ class VpxDecoder final : public codec::VideoDecoder {
   Result<void> configure(const CodecParams& params) override {
     if (initialised_) return fail(Status::Internal, "decoder configured twice");
     timescale_ = params.timescale == 0 ? 1000 : params.timescale;
+    if (params.max_pixels > 0) max_pixels_ = std::min(max_pixels_, params.max_pixels);
     if (codec_ == Codec::Vp8 && !params.extradata.empty()) {
       // Optional vpcC: the only place a VP8 stream can state its colours.
       if (const auto config = parse_vpcc(params.extradata)) {
@@ -271,9 +272,9 @@ class VpxDecoder final : public codec::VideoDecoder {
   /// allocates their buffers.
   Result<void> check_headers(ByteView packet) {
     const auto check_size = [this](std::uint32_t width, std::uint32_t height) -> Result<void> {
-      if (std::uint64_t{width} * height > max_frame_pixels) {
+      if (std::uint64_t{width} * height > max_pixels_) {
         return fail(Status::Limit, "{} frame of {}x{} pixels exceeds the limit of {} pixels", name(), width, height,
-                    max_frame_pixels);
+                    max_pixels_);
       }
       return {};
     };
@@ -322,6 +323,7 @@ class VpxDecoder final : public codec::VideoDecoder {
   bool failed_ = false;
   bool flushed_ = false;
   std::uint32_t timescale_ = 1000;
+  std::uint64_t max_pixels_ = max_frame_pixels;  ///< lowered by CodecParams::max_pixels
   std::optional<ColorInfo> vp8_color_;
   Vp9RefSizes refs_;
   std::deque<PendingFrame> ready_;

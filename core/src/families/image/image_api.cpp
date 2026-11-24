@@ -88,9 +88,9 @@ std::optional<std::string> sniff_format(ByteView bytes) {
   if (starts("8BPS")) return "psd";
   if (starts("DDS ")) return "dds";
   if (starts("#?RADIANCE") || starts("#?RGBE")) return "hdr";
-  if (starts("farbfeld")) return "farbfeld";
+  if (starts("farbfeld")) return "ff";
   if (starts("\x01\xDA"sv)) return "sgi";
-  if (starts("\x59\xA6\x6A\x95"sv)) return "sun";
+  if (starts("\x59\xA6\x6A\x95"sv)) return "ras";
   if (starts("\0\0\0\x0CjP  \r\n\x87\n"sv) || starts("\xFF\x4F\xFF\x51"sv)) return "jp2";
   if (starts("\0\0\0\x0CJXL \r\n\x87\n"sv) || starts("\xFF\x0A"sv)) return "jxl";
   if (s.size() >= 12 && starts("ftyp", 4)) {

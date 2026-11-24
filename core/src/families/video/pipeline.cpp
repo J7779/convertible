@@ -222,7 +222,12 @@ class VideoEncodeStream final : public OutStream {
 
   Result<void> start() {
     CVT_TRY(limits_.check_pixels(s_.width, s_.height));
-    CVT_TRY(encoder_->configure(s_.params));
+    if (auto configured = encoder_->configure(s_.params); !configured) {
+      // The encoder cannot take this picture size/rate: content the target cannot hold.
+      Error error = std::move(configured).error();
+      if (error.code == Status::InvalidArgument) error.code = Status::Encode;
+      return std::unexpected(std::move(error));
+    }
     desc.extradata = encoder_->extradata();
     return {};
   }
@@ -521,7 +526,7 @@ std::vector<OptionSpec> container_read_options(bool raw_stream) {
           .advanced()};
   if (raw_stream) {
     specs.push_back(OptionSpec::number("raw_fps", "Frame rate of a raw stream", 25, 1, 1000,
-                                       "Raw video streams carry no timestamps; frames are timed at this rate.")
+                                       "Raw video streams carry no timestamps; frames are timed at this rate (by default the rate the stream states, else 25).")
                         .advanced());
   }
   return specs;
@@ -533,6 +538,7 @@ std::vector<OptionSpec> container_write_options(std::string_view format_id) {
   const bool has_audio = policy != nullptr && !policy->audio_storable.empty();
   std::vector<OptionSpec> specs = {options::quality(), options::preset()};
   if (has_video) {
+    specs.push_back(options::lossless());
     std::vector<std::string> choices = {"auto", "copy"};
     for (const std::string_view c : policy->video_storable) choices.emplace_back(c);
     specs.push_back(OptionSpec::choice("video_codec", "Video codec", "auto", choices,
@@ -609,7 +615,12 @@ Result<Bytes> write_container(const ir::Video& video, WriteContext& ctx, std::st
   const double duration_s = o.get_float("duration", 0.0, 0.0, 1e7);
   const bool trim = start_s > 0 || duration_s > 0;
   const bool same_format = !ctx.source_format_id.empty() && ctx.source_format_id == format_id;
-  const std::string video_req = o.get_string("video_codec", "auto");
+  std::string video_req = o.get_string("video_codec", "auto");
+  // Lossless video: FFV1 where the container can hold it and no codec was chosen.
+  if (video_req == "auto" && options::resolved_lossless(o) && container_accepts(format_id, ir::TrackType::Video, codec::id::ffv1) &&
+      media.has_video_encoder(codec::id::ffv1)) {
+    video_req = std::string(codec::id::ffv1);
+  }
   const std::string audio_req = o.get_string("audio_codec", "auto");
 
   // ---------------------------------------------------------------- decide per stream
@@ -622,7 +633,7 @@ Result<Bytes> write_container(const ir::Video& video, WriteContext& ctx, std::st
                                                   audio_choice, static_cast<std::int64_t>(atracks.size()) - 1))];
 
   const bool video_forced = any_set(o, {"width", "height", "scale", "max_width", "max_height", "fps", "video_bitrate_kbps",
-                                        "quality", "preset", "keyframe_interval", "encoder_speed"}) ||
+                                        "quality", "preset", "keyframe_interval", "encoder_speed", "lossless"}) ||
                             trim || same_format || (video_req != "auto" && video_req != "copy" && vtrack && vtrack->codec != video_req);
   const bool audio_forced = any_set(o, {"sample_rate", "channels", "audio_bitrate_kbps", "quality", "preset"}) || trim ||
                             same_format || (audio_req != "auto" && audio_req != "copy" && atrack && atrack->codec != audio_req);
@@ -659,7 +670,7 @@ Result<Bytes> write_container(const ir::Video& video, WriteContext& ctx, std::st
     if (!video.next_frame) return fail(Status::Decode, "the video stream of this file cannot be decoded");
     CVT_TRY_ASSIGN(first_frame, video.next_frame());
     if (!first_frame) {
-      if (!want_audio) return fail(Status::Decode, "the video has no frames");
+      if (!want_audio) return fail(Status::Encode, "the video has no frames to write");
     }
   }
   if (want_audio && !copy_audio) {
@@ -744,6 +755,11 @@ Result<Bytes> write_container(const ir::Video& video, WriteContext& ctx, std::st
     const options::Size size = options::resolved_video_size(o, {sw, sh});
     vs.width = size.width;
     vs.height = size.height;
+    if (choice.codec != codec::id::rawvideo && !any_set(o, {"width", "height", "scale", "max_width", "max_height"}) &&
+        (vs.width != sw || vs.height != sh)) {
+      ctx.warn(std::format("the {} encoder works on even picture dimensions; the {}x{} pictures were scaled to {}x{}", choice.codec, sw, sh,
+                           vs.width, vs.height));
+    }
     if (choice.codec == codec::id::rawvideo) {
       // Raw video can keep the exact source size.
       if (!any_set(o, {"width", "height", "scale", "max_width", "max_height"})) {
@@ -765,10 +781,22 @@ Result<Bytes> write_container(const ir::Video& video, WriteContext& ctx, std::st
     const double rate_for_gop = fps > 0 ? fps : (source_fps > 0 ? source_fps : 25.0);
     vp.keyframe_interval = kf > 0 ? static_cast<std::uint32_t>(std::max(1.0, std::round(kf * rate_for_gop))) : 0;
     vp.preset = encoder_preset(o);
+    vp.lossless = options::resolved_lossless(o);
     vp.pixel_format = ir::PixelFormat::I420;
     if (choice.codec == codec::id::rawvideo && format_id == "y4m" && ir::is_yuv(first_frame->format) &&
         first_frame->format != ir::PixelFormat::NV12 && first_frame->format != ir::PixelFormat::P010) {
       vp.pixel_format = first_frame->format;
+    }
+    {
+      // Lossless codecs keep the source layout they can code, so nothing is
+      // lost to a 4:2:0 or 8-bit detour (codec_legacy/codec_notes.hpp).
+      using PF = ir::PixelFormat;
+      const PF f = first_frame->format;
+      if (choice.codec == codec::id::ffv1 && (f == PF::I420 || f == PF::I422 || f == PF::I444 || f == PF::I420P10 ||
+                                              f == PF::I422P10 || f == PF::I444P10 || f == PF::RGBA8)) {
+        vp.pixel_format = f;
+      }
+      if (choice.codec == codec::id::huffyuv && (f == PF::I422 || f == PF::RGBA8)) vp.pixel_format = f;
     }
     vp.color = ir::is_yuv(first_frame->format) ? first_frame->color : ir::ColorInfo{};
     vp.timescale = video_timescale;
@@ -779,6 +807,9 @@ Result<Bytes> write_container(const ir::Video& video, WriteContext& ctx, std::st
     d.type = ir::TrackType::Video;
     d.codec = choice.codec;
     d.timescale = video_timescale;
+    // Coded depth for containers that record it (BITMAPINFOHEADER.biBitCount).
+    if (choice.codec == codec::id::huffyuv) d.bits_per_sample = vp.pixel_format == ir::PixelFormat::RGBA8 ? 32 : 16;
+    d.quality = vp.quality;
     d.width = vs.width;
     d.height = vs.height;
     d.fps = vp.fps;
@@ -857,7 +888,7 @@ Result<Bytes> write_container(const ir::Video& video, WriteContext& ctx, std::st
     }
     if (best == streams_out.size()) break;
     CVT_TRY(muxer->write(best, *heads[best]));
-    if ((++written & 31) == 0) {
+    if ((++written & 7) == 0) {
       const double fraction = total_s > 0 ? static_cast<double>(best_time) / total_s : 0.0;
       CVT_TRY(ctx.checkpoint(std::clamp(fraction, 0.0, 0.99), "Encoding"));
     }

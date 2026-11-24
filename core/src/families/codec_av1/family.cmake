@@ -3,7 +3,7 @@ include("${CVT_FAMILY_DIR}/libaom_sources.cmake")
 cvt_add_imported(libaom
   SOURCES ${CVT_LIBAOM_SOURCES}
   INCLUDE_DIRS .
-  PRIVATE_DEFINITIONS NDEBUG
+  PRIVATE_DEFINITIONS NDEBUG _DEFAULT_SOURCE
   C_STANDARD 11)
 target_compile_definitions(convertible_core PRIVATE CVT_HAVE_LIBAOM=1)
 

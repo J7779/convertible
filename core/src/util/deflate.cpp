@@ -18,7 +18,9 @@
 //
 // Encoder. Input is collected in a window buffer and compressed in fixed
 // steps (so the result does not depend on how the caller chunked it):
-// LZ77 parsing with hash chains over a 32 KiB window, greedy at levels 1-3
+// LZ77 parsing with hash chains of 4-byte prefixes over a 32 KiB window plus
+// a table of the latest position of every 3-byte prefix (short matches are
+// only worth coding when close, so walking chains for them is wasted), greedy at levels 1-3
 // and lazy at levels 4-9; the token stream is cut into blocks where the
 // symbol statistics change; each block is written as the cheapest of stored,
 // fixed-Huffman and dynamic-Huffman, with optimal length-limited codes from
@@ -1031,7 +1033,8 @@ struct LevelConfig {
   bool lazy;
 };
 // The effort ladder. zlib's table is the reference point; level 4 searches a little harder so that every
-// step up is also a step down in size now that the greedy levels keep more hash entries.
+// step up is also a step down in size now that the greedy levels keep more hash entries. With chains of
+// 4-byte prefixes a walk wastes no steps on 3-byte look-alikes, so level 6 affords a longer chain.
 constexpr std::array<LevelConfig, 10> level_configs = {{
     {0, 0, 0, 0, false},
     {4, 4, 8, 4, false},
@@ -1039,7 +1042,7 @@ constexpr std::array<LevelConfig, 10> level_configs = {{
     {4, 6, 32, 32, false},
     {4, 6, 32, 24, true},
     {8, 16, 32, 32, true},
-    {8, 16, 128, 128, true},
+    {8, 16, 128, 160, true},
     {8, 32, 128, 256, true},
     {32, 128, 258, 1024, true},
     {32, 258, 258, 4096, true},
@@ -1427,7 +1430,17 @@ struct Deflater::Impl {
                   bool final);
   void emit_stored(BitWriter& writer, const u8* data, std::size_t size, bool final);
 
+  // The hash chains link positions with equal 4-byte prefixes, so a chain
+  // walk only meets candidates that can give a match of 4 or more bytes; the
+  // most recent position of each 3-byte prefix is kept separately for the
+  // short matches (worth coding only when close). Positions whose fourth
+  // byte lies beyond the data hash a zero in its place.
   [[nodiscard]] u32 hash_at(const u8* p) const noexcept {
+    const u32 fourth = p + 3 < data_end ? p[3] : 0u;
+    const u32 value = static_cast<u32>(p[0]) | (static_cast<u32>(p[1]) << 8) | (static_cast<u32>(p[2]) << 16) | (fourth << 24);
+    return (value * 0x9E3779B1u) >> hash_shift;
+  }
+  [[nodiscard]] u32 hash3_at(const u8* p) const noexcept {
     const u32 value = static_cast<u32>(p[0]) | (static_cast<u32>(p[1]) << 8) | (static_cast<u32>(p[2]) << 16);
     return (value * 0x9E3779B1u) >> hash_shift;
   }
@@ -1448,7 +1461,9 @@ struct Deflater::Impl {
   std::size_t next_insert = 0;  ///< first position not yet entered in the hash table
   unsigned hash_shift = 0;
   u32 chain_mask = 0;
-  std::vector<i32> head;  ///< hash -> most recent position
+  std::vector<i32> head;  ///< 4-byte hash -> most recent position
+  std::vector<i32> head3; ///< 3-byte hash -> most recent position
+  const u8* data_end = nullptr;  ///< end of the buffered data (for hashing near the end)
   std::vector<u16> prev;  ///< position & chain_mask -> distance to the previous position with the same hash, 0 = none
   std::vector<u32> tokens;
   std::unique_ptr<CodeLengthWorkspace> code_workspace;  ///< allocated with the matcher tables
@@ -1558,6 +1573,7 @@ void Deflater::Impl::prepare_matcher(bool final) {
   hash_shift = 32 - hash_bits;
   chain_mask = static_cast<u32>(span - 1);
   head.assign(std::size_t{1} << hash_bits, no_position);
+  head3.assign(std::size_t{1} << hash_bits, no_position);
   prev.assign(span, 0);
 }
 
@@ -1576,6 +1592,7 @@ void Deflater::Impl::slide() {
   next_insert -= shift;
   const i32 delta = static_cast<i32>(shift);
   for (i32& position : head) position = position >= delta ? position - delta : no_position;
+  for (i32& position : head3) position = position >= delta ? position - delta : no_position;
 }
 
 /// Enter the positions [next_insert, pos) in the hash table. Each needs
@@ -1587,6 +1604,7 @@ void Deflater::Impl::insert_until(const u8* data, std::size_t pos) noexcept {
     const i32 gap = here - head[h];
     prev[next_insert & chain_mask] = static_cast<u16>(gap <= static_cast<i32>(window_size) ? gap : 0);
     head[h] = here;
+    head3[hash3_at(data + next_insert)] = here;
   }
 }
 
@@ -1616,11 +1634,25 @@ Deflater::Impl::Match Deflater::Impl::find_match(const u8* data, std::size_t pos
   const i32 gap = position - candidate;
   prev[pos & chain_mask] = static_cast<u16>(gap <= static_cast<i32>(window_size) ? gap : 0);
   head[h] = position;
+  const u32 h3 = hash3_at(here);
+  const i32 short_candidate = head3[h3];
+  head3[h3] = position;
   next_insert = pos + 1;
 
   Match best{floor_length, 0};
   const unsigned limit = static_cast<unsigned>(std::min<std::size_t>(max_match, end - pos));
   if (floor_length >= limit) return best;
+  // A 3-byte match, considered only when nothing longer is wanted yet: the
+  // nearest one is the best (the parser codes it only when close).
+  if (floor_length < min_match && short_candidate != no_position && position - short_candidate <= static_cast<i32>(short_match_max_distance)) {
+    const u8* const there = data + short_candidate;
+    if (there[0] == here[0] && there[1] == here[1] && there[2] == here[2]) {
+      best.length = min_match;
+      best.distance = static_cast<unsigned>(position - short_candidate);
+      // The chain walk below reads here[best.length]: nothing longer fits.
+      if (best.length >= limit) return best;
+    }
+  }
   nice_length = std::min(nice_length, limit);
   // Candidates strictly decrease along a chain, so the walk always ends. The
   // chain link of a candidate within the window has not been overwritten by
@@ -1702,6 +1734,7 @@ void Deflater::Impl::compress_pending(Bytes& out, bool final) {
     return;
   }
   prepare_matcher(final);
+  data_end = buf.data() + end;
   if (tokens.size() < end - start) tokens.resize(end - start);
   const std::size_t token_count = parse(start, end);
   emit_blocks(out, token_count, buf.data() + start, final);

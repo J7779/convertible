@@ -224,7 +224,7 @@ TEST_CASE("codec_hevc/stream: writer options") {
     return idr;
   };
   SUBCASE("keyframe_interval") {
-    const Bytes every = test::convert(source, "hevc", "hevc", R"({"keyframe_interval":1})").data;
+    const Bytes every = test::convert(source, "hevc", "hevc", R"({"keyframe_interval":0.04})").data;  // seconds: every frame at 25 fps
     const Bytes rare = test::convert(source, "hevc", "hevc", R"({"keyframe_interval":0})").data;
     CHECK(count_keyframes(every) == 12);
     CHECK(count_keyframes(rare) == 1);

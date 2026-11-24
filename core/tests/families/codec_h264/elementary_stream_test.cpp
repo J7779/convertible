@@ -103,7 +103,12 @@ TEST_CASE("codec_h264/h264: reading decodes every picture") {
     CHECK(th::frame_md5((*frames)[i]) == reference[i]);
     CHECK((*frames)[i].pts_ms == static_cast<std::int64_t>(i) * 40);
   }
-  CHECK_STATUS(test::read_as<ir::Video>("h264", test::fixture(path("unsupported_high422_32x32", ".h264"))), Status::Decode);
+  // An unsupported profile can still be remuxed, so reading succeeds and
+  // decoding reports the problem.
+  const Bytes high422 = test::fixture(path("unsupported_high422_32x32", ".h264"));
+  auto unsupported = test::read_as<ir::Video>("h264", high422);
+  REQUIRE_OK(unsupported);
+  CHECK_STATUS(pull_all(*unsupported), Status::Decode);
   Limits tight;
   tight.max_pixels = 1000;
   CHECK_STATUS(test::read_as<ir::Video>("h264", data, {}, nullptr, tight), Status::Limit);
@@ -129,10 +134,11 @@ TEST_CASE("codec_h264/h264: writing, options and odd sizes") {
   const auto preset_small = encode_with(R"({"preset":"small"})");
   REQUIRE_OK(preset_small);
   CHECK(preset_small->size() < high->size());
-  const auto all_intra = encode_with(R"({"keyframe_interval":1})");
+  // keyframe_interval is in seconds for every video writer: 0.04 s = every frame at 25 fps.
+  const auto all_intra = encode_with(R"({"keyframe_interval":0.04})");
   REQUIRE_OK(all_intra);
   CHECK(all_intra->size() > high->size());
-  const auto fast = encode_with(R"({"speed":"fast"})");
+  const auto fast = encode_with(R"({"encoder_speed":"fast"})");
   REQUIRE_OK(fast);
   const auto by_rate = encode_with(R"({"video_bitrate_kbps":200})");
   REQUIRE_OK(by_rate);
@@ -148,7 +154,7 @@ TEST_CASE("codec_h264/h264: writing, options and odd sizes") {
   for (const ByteView nal : cvt::h264::split_annexb(*all_intra)) sps_count += cvt::h264::nal_type(nal) == cvt::h264::nal_sps;
   CHECK(sps_count == clip.size());
 
-  // Odd sizes lose their last column/row, with a warning.
+  // Odd sizes are scaled to the next even size for the encoder, with a warning.
   std::vector<codec::VideoFrame> odd;
   for (std::uint32_t i = 0; i < 3; ++i) odd.push_back(th::natural_frame(65, 49, i));
   std::vector<std::string> warnings;
@@ -157,8 +163,8 @@ TEST_CASE("codec_h264/h264: writing, options and odd sizes") {
   CHECK(warnings.size() == 1);
   auto cropped_video = test::read_as<ir::Video>("h264", *cropped);
   REQUIRE_OK(cropped_video);
-  CHECK(cropped_video->info.width == 64);
-  CHECK(cropped_video->info.height == 48);
+  CHECK(cropped_video->info.width == 66);
+  CHECK(cropped_video->info.height == 50);
 
   // RGBA frames are converted.
   std::vector<codec::VideoFrame> rgba = {test::test_pattern_frame(ir::PixelFormat::RGBA8, 64, 32, 0)};

@@ -95,6 +95,12 @@ struct ColorInfo {
   ColorMatrix matrix = ColorMatrix::BT709;
   ColorRange range = ColorRange::Limited;
   ChromaSiting siting = ChromaSiting::Left;
+  /// Colour primaries and transfer characteristics as ITU-T H.273 (CICP)
+  /// code points, carried through for encoders and containers that signal
+  /// them (1 = BT.709, 9 = BT.2020, 16 = PQ, 18 = HLG ...); 2 = unspecified.
+  /// The pixel conversions in codec/colorspace.hpp do not use them.
+  std::uint8_t primaries = 2;
+  std::uint8_t transfer = 2;
   friend bool operator==(const ColorInfo&, const ColorInfo&) = default;
 };
 
@@ -183,6 +189,9 @@ struct VideoFrame {
   /// Presentation time and display duration in milliseconds.
   std::int64_t pts_ms = 0;
   std::int64_t duration_ms = 0;
+  /// Sample (pixel) aspect ratio from the bitstream, e.g. 16/11 for
+  /// anamorphic PAL; 0/1 when unknown, which means square pixels.
+  Rational sample_aspect{0, 1};
 
   /// A zero-filled frame with tightly packed planes (stride = row bytes).
   [[nodiscard]] static VideoFrame allocate(PixelFormat format, std::uint32_t width, std::uint32_t height) {

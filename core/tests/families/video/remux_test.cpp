@@ -107,11 +107,11 @@ void check_remux(const char* file, const char* from, const char* to, std::string
 
 TEST_CASE("video/remux: streams are copied bit-exact between containers") {
   check_remux("h264_aac.mp4", "mp4", "mkv");
-  check_remux("h264_aac.mp4", "mp4", "ts");
+  check_remux("h264_aac.mp4", "mp4", "mpegts");
   check_remux("h264_aac.mp4", "mp4", "flv");
   check_remux("h264_aac.mp4", "mp4", "mov");
   check_remux("h264_aac.mp4", "mp4", "3gp");
-  check_remux("h264_aac.ts", "ts", "mp4");
+  check_remux("h264_aac.ts", "mpegts", "mp4");
   check_remux("h264_aac.flv", "flv", "mp4");
   check_remux("h264_aac_frag.mp4", "mp4", "mkv");
   check_remux("vp9_opus.webm", "webm", "mp4");
@@ -121,10 +121,10 @@ TEST_CASE("video/remux: streams are copied bit-exact between containers") {
   check_remux("av1.mp4", "mp4", "ivf");
   check_remux("vp8.ivf", "ivf", "webm");
   check_remux("hevc.mp4", "mp4", "mkv");
-  check_remux("hevc.mp4", "mp4", "ts");
-  check_remux("hevc_ac3.ts", "ts", "mkv");
-  check_remux("mpeg2_mp2.vob", "vob", "ts");
-  check_remux("mpeg2_mp2.ts", "ts", "mkv");
+  check_remux("hevc.mp4", "mp4", "mpegts");
+  check_remux("hevc_ac3.ts", "mpegts", "mkv");
+  check_remux("mpeg2_mp2.vob", "vob", "mpegts");
+  check_remux("mpeg2_mp2.ts", "mpegts", "mkv");
   check_remux("mpeg4_mp3.avi", "avi", "mkv");
   check_remux("mpeg4_mp3.avi", "avi", "mp4");
   check_remux("mjpeg_pcm.mov", "mov", "avi");

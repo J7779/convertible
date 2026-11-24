@@ -130,7 +130,19 @@ approximate ones, 5–30 for bridges. Two special rules:
   `zip → zip` re-encode through the format's own reader and writer with the
   `quality`/`preset`/… options. UIs offer it as "Compress" (the target entry
   carries `"compress": true`). It is never planned through the implicit Blob
-  reader, so a format needs a real reader and writer to be compressible.
+  reader, so a format needs a real reader and writer to be compressible. A
+  writer that only rewrites its own format (the PDF rewrite takes the PDF
+  bytes as `Blob`) sets `Codec::same_format_only`, so other files reaching
+  `Blob` through the implicit reader are not offered that target.
+- *Pointless routes are excluded per bridge*: `Bridge::excluded_target_categories`
+  lists target categories a bridge must not lead to (a still image made into
+  a video never ends as a sound file; a waveform picture never becomes a
+  video; video frames never become a document).
+- *Target order* (`list_targets`, `cvt_targets_json`): the source's own
+  category first, most popular first (a lossy target is not demoted there:
+  PNG offers JPEG first); then real conversions to other categories, fewer
+  bridges first, faithful before lossy, by popularity; the universal
+  byte-level targets (Base64, checksums, …) last.
 
 **Detection** (`engine/detect.hpp`) scores every format and takes the best:
 a magic number scores 60 (1 byte) to 95 (8+ bytes); a `sniff` result is used
@@ -153,7 +165,8 @@ limits. Each step receives a context:
 - `ctx.progress` / `ctx.checkpoint(fraction, stage)` — report progress in
   long loops; `CVT_TRY(ctx.checkpoint(...))` also stops when the user cancels.
 - `ctx.limits` — ceilings that defeat hostile input: `check_pixels`,
-  `check_decompressed`, `check_archive_entries`, `check_output`. Consult them
+  `check_decompressed`, `check_archive_entries`, `check_output`, and
+  `check_depth` (`max_depth`, default 256) for recursive parsers. Consult them
   **before** allocating anything sized by the input.
 - `ctx.warn("...")` — non-fatal notes shown to the user.
 - `ctx.registry` — for nested lookups (`ctx.registry->media()` for codecs).
@@ -273,6 +286,38 @@ Shared ground:
 - Two families may add codecs of different kinds to the same format id
   (html as `Document` and as `Table`): both call `add_format` with the fields
   they know; non-empty fields of the later call win, extensions are united.
+
+### One owner per id (enforced by `Registry::validate()`)
+
+- **Format description.** One family owns the `FormatInfo` of an id (name,
+  category, MIME, detection). A family that only adds codecs of another kind
+  to that id calls `add_known_format` (fills gaps, never overrides) or
+  `add_format` with just the id; the detection database fills anything no
+  family states. One id names one format: a format another family already
+  uses under a different id is not registered again under a new spelling
+  (the canonical spellings are listed at the top of `engine/known_formats.cpp`:
+  the MPEG transport stream is `mpegts`, Sun raster `ras`, farbfeld `ff`, ...).
+- **Readers and writers.** At most one reader and one writer per
+  (format id, IR kind); a second one is a validation error, because which one
+  ran would depend on costs and registration order. Containers and raw
+  elementary streams (`mp4`, `mkv`, `h264`, `hevc`, `obu`, `m2v`, ...) belong
+  to `video`; the codec families register decoders and encoders only.
+- **Media codecs** (`codec::Registry`): one owner per (codec id, role). The
+  owner calls `register_*`; a second owner registration is ignored and
+  reported. A family that wants an implementation only when the owner is
+  absent calls `register_*_fallback`, which never displaces anything and is
+  replaced by a later owner registration, so the result does not depend on
+  the order of `register_all()`. Owners: PCM/ADPCM/FLAC/ALAC/WavPack/GSM/IMA4
+  → `audio_lossless`; `rawvideo` → `video` (its PCM codecs are fallbacks);
+  `mjpeg`/`png` → `image`; `h264`, `hevc`, `vp8`/`vp9`, `av1` → their codec
+  families; MPEG-1/2/4, H.263, Theora, ProRes, FFV1, HuffYUV, ... → `codec_legacy`.
+- **Detection ties.** For the same confidence, a format a family describes
+  beats a detection-only database entry, and an untested extension shared by
+  a family format and a database entry resolves to the family's format (only
+  two family formats, or two database entries, sharing one untested extension
+  are a validation error). The `txt` fallback scores 30 and the text sniffers
+  of the database up to 60: content-sniffed text formats must score above 60
+  to win against them.
 
 ## Adding a format: a complete example
 
@@ -609,6 +654,15 @@ void register_codec_h264_family(Registry& registry) {
 auto decoder = ctx.registry->media().make_video_decoder(track.codec);
 if (!decoder) return fail(Status::Decode, "no decoder available for {} video", track.codec);
 ```
+
+Packaging is fixed by the convention documented at the top of
+`codec/codec.hpp` (length-prefixed NAL units with avcC/hvcC, the `vpcC` box
+body for VP8/VP9 — never copied to Matroska's CodecPrivate — av1C with
+low-overhead OBUs, raw AAC with an AudioSpecificConfig). Decoders receive it,
+encoders emit it, and every `ir::Track` carries it whatever the container
+stored; containers convert to and from their own form. Decoders honour
+`CodecParams::max_pixels` (the caller's pixel limit) and report non-fatal
+problems through `VideoDecoder::take_warnings()`.
 
 `ir::Video` is a stream, not a buffer: the reader returns functions
 (`next_frame`, `next_audio`, and optionally compressed `tracks` for remuxing

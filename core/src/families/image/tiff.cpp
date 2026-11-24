@@ -1364,6 +1364,12 @@ void register_tiff(Registry& registry) {
                                    .advanced());
   spec.write_options.push_back(background_option());
   add_image_codec(registry, std::move(spec));
+
+  // BigTIFF has its own id in the detection database; this reader handles it.
+  ImageCodecSpec big;
+  big.format_id = "bigtiff";
+  big.read = reader(read_tiff);
+  add_image_codec(registry, std::move(big));
 }
 
 }  // namespace cvt::image

@@ -361,21 +361,19 @@ class PcmEncoder final : public codec::AudioEncoder {
 }  // namespace
 
 void register_builtin_codecs(codec::Registry& media) {
-  if (!media.has_video_decoder(codec::id::rawvideo)) {
-    media.register_video_decoder(codec::id::rawvideo, [] { return std::make_unique<RawVideoDecoder>(); });
-  }
-  if (!media.has_video_encoder(codec::id::rawvideo)) {
-    media.register_video_encoder(codec::id::rawvideo, [] { return std::make_unique<RawVideoEncoder>(); });
-  }
+  // Raw video belongs to this family. The PCM codecs belong to the lossless
+  // audio family; these simple ones are fallbacks for builds without it.
+  media.register_video_decoder(codec::id::rawvideo, [] { return std::make_unique<RawVideoDecoder>(); });
+  media.register_video_encoder(codec::id::rawvideo, [] { return std::make_unique<RawVideoEncoder>(); });
   const std::pair<std::string_view, Pcm> decoders[] = {
       {codec::id::pcm_s16le, Pcm::S16LE}, {codec::id::pcm_s16be, Pcm::S16BE}, {codec::id::pcm_s24le, Pcm::S24LE},
       {codec::id::pcm_f32le, Pcm::F32LE}, {codec::id::pcm_u8, Pcm::U8},       {codec::id::pcm_alaw, Pcm::ALaw},
       {codec::id::pcm_mulaw, Pcm::MuLaw}};
   for (const auto& [name, format] : decoders) {
     const Pcm f = format;
-    if (!media.has_audio_decoder(name)) media.register_audio_decoder(name, [f] { return std::make_unique<PcmDecoder>(f); });
-    if (f != Pcm::ALaw && f != Pcm::MuLaw && !media.has_audio_encoder(name)) {
-      media.register_audio_encoder(name, [f] { return std::make_unique<PcmEncoder>(f); });
+    media.register_audio_decoder_fallback(name, [f] { return std::make_unique<PcmDecoder>(f); });
+    if (f != Pcm::ALaw && f != Pcm::MuLaw) {
+      media.register_audio_encoder_fallback(name, [f] { return std::make_unique<PcmEncoder>(f); });
     }
   }
 }

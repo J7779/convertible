@@ -1,8 +1,14 @@
 // Container readers against real files: every packet's size, payload CRC,
 // key flag and timestamps, and every track's codec and configuration, are
 // compared with what ffprobe reported for the same file (probe/*.csv; see
-// core/tests/data/video/SOURCES.md).
+// core/tests/data/video/SOURCES.md). Payloads are compared as the demuxer
+// found them in the file; the ir::Track the reader returns re-packages
+// H.264/HEVC/AAC/AV1 into the canonical form of codec/codec.hpp, which is
+// checked separately.
 // Copyright (c) Convertible contributors. MIT licence; see LICENSE.
+#include "families/video/bitstream.hpp"
+#include "families/video/common.hpp"
+#include "families/video/containers.hpp"
 #include "families/video/video_test_util.hpp"
 
 using namespace cvt;
@@ -26,6 +32,48 @@ std::string canonical_probe_codec(const std::string& codec) {
   return codec;
 }
 
+// The demuxer's packets exactly as stored in the file.
+Result<std::shared_ptr<video::Demuxed>> demux_native(std::string_view format, ByteView data) {
+  const video::ReadSettings settings{Limits{}, Progress{}, Warnings{}};
+  if (format == "mp4" || format == "mov" || format == "m4v" || format == "3gp" || format == "m4a") return video::demux_mp4(data, settings);
+  if (format == "mkv" || format == "webm" || format == "mka") return video::demux_mkv(data, settings);
+  if (format == "avi") return video::demux_avi(data, settings);
+  if (format == "flv") return video::demux_flv(data, settings);
+  if (format == "mpegts") return video::demux_ts(data, settings);
+  if (format == "vob" || format == "mpg") return video::demux_ps(data, settings);
+  if (format == "ogg" || format == "ogv") return video::demux_ogg(data, settings);
+  if (format == "wmv" || format == "wma") return video::demux_asf(data, settings);
+  if (format == "ivf") return video::demux_ivf(data, settings);
+  if (format == "y4m") return video::demux_y4m(data, settings);
+  if (format == "rm") return video::demux_rm(data, settings);
+  if (format == "h264" || format == "hevc") return video::demux_raw(data, settings, format, 0.0);
+  if (format == "obu") return video::demux_raw(data, settings, "av1", 0.0);
+  if (format == "m2v") return video::demux_raw(data, settings, "mpeg2video", 0.0);
+  return fail(Status::Internal, "no demuxer for {}", format);
+}
+
+// The canonical form: length-prefixed NAL units with a parseable avcC/hvcC,
+// AAC without ADTS headers, AV1 without temporal delimiters.
+void check_canonical(const ir::Track& track, const std::vector<ir::Packet>& packets) {
+  if (track.codec == "h264" || track.codec == "hevc") {
+    const bool hevc = track.codec == "hevc";
+    const auto record = hevc ? video::bits::parse_hvcc(track.extradata) : video::bits::parse_avcc(track.extradata);
+    REQUIRE(record.has_value());
+    for (const ir::Packet& p : packets) {
+      CHECK(!video::bits::starts_with_start_code(p.bytes));
+      CHECK(video::bits::split_length_prefixed(p.bytes, record->length_size).has_value());
+    }
+  } else if (track.codec == "aac") {
+    CHECK(video::bits::parse_asc(track.extradata).has_value());
+    for (const ir::Packet& p : packets) CHECK(!video::bits::parse_adts(p.bytes).has_value());
+  } else if (track.codec == "av1") {
+    for (const ir::Packet& p : packets) {
+      REQUIRE(!p.bytes.empty());
+      CHECK(((std::to_integer<int>(p.bytes[0]) >> 3) & 0xF) != 2);  // no temporal delimiter
+    }
+  }
+}
+
 void check_case(const Case& c) {
   INFO(c.file);
   const Bytes data = test::fixture(std::string("video/") + c.file);
@@ -34,6 +82,9 @@ void check_case(const Case& c) {
   REQUIRE_OK(video);
   const auto streams = probe_streams(c.file);
   const auto packets = probe_packets(c.file);
+  auto native = demux_native(c.format, data);
+  REQUIRE_OK(native);
+  REQUIRE((*native)->tracks.size() == streams.size());
   REQUIRE(video->tracks.size() == streams.size());
   for (std::size_t i = 0; i < streams.size(); ++i) {
     const ProbeStream& s = streams[i];
@@ -49,6 +100,9 @@ void check_case(const Case& c) {
     REQUIRE_OK(ours);
     const auto theirs = probe_packets_of(packets, s.index);
     REQUIRE(ours->size() == theirs.size());
+    check_canonical(track, *ours);
+    const video::TrackInfo& stored = (*native)->tracks[i];
+    REQUIRE(stored.packets.size() == theirs.size());
     // ffprobe states timestamps in the stream time base; ours are in the track timescale.
     const auto slash = s.time_base.find('/');
     const std::int64_t tb_num = util::parse_int(s.time_base.substr(0, slash)).value_or(1);
@@ -62,8 +116,9 @@ void check_case(const Case& c) {
       INFO("packet ", k);
       const ir::Packet& p = (*ours)[k];
       if (c.payload) {
-        CHECK(p.bytes.size() == theirs[k].size);
-        CHECK(util::crc32(p.bytes) == theirs[k].crc);
+        const Bytes in_file = (*native)->packet_bytes(stored.packets[k]);
+        CHECK(in_file.size() == theirs[k].size);
+        CHECK(util::crc32(in_file) == theirs[k].crc);
       }
       if (c.key) {
         CHECK(p.keyframe == theirs[k].key);
@@ -152,9 +207,9 @@ TEST_CASE("video/ts: packets, timestamps and configuration match ffprobe") {
   // ffprobe derives TS configuration records with parsers (TS has none); MPEG audio
   // frames after the first of each PES get timestamps interpolated by ffprobe.
   const Case cases[] = {
-      {"h264_aac.ts", "ts", true, true, true, false},
-      {"mpeg2_mp2.ts", "ts", true, true, true, false, true, false},
-      {"hevc_ac3.ts", "ts", true, true, true, false, true, false},
+      {"h264_aac.ts", "mpegts", true, true, true, false},
+      {"mpeg2_mp2.ts", "mpegts", true, true, true, false, true, false},
+      {"hevc_ac3.ts", "mpegts", true, true, true, false, true, false},
   };
   for (const Case& c : cases) check_case(c);
 }

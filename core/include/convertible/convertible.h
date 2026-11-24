@@ -178,7 +178,7 @@ enum cvt_status {
  *                     The reserved key "limits" may hold an object that
  *                     overrides safety limits for this call, with any of:
  *                     max_input_bytes, max_output_bytes, max_pixels,
- *                     max_archive_entries, max_decompressed_bytes.
+ *                     max_archive_entries, max_decompressed_bytes, max_depth.
  *   progress, user    optional progress/cancel callback and its context
  *
  * Never returns NULL: inspect the result with cvt_result_status() and

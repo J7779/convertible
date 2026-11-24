@@ -151,6 +151,8 @@ endif()
 # ---------------------------------------------------------------------------
 if(CVT_BUILD_TESTS)
   enable_testing()
+  # Everything below tests/: engine/, util/, codec/, support/, families/<family>/
+  # and integration/ (cross-family conversions of real files through the C ABI).
   file(GLOB_RECURSE CVT_TEST_SOURCES CONFIGURE_DEPENDS
     "${CVT_CORE_DIR}/tests/*.cpp"
     "${CVT_CORE_DIR}/tests/*.hpp")

@@ -784,7 +784,8 @@ ir::Card outlook_card(const std::vector<std::string>& row, const Header& h) {
   card.birthday = csv_date(get(row, h, {"Birthday"}));
   card.anniversary = csv_date(get(row, h, {"Anniversary"}));
   card.note = util::replace_all(get(row, h, {"Notes"}), "\r\n", "\n");
-  for (const std::string_view category : util::split(get(row, h, {"Categories"}), ';', false)) {
+  const std::string split_text = get(row, h, {"Categories"});  // split() returns views into it
+  for (const std::string_view category : util::split(split_text, ';', false)) {
     if (!util::trim(category).empty()) card.categories.emplace_back(util::trim(category));
   }
   for (const std::string_view column : {"E-mail Address", "E-mail 2 Address", "E-mail 3 Address"}) {

@@ -448,15 +448,15 @@ void Interpreter::run(ByteView content, const Object& resources_ref, GState& gs_
     } else if (op == "G" || op == "g") {
       const bool fill = op == "g";
       (fill ? gs.fill_space : gs.stroke_space) = device_gray();
-      (fill ? gs.fill_color : gs.stroke_color) = {num(ops, 0)};
+      (fill ? gs.fill_color : gs.stroke_color) = std::vector<double>{num(ops, 0)};
     } else if (op == "RG" || op == "rg") {
       const bool fill = op == "rg";
       (fill ? gs.fill_space : gs.stroke_space) = device_rgb();
-      (fill ? gs.fill_color : gs.stroke_color) = {num(ops, 0), num(ops, 1), num(ops, 2)};
+      (fill ? gs.fill_color : gs.stroke_color) = std::vector<double>{num(ops, 0), num(ops, 1), num(ops, 2)};
     } else if (op == "K" || op == "k") {
       const bool fill = op == "k";
       (fill ? gs.fill_space : gs.stroke_space) = device_cmyk();
-      (fill ? gs.fill_color : gs.stroke_color) = {num(ops, 0), num(ops, 1), num(ops, 2), num(ops, 3)};
+      (fill ? gs.fill_color : gs.stroke_color) = std::vector<double>{num(ops, 0), num(ops, 1), num(ops, 2), num(ops, 3)};
     } else if (op == "sh") {
       if (!ops.empty()) {
         const Object shading = file_.get(file_.get(res, "Shading").as_dict(), ops[0].as_name());

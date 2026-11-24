@@ -312,6 +312,96 @@ void collect_parameter_sets(const std::vector<ByteView>& nals, bool hevc, Parame
   }
 }
 
+namespace {
+
+/// Table E-1 of H.264 / H.265: sample aspect ratios by aspect_ratio_idc.
+constexpr std::array<std::array<std::uint16_t, 2>, 17> sar_table = {{{0, 0},
+                                                                    {1, 1},
+                                                                    {12, 11},
+                                                                    {10, 11},
+                                                                    {16, 11},
+                                                                    {40, 33},
+                                                                    {24, 11},
+                                                                    {20, 11},
+                                                                    {32, 11},
+                                                                    {80, 33},
+                                                                    {18, 11},
+                                                                    {15, 11},
+                                                                    {64, 33},
+                                                                    {160, 99},
+                                                                    {4, 3},
+                                                                    {3, 2},
+                                                                    {2, 1}}};
+
+void read_sar(BitReader& r, SpsInfo& info) {
+  const std::uint32_t idc = r.bits(8);
+  if (idc == 255) {
+    info.sar_num = r.bits(16);
+    info.sar_den = r.bits(16);
+  } else if (idc < sar_table.size()) {
+    info.sar_num = sar_table[idc][0];
+    info.sar_den = sar_table[idc][1];
+  }
+}
+
+void skip_h264_hrd(BitReader& r) {
+  const std::uint32_t count = r.ue();
+  if (count > 31) {
+    r.skip(r.remaining() + 1);
+    return;
+  }
+  r.skip(8);
+  for (std::uint32_t i = 0; i <= count && !r.failed(); ++i) {
+    r.ue();
+    r.ue();
+    r.skip(1);
+  }
+  r.skip(20);
+}
+
+/// H.264 vui_parameters() (Annex E.1.1): aspect ratio, timing, reordering.
+void parse_h264_vui(BitReader& r, SpsInfo& info) {
+  if (r.flag()) read_sar(r, info);
+  if (r.flag()) r.skip(1);  // overscan
+  if (r.flag()) {           // video_signal_type
+    r.skip(4);
+    if (r.flag()) r.skip(24);
+  }
+  if (r.flag()) {  // chroma_loc_info
+    r.ue();
+    r.ue();
+  }
+  if (r.flag()) {  // timing_info_present_flag
+    const std::uint32_t units = r.bits(32);
+    const std::uint32_t scale = r.bits(32);
+    r.skip(1);  // fixed_frame_rate_flag
+    // One frame = two field ticks.
+    if (!r.failed() && units > 0 && scale > 0) {
+      info.fps_num = scale;
+      info.fps_den = units > 0x7FFFFFFFu ? 0 : units * 2;
+      if (info.fps_den == 0) info.fps_num = 0;
+    }
+  }
+  const bool nal_hrd = r.flag();
+  if (nal_hrd) skip_h264_hrd(r);
+  const bool vcl_hrd = r.flag();
+  if (vcl_hrd) skip_h264_hrd(r);
+  if (nal_hrd || vcl_hrd) r.skip(1);  // low_delay_hrd_flag
+  r.skip(1);                          // pic_struct_present_flag
+  if (r.flag()) {                     // bitstream_restriction_flag
+    r.skip(1);
+    r.ue();
+    r.ue();
+    r.ue();
+    r.ue();
+    const std::uint32_t reorder = r.ue();
+    r.ue();
+    if (!r.failed() && reorder <= 16) info.max_num_reorder = reorder;
+  }
+}
+
+}  // namespace
+
 std::optional<SpsInfo> parse_h264_sps(ByteView nal) {
   if (nal.size() < 4 || h264_nal_type(nal) != 7) return std::nullopt;
   const Bytes rbsp = unescape_rbsp(nal.subspan(1));
@@ -378,54 +468,8 @@ std::optional<SpsInfo> parse_h264_sps(ByteView nal) {
   if (cx >= w || cy >= h) return std::nullopt;
   info.width = static_cast<std::uint32_t>(w - cx);
   info.height = static_cast<std::uint32_t>(h - cy);
-  return info;
-}
-
-std::optional<SpsInfo> parse_hevc_sps(ByteView nal) {
-  if (nal.size() < 16 || hevc_nal_type(nal) != 33) return std::nullopt;
-  const Bytes rbsp = unescape_rbsp(nal.subspan(2));
-  BitReader r(rbsp);
-  SpsInfo info;
-  r.bits(4);
-  const int max_sub_layers = static_cast<int>(r.bits(3));
-  r.bits(1);
-  r.bits(2);
-  r.bits(1);
-  info.profile = static_cast<int>(r.bits(5));
-  r.skip(32 + 48);
-  info.level = static_cast<int>(r.bits(8));
-  std::array<bool, 8> profile_present{};
-  std::array<bool, 8> level_present{};
-  for (int i = 0; i < max_sub_layers; ++i) {
-    profile_present[static_cast<std::size_t>(i)] = r.flag();
-    level_present[static_cast<std::size_t>(i)] = r.flag();
-  }
-  if (max_sub_layers > 0) {
-    for (int i = max_sub_layers; i < 8; ++i) r.bits(2);
-  }
-  for (int i = 0; i < max_sub_layers; ++i) {
-    if (profile_present[static_cast<std::size_t>(i)]) r.skip(88);
-    if (level_present[static_cast<std::size_t>(i)]) r.skip(8);
-  }
-  r.ue();
-  info.chroma_format = static_cast<int>(r.ue());
-  if (info.chroma_format == 3) r.bits(1);
-  const std::uint32_t width = r.ue();
-  const std::uint32_t height = r.ue();
-  std::uint32_t win[4] = {0, 0, 0, 0};
-  if (r.flag()) {
-    for (auto& w : win) w = r.ue();
-  }
-  info.bit_depth_luma = static_cast<int>(r.ue()) + 8;
-  info.bit_depth_chroma = static_cast<int>(r.ue()) + 8;
-  if (r.failed() || width == 0 || height == 0 || width > 65536 || height > 65536) return std::nullopt;
-  const std::uint64_t sub_w = info.chroma_format == 1 || info.chroma_format == 2 ? 2 : 1;
-  const std::uint64_t sub_h = info.chroma_format == 1 ? 2 : 1;
-  const std::uint64_t cx = sub_w * (std::uint64_t{win[0]} + win[1]);
-  const std::uint64_t cy = sub_h * (std::uint64_t{win[2]} + win[3]);
-  if (cx >= width || cy >= height) return std::nullopt;
-  info.width = static_cast<std::uint32_t>(width - cx);
-  info.height = static_cast<std::uint32_t>(height - cy);
+  info.frame_mbs_only = frame_mbs_only;
+  if (r.flag()) parse_h264_vui(r, info);  // vui_parameters_present_flag; best effort
   return info;
 }
 
@@ -1030,16 +1074,25 @@ Bytes build_vpcc(const Vp9Info& info) {
   put_u8(out, 0);
   put_u8(out, 0);
   put_u8(out, static_cast<std::uint32_t>(info.profile));
+  // The lowest level whose picture size and width/height limits fit (VP9
+  // levels table of the WebM project; vpcC codes level X.Y as 10 * X + Y).
+  // The frame rate is unknown here, so sample-rate limits are not applied.
+  struct Level {
+    int code;
+    std::uint64_t picture;
+    std::uint32_t breadth;
+  };
+  static constexpr Level levels[] = {{10, 36864, 512},     {11, 73728, 768},     {20, 122880, 960},
+                                     {21, 245760, 1344},   {30, 552960, 2048},   {31, 983040, 2752},
+                                     {40, 2228224, 4160},  {50, 8912896, 8384},  {60, 35651584, 16832}};
   const std::uint64_t samples = std::uint64_t{info.width} * info.height;
-  int level = 10;
-  if (samples > 36864) level = 11;
-  if (samples > 73728) level = 20;
-  if (samples > 122880) level = 21;
-  if (samples > 245760) level = 30;
-  if (samples > 552960) level = 31;
-  if (samples > 983040) level = 40;
-  if (samples > 2228224) level = 50;
-  if (samples > 8912896) level = 60;
+  int level = 0;  // undefined: larger than level 6.2
+  for (const Level& l : levels) {
+    if (samples <= l.picture && info.width <= l.breadth && info.height <= l.breadth) {
+      level = l.code;
+      break;
+    }
+  }
   put_u8(out, static_cast<std::uint32_t>(level));
   put_u8(out, static_cast<std::uint32_t>((info.bit_depth << 4) | (info.chroma_subsampling << 1) | (info.full_range ? 1 : 0)));
   put_u8(out, 2);

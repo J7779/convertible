@@ -220,6 +220,7 @@ void flatten_alpha(ir::Frame& frame, Rgb background) noexcept {
 }
 
 void flatten_alpha(ir::Image& image, Rgb background) noexcept {
+  if (std::ranges::any_of(image.frames, [](const ir::Frame& f) { return f.has_transparency(); })) image.clear_original();
   for (ir::Frame& frame : image.frames) flatten_alpha(frame, background);
   if (image.hdr) {
     const float bg[3] = {srgb_to_linear(background[0]), srgb_to_linear(background[1]), srgb_to_linear(background[2])};
@@ -554,6 +555,7 @@ Result<ir::HdrPixels> resize(const ir::HdrPixels& pixels, std::uint32_t width, s
 Result<void> resize(ir::Image& image, std::uint32_t width, std::uint32_t height, const ResizeOptions& options) {
   const std::uint32_t old_width = image.width();
   const std::uint32_t old_height = image.height();
+  if (width != old_width || height != old_height) image.clear_original();  // the encoded file no longer matches
   for (ir::Frame& frame : image.frames) {
     CVT_TRY_ASSIGN(frame, resize(frame, width, height, options));
   }
@@ -645,6 +647,7 @@ ir::HdrPixels apply_orientation(const ir::HdrPixels& pixels, int orientation) {
 
 void apply_orientation(ir::Image& image, int orientation) {
   if (orientation < 2 || orientation > 8) return;
+  image.clear_original();
   for (ir::Frame& frame : image.frames) frame = apply_orientation(frame, orientation);
   if (image.hdr) *image.hdr = apply_orientation(*image.hdr, orientation);
   if (orientation >= 5) std::swap(image.dpi_x, image.dpi_y);

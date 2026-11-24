@@ -103,7 +103,8 @@ TEST_CASE("pdf/render: encrypted files render like their plain source") {
 TEST_CASE("pdf/render: JPEG images decode through the registry when available") {
   const Bytes data = test::fixture("pdf/img2pdf_jpeg.pdf");
   std::vector<std::string> warnings;
-  auto image = test::read_as<ir::Image>("pdf", data, R"({"dpi":72})", &warnings);
+  // img2pdf places the 64x48 picture at 96 dpi, so 96 dpi renders it 1:1.
+  auto image = test::read_as<ir::Image>("pdf", data, R"({"dpi":96})", &warnings);
   REQUIRE_OK(image);
   if (test::find_reader("jpg", Kind::Image) == nullptr) {
     CHECK(!warnings.empty());  // the picture is left blank, with a warning

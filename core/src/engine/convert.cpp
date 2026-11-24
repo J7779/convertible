@@ -247,6 +247,8 @@ Result<Limits> effective_limits(const Limits& base, const Options& options) {
       limits.max_archive_entries = amount;
     } else if (key == "max_decompressed_bytes") {
       limits.max_decompressed_bytes = amount;
+    } else if (key == "max_depth") {
+      limits.max_depth = static_cast<std::uint32_t>(std::min<std::uint64_t>(amount, 0xFFFFFFFFu));
     } else {
       return fail(Status::InvalidArgument, "unknown limit '{}'", util::sanitize_utf8(key));
     }
