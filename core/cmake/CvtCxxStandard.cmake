@@ -46,7 +46,13 @@ foreach(_cvt_std 26 23)
   endif()
   _cvt_try_manual_flags(_cvt_flag ${_cvt_flags_${_cvt_std}})
   if(_cvt_flag)
-    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:${_cvt_flag}>")
+    # Only for targets that do not choose a standard themselves: imported
+    # C++ libraries (cvt_add_imported always sets their CXX_STANDARD, e.g.
+    # C++17 or C++14 for code written before C++20 made mixed-enum
+    # arithmetic and `register` ill-formed) and app targets with their own
+    # CXX_STANDARD keep theirs, so this flag never overrides theirs.
+    add_compile_options(
+      "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<BOOL:$<TARGET_PROPERTY:CXX_STANDARD>>>>:${_cvt_flag}>")
     set(_cvt_selected "C++${_cvt_std} (${_cvt_flag})")
     break()
   endif()

@@ -39,7 +39,7 @@ endfunction()
 #     [INCLUDE_DIRS <dir>...]        # relative to core/src/imported/<name>/; default: the library root
 #     [DEFINITIONS <def>...]         # compile definitions for the library AND for core code that includes it
 #     [PRIVATE_DEFINITIONS <def>...] # compile definitions for the library sources only
-#     [C_STANDARD <n>] [CXX_STANDARD <n>])
+#     [C_STANDARD <n>] [CXX_STANDARD <n>])   # CXX_STANDARD default 17, never the core's
 #
 #   The core is written in-house. This function exists for the rare component
 #   that policy allows to be imported (see core/README.md, "Imported code"):
@@ -111,9 +111,16 @@ function(cvt_add_imported name)
   if(TP_C_STANDARD)
     set_target_properties(${tp_target} PROPERTIES C_STANDARD ${TP_C_STANDARD})
   endif()
-  if(TP_CXX_STANDARD)
-    set_target_properties(${tp_target} PROPERTIES CXX_STANDARD ${TP_CXX_STANDARD})
+  # Imported C++ always compiles at the standard it was written for, never at
+  # the core's C++26/23: newer standards reject constructs that old codec
+  # sources use (C++26 mixed-enum arithmetic, C++17 `register`). The explicit
+  # property wins over CMAKE_CXX_STANDARD and disables the manual flag of
+  # CvtCxxStandard.cmake for this target. Default: C++17.
+  if(NOT TP_CXX_STANDARD)
+    set(TP_CXX_STANDARD 17)
   endif()
+  set_target_properties(${tp_target} PROPERTIES CXX_STANDARD ${TP_CXX_STANDARD} CXX_STANDARD_REQUIRED ON
+                                                CXX_EXTENSIONS OFF)
   if(MSVC)
     target_compile_options(${tp_target} PRIVATE /w /utf-8)
     target_compile_definitions(${tp_target} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE NOMINMAX)

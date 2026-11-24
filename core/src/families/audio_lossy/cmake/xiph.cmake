@@ -7,6 +7,16 @@
 set(_cvt_imp "${CVT_CORE_DIR}/src/imported")
 set(_cvt_xiph "${CVT_FAMILY_DIR}/xiph")
 
+# alloca(): <malloc.h>/_alloca on Windows (the libraries know), <alloca.h>
+# everywhere else (glibc, bionic, musl, Emscripten, Apple). Without
+# HAVE_ALLOCA_H they would rely on <stdlib.h> declaring it, which strict C
+# modes do not.
+if(NOT WIN32)
+  set(_cvt_alloca_h HAVE_ALLOCA_H)
+else()
+  set(_cvt_alloca_h "")
+endif()
+
 function(_cvt_force_include target header)
   if(MSVC)
     target_compile_options(${target} PRIVATE "/FI${header}")
@@ -20,7 +30,7 @@ file(STRINGS "${_cvt_imp}/libopus/sources.txt" _cvt_opus_sources)
 cvt_add_imported(libopus
   SOURCES ${_cvt_opus_sources}
   INCLUDE_DIRS include
-  PRIVATE_DEFINITIONS OPUS_BUILD USE_ALLOCA NDEBUG)
+  PRIVATE_DEFINITIONS OPUS_BUILD USE_ALLOCA NDEBUG ${_cvt_alloca_h})
 target_include_directories(cvt_imported_libopus PRIVATE
   "${_cvt_imp}/libopus/celt" "${_cvt_imp}/libopus/silk" "${_cvt_imp}/libopus/silk/float" "${_cvt_imp}/libopus/src")
 _cvt_force_include(cvt_imported_libopus "${_cvt_xiph}/opus_rename.h")
@@ -33,7 +43,7 @@ list(TRANSFORM _cvt_ogg_sources PREPEND "${_cvt_imp}/libogg/")
 cvt_add_imported(libvorbis
   SOURCES ${_cvt_vorbis_sources} ${_cvt_ogg_sources}
   INCLUDE_DIRS include "${_cvt_imp}/libogg/include"
-  PRIVATE_DEFINITIONS NDEBUG)
+  PRIVATE_DEFINITIONS NDEBUG ${_cvt_alloca_h})
 target_include_directories(cvt_imported_libvorbis PRIVATE "${_cvt_imp}/libvorbis/lib")
 _cvt_force_include(cvt_imported_libvorbis "${_cvt_xiph}/vorbis_rename.h")
 target_compile_definitions(convertible_core PRIVATE CVT_HAVE_LIBVORBIS=1)
@@ -49,7 +59,7 @@ file(STRINGS "${_cvt_imp}/speex/sources.txt" _cvt_speex_sources)
 cvt_add_imported(speex
   SOURCES ${_cvt_speex_sources}
   INCLUDE_DIRS include
-  PRIVATE_DEFINITIONS FLOATING_POINT USE_SMALLFT EXPORT= NDEBUG)
+  PRIVATE_DEFINITIONS FLOATING_POINT USE_SMALLFT EXPORT= NDEBUG ${_cvt_alloca_h})
 target_include_directories(cvt_imported_speex PRIVATE "${_cvt_imp}/speex/libspeex")
 _cvt_force_include(cvt_imported_speex "${_cvt_xiph}/speex_rename.h")
 target_compile_definitions(convertible_core PRIVATE CVT_HAVE_SPEEX=1)

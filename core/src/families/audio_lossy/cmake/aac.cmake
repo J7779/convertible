@@ -12,7 +12,7 @@ cvt_add_imported(pv-aacdec
   SOURCES ${_cvt_pvaac_sources}
   INCLUDE_DIRS .
   PRIVATE_DEFINITIONS AAC_PLUS HQ_SBR NDEBUG
-  CXX_STANDARD 17)
+  CXX_STANDARD 14)  # PacketVideo C++98-era sources (register storage class)
 if(MSVC)
   target_compile_options(cvt_imported_pv_aacdec PRIVATE "/FI${_cvt_aac}/pv_aacdec_rename.h")
 else()

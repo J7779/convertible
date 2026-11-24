@@ -22,7 +22,9 @@ the SIMD strategy sources, `src/threadwrapper` (C++ std::thread wrapper),
 ## Changes
 
 1. Threads: every `pthread_` identifier in the library sources was renamed
-   to `kvz_pthread_` (mechanically) and `#include <pthread.h>` removed;
+   to `kvz_pthread_` (mechanically) and `#include <pthread.h>` removed
+   (also the quoted `#include "pthread.h"` of `rate_control.c`, which only
+   compiled where a system pthread.h exists, never with MSVC);
    `src/threads.h` is rewritten to define those names, `kvz_sem_*` and the
    atomics as single-threaded no-ops, and the clock macros as constants.
    The wrapper always configures `threads = 0` and `owf = 0`, where Kvazaar
