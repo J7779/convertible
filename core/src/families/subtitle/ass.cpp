@@ -280,10 +280,12 @@ Result<ir::Subtitles> parse_ass(std::string_view text, const ReadContext& ctx) {
         style_format = util::split(value, ',');
         for (std::string_view& name : style_format) name = util::trim(name);
       } else if (util::iequals(key, "Style")) {
-        const std::vector<std::string_view> format =
-            style_format.empty() ? std::vector<std::string_view>(legacy_styles ? v4_names.begin() : v4plus_names.begin(),
-                                                                 legacy_styles ? v4_names.end() : v4plus_names.end())
-                                 : style_format;
+        // The two name tables are std::arrays of different sizes, so their
+        // iterators are different types on some standard libraries.
+        const std::vector<std::string_view> default_format =
+            legacy_styles ? std::vector<std::string_view>(v4_names.begin(), v4_names.end())
+                          : std::vector<std::string_view>(v4plus_names.begin(), v4plus_names.end());
+        const std::vector<std::string_view> format = style_format.empty() ? default_format : style_format;
         std::vector<std::string> style = canonical_style(format, value, legacy_styles);
         subs.metadata["ass.style." + style[0]] = util::join(style, ",");
         script.styles[style[0]] = std::move(style);
