@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Convertible
+GenericName=File Converter
+Comment=Convert files offline. Nothing leaves your device.
+Exec=convertible-desktop %F
+Icon=app.convertible.desktop
+Terminal=false
+Categories=Utility;FileTools;
+Keywords=convert;converter;base64;hex;checksum;image;document;audio;
+MimeType=application/octet-stream;text/plain;
+StartupNotify=true
+StartupWMClass=convertible-desktop
