@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Convertible</string>
+    <string name="share_target_label">Convert</string>
+    <string name="open_with_label">Convert with Convertible</string>
+
+    <!-- Intro -->
+    <string name="intro_description">Convertible</string>
+    <string name="intro_skip">Skip intro</string>
+
+    <!-- Home -->
+    <string name="home_title">Convert anything</string>
+    <string name="home_subtitle">Pick files, choose a format, done.</string>
+    <string name="drop_title">Drop files here</string>
+    <string name="drop_title_touch">Add files to convert</string>
+    <string name="drop_body">Or choose them from your device. You can add several at once.</string>
+    <string name="drop_active">Release to add</string>
+    <string name="action_choose_files">Choose files</string>
+    <string name="action_add_more">Add files</string>
+    <string name="privacy_line">Files never leave your device. Everything converts right here, offline.</string>
+    <string name="nav_formats">Formats</string>
+    <string name="nav_settings">Settings</string>
+    <string name="action_back">Back</string>
+    <plurals name="action_convert_n">
+        <item quantity="one">Convert %d file</item>
+        <item quantity="other">Convert %d files</item>
+    </plurals>
+    <string name="action_convert">Convert</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_cancel_all">Cancel all</string>
+    <string name="action_save">Save</string>
+    <string name="action_save_all">Save all</string>
+    <string name="action_share">Share</string>
+    <string name="action_share_all">Share all</string>
+    <string name="action_open_in">Open in…</string>
+    <string name="action_convert_again">Convert again</string>
+    <string name="action_try_again">Try again</string>
+    <string name="action_remove">Remove %1$s</string>
+    <string name="action_compress">Compress</string>
+    <string name="converting_summary">Converting %1$d of %2$d</string>
+    <string name="group_title">%1$d %2$s files</string>
+    <string name="group_set_all">Convert all to…</string>
+    <string name="group_applied">All set to %1$s</string>
+
+    <!-- File card -->
+    <string name="card_importing">Reading file…</string>
+    <string name="card_convert_to">Convert to</string>
+    <string name="card_more_formats">More</string>
+    <string name="card_change_format">Change format, currently %1$s</string>
+    <string name="card_no_targets">No conversions are available for this file yet.</string>
+    <string name="card_waiting">Waiting…</string>
+    <string name="card_starting">Starting…</string>
+    <string name="card_progress">%1$d%%</string>
+    <string name="card_advanced">Advanced</string>
+    <plurals name="card_advanced_count">
+        <item quantity="one">%d more option</item>
+        <item quantity="other">%d more options</item>
+    </plurals>
+    <string name="card_size_change">%1$s → %2$s</string>
+    <string name="card_smaller">%1$d%% smaller</string>
+    <string name="card_larger">%1$d%% larger</string>
+    <string name="card_same_size">Same size</string>
+    <string name="card_lossy">Lossy</string>
+    <string name="card_source_unknown">Unrecognised format</string>
+    <plurals name="card_warnings">
+        <item quantity="one">%d note</item>
+        <item quantity="other">%d notes</item>
+    </plurals>
+    <string name="card_file_description">%1$s, %2$s, %3$s</string>
+
+    <!-- Quality -->
+    <string name="quality_title">Quality</string>
+    <string name="preset_high">High</string>
+    <string name="preset_balanced">Balanced</string>
+    <string name="preset_small">Small</string>
+
+    <!-- Target picker -->
+    <string name="picker_title">Convert %1$s to</string>
+    <string name="picker_search">Search formats</string>
+    <string name="picker_popular">Popular</string>
+    <string name="picker_no_results">No format matches “%1$s”.</string>
+    <string name="picker_clear_search">Clear search</string>
+    <string name="picker_close">Close</string>
+    <string name="picker_compress_title">Compress %1$s</string>
+    <string name="picker_compress_same">Smaller %1$s, same format</string>
+
+    <!-- Errors -->
+    <string name="error_invalid_settings">Check the conversion settings</string>
+    <string name="error_unrecognised">This file type isn’t recognised</string>
+    <string name="error_unsupported">This conversion isn’t possible</string>
+    <string name="error_damaged">The file looks damaged</string>
+    <string name="error_cannot_write">Couldn’t write this format</string>
+    <string name="error_file_access">Couldn’t read or write the file</string>
+    <string name="error_cancelled">Cancelled</string>
+    <string name="error_too_large">The file is too large</string>
+    <string name="error_internal">Something went wrong</string>
+    <string name="error_import_unreadable">Couldn’t open this file</string>
+    <string name="error_import_unreadable_detail">The app that shared it may no longer allow access. Try adding it again.</string>
+    <string name="error_import_no_space">Not enough free space</string>
+    <string name="error_import_no_space_detail">Free up some storage on your device, then add the file again.</string>
+    <string name="error_too_large_detail">It is larger than this device can convert in one go.</string>
+
+    <!-- Messages -->
+    <string name="message_saved">Saved %1$s</string>
+    <plurals name="message_saved_all">
+        <item quantity="one">Saved %d file</item>
+        <item quantity="other">Saved %d files</item>
+    </plurals>
+    <string name="message_save_failed">Couldn’t save. Try another location.</string>
+    <string name="message_no_app">No app on this device can open that.</string>
+
+    <!-- Formats -->
+    <string name="formats_title">Formats</string>
+    <string name="formats_subtitle">Everything Convertible understands, all on this device.</string>
+    <string name="formats_all">All</string>
+    <string name="formats_read">Read</string>
+    <string name="formats_write">Write</string>
+    <string name="formats_empty">No format matches “%1$s”.</string>
+    <string name="formats_row_description">%1$s, %2$s. %3$s. %4$s.</string>
+    <string name="formats_can_read">Can read</string>
+    <string name="formats_cannot_read">Cannot read</string>
+    <string name="formats_can_write">Can write</string>
+    <string name="formats_cannot_write">Cannot write</string>
+    <string name="formats_universal_note">Any file, even one that isn’t listed, can be turned into Base64, hex, checksums and the other encodings.</string>
+
+    <!-- Categories -->
+    <string name="category_image">Images</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_video">Video</string>
+    <string name="category_document">Documents</string>
+    <string name="category_ebook">E-books</string>
+    <string name="category_spreadsheet">Spreadsheets</string>
+    <string name="category_presentation">Presentations</string>
+    <string name="category_data">Data</string>
+    <string name="category_archive">Archives</string>
+    <string name="category_font">Fonts</string>
+    <string name="category_subtitle">Subtitles</string>
+    <string name="category_model3d">3D models</string>
+    <string name="category_geo">Maps &amp; GPS</string>
+    <string name="category_pim">Contacts &amp; calendars</string>
+    <string name="category_code">Code</string>
+    <string name="category_encoding">Encodings</string>
+    <string name="category_vector">Vector graphics</string>
+    <string name="category_other">Other</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="settings_defaults">Conversion defaults</string>
+    <string name="settings_default_quality">Default quality</string>
+    <string name="settings_default_quality_hint">Used when a format offers quality presets.</string>
+    <string name="settings_strip_metadata">Strip metadata</string>
+    <string name="settings_strip_metadata_hint">Remove location, camera and author details from converted files.</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_body">Convertible works entirely on this device. It has no internet access, no accounts, no analytics and no crash reporting. Files you add are copied into private temporary storage only while you work with them and are deleted when you leave the app. Nothing you convert is remembered.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_app_version">App version</string>
+    <string name="settings_core_version">Converter engine</string>
+    <string name="settings_licences">Open-source licences</string>
+    <string name="settings_source">Convertible is free and open-source software (MIT licence).</string>
+
+    <!-- Licences -->
+    <string name="licences_title">Open-source licences</string>
+    <string name="licences_intro">Convertible is built from these components. Thank you to everyone who made them.</string>
+    <string name="licence_show">Show licence text</string>
+    <string name="licence_hide">Hide licence text</string>
+    <string name="state_expanded">Expanded</string>
+    <string name="state_collapsed">Collapsed</string>
+</resources>

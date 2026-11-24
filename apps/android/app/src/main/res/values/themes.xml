@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window only provides the background behind the Compose UI (and the splash). -->
+    <style name="Theme.Convertible" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- Launch theme. On Android 12+ the system splash shows only the background colour and hands over to the
+         in-app intro animation, which starts from an empty canvas (see values-v31). -->
+    <style name="Theme.Convertible.Starting" parent="Theme.Convertible" />
+</resources>

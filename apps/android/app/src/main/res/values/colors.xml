@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window only (splash, behind Compose); mirrors color.light.background / accentFill in assets/brand/tokens.json.
+         The UI itself reads the tokens file. -->
+    <color name="window_background">#FFF6F6FA</color>
+    <color name="accent">#FF5746E0</color>
+</resources>

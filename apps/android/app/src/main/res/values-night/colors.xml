@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors color.dark.background / accentFill in assets/brand/tokens.json. -->
+    <color name="window_background">#FF0D0F16</color>
+    <color name="accent">#FF6C5AF3</color>
+</resources>
